@@ -98,31 +98,31 @@ function getAreaNameByPos(row, col) {
   return AREAS[zone]?.name || '이동 중';
 }
 
-function renderMiniMap(player, radius = 5) {
-  const lines = [];
-  const startR = Math.max(0, player.mapRow - radius);
-  const endR = Math.min(TILE_MAP.length - 1, player.mapRow + radius);
-  const startC = Math.max(0, player.mapCol - radius);
-  const endC = Math.min(TILE_MAP[0].length - 1, player.mapCol + radius);
+function getMovementFlavorText(row, col, prevZone, nextZone) {
+  const ch = getTileChar(row, col);
 
-  for (let r = startR; r <= endR; r++) {
-    let line = '';
-    for (let c = startC; c <= endC; c++) {
-      if (r === player.mapRow && c === player.mapCol) {
-        line += '@ ';
-        continue;
-      }
-      const ch = getTileChar(r, c);
-      if (ch in LOCATIONS) line += '★ ';
-      else if (ch === '#') line += '■ ';
-      else if (ch === '^') line += '▲ ';
-      else if (ch === 'w') line += '≈ ';
-      else if (ch === '=' || ch === '.') line += '· ';
-      else line += '□ ';
-    }
-    lines.push(line.trimEnd());
+  if (LOCATIONS[ch]) {
+    const location = LOCATIONS[ch];
+    const area = AREAS[location.zone];
+    return area?.desc || `${location.name}에 도착했다.`;
   }
-  return lines;
+
+  if (ch === '=') {
+    return '정비된 대로를 따라 차분히 걸음을 옮겼다.';
+  }
+
+  if (ch === '.') {
+    if (prevZone && AREAS[prevZone]) {
+      return `${AREAS[prevZone].name}에서 이어지는 길을 천천히 걸어갔다.`;
+    }
+    return '한적한 길 위로 발걸음을 옮겼다.';
+  }
+
+  if (nextZone && AREAS[nextZone]) {
+    return AREAS[nextZone].desc;
+  }
+
+  return '조심스럽게 한 걸음 앞으로 나아갔다.';
 }
 
 async function tryStepMove(player, dr, dc, label) {
@@ -154,6 +154,7 @@ async function tryStepMove(player, dr, dc, label) {
   }
 
   UI.updateHeader();
+  UI.addLog(`  ${getMovementFlavorText(nr, nc, curZone, nextZone)}`);
   const zoneMeta = AREAS[nextZone];
   if (!zoneMeta || zoneMeta.encounter_chance <= 0) return { ok: true };
   if (Math.random() >= zoneMeta.encounter_chance) return { ok: true };
