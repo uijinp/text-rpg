@@ -1,0 +1,112 @@
+dwarf_mine:
+  actions:
+    # 1. 첫 방문 이벤트
+    - action: if
+      cond: {not_flag: dwarf_mine_visited}
+      then:
+        - action: divider
+          title: "드워프 광산 (Dwarf Mine)"
+        - action: print
+          text: |
+            거대한 지하 광산. 투박한 손길로 캐낸 광석들이 산을 이루고 있다.
+            저기 곡괭이를 휘두르던 드워프 하나가 당신을 쳐다본다.
+            "누구냐, 꼬맹이! 여기부터는 드워프의 영토다!"
+        - action: set_flag
+          key: dwarf_mine_visited
+          value: true
+        - action: pause
+
+    # 2. 메인 루프 (광산 탐색 메뉴)
+    - action: loop
+      body:
+        - action: divider
+          title: "드워프 광산"
+        - action: menu
+          options:
+            - label: "구석진 틈새 조사"
+              actions:
+                - action: print
+                  text: "\n  비좁은 바위 틈새를 뒤져보았다."
+                - action: random
+                  branches:
+                    - weight: 0.6
+                      actions:
+                        - action: add_gold
+                          amount: 25
+                    - weight: 0.4
+                      actions:
+                        - action: print
+                          text: "  거대한 고블린 무리와 마주쳤다!"
+                        - action: battle
+                          enemy: goblin
+
+            - label: "드워프 대장장이와 대화"
+              actions:
+                - action: print
+                  text: |
+
+                    드워프 대장장이: "광산 저 깊이 위험한 골렘 한마리가 깨어났다네."
+                    "어찌나 단단한지 우리 곡괭이로는 흠집도 낼 수가 없어."
+                    "자네가 만약 저 골렘을 처치해준다면... 좋은 무기를 줄지도 모르지."
+                - action: pause
+
+            - label: "광산 최심부로 전진 (보스전)"
+              when: {not_flag: dwarf_mine_cleared}
+              actions:
+                - action: goto
+                  scene: boss_battle
+
+            - label: "광산 최심부"
+              when: {flag: dwarf_mine_cleared}
+              actions:
+                - action: print
+                  text: |
+                    
+                    골렘의 잔해가 여기저기 나뒹굴고 있다.
+                    이제 드워프들은 안전하게 광맥을 캘 수 있을 것이다.
+                - action: pause
+
+            - label: "다른 지역으로 이동 (밖으로)"
+              actions:
+                - action: break
+
+  # 3. 보스전 씬
+  scenes:
+    boss_battle:
+      actions:
+        - action: divider
+          title: "어둠의 광물 동굴"
+        - action: print
+          text: |
+            
+            광산 깊은 곳으로 갈수록 불길한 진동이 느껴진다.
+            쾅- 쾅-
+            육중한 바위들이 뭉쳐진 골렘이 몸을 웅크린 채 길을 막고 있다.
+            붉게 빛나는 눈이 파티를 발견하곤 천천히 일어난다...!
+        - action: battle
+          name: "미쳐버린 거대 드워프 골렘"
+          enemy: dwarf_golem
+          hp_multiply: 1.2
+          on_win:
+            - action: divider
+              title: "전투 승리"
+            - action: print
+              text: |
+                
+                마침내 굉음과 함께 골렘의 몸통을 구르는 돌덩이들이 무너져 내렸다.
+                광산에 다시 평화가 찾아왔다. 
+                드워프 대장장이가 나타나 고맙다며 보상을 건넸다!
+            - action: set_flag
+              key: dwarf_mine_cleared
+              value: true
+            - action: add_item
+              item: "대지의 룬소드"
+              count: 1
+            - action: pause
+          on_lose:
+            - action: print
+              text: |
+                
+                거대 골렘의 육중한 팔에 맞아 그 벽에 튕겨져 나갔다...
+                눈 앞이 캄캄해진다...
+            - action: game_over

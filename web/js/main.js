@@ -8,8 +8,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupQuickMenu();
   setupBackButtons();
+  setupDPad();
 });
 
+/* ───── 방향키 (D-pad) 설정 ───── */
+function setupDPad() {
+  const dirMap = {
+    'dpad-up': { dr: -1, dc: 0, name: '북' },
+    'dpad-down': { dr: 1, dc: 0, name: '남' },
+    'dpad-left': { dr: 0, dc: -1, name: '서' },
+    'dpad-right': { dr: 0, dc: 1, name: '동' },
+  };
+
+  for (const [id, d] of Object.entries(dirMap)) {
+    const btn = document.getElementById(id);
+    if (!btn) continue;
+    btn.addEventListener('click', async () => {
+      // 메뉴 대기 중 등 조작 불가능한 상태면 무시
+      if (!GameState.player || !GameState.player.isAlive()) return;
+      // UI.showChoices 상태이거나 다른 팝업창이 떠있을 때는 방어 처리(선택적)
+      if (document.getElementById('quick-menu') && !document.getElementById('quick-menu').classList.contains('hidden')) return;
+
+      const stepResult = await tryStepMove(GameState.player, d.dr, d.dc, d.name);
+
+      // 전투 조우 등 게임 루프 중단/재개가 필요한 상황이므로 
+      // 화면 갱신 리로드를 유도해야 함. (단, 현재 startGameLoop 무한 루프 대기 상태와 중첩될 수 있으므로 분기 필요)
+      if (stepResult.gameover) {
+        await showGameOver(GameState.player);
+      } else {
+        // 이동 성공 시 현재 선택지를 닫고 새 루프를 트리거하거나 UI를 다시 그립니다.
+        // 현재 showChoices 대기 상태를 강제로 취소(resolve 0 등)할 필요가 있습니다.
+        if (UI._choiceResolve) {
+          // hack: 강제로 '이동을 통해 화면 갱신' 용도의 특수 반환값 전달
+          UI.hideChoices();
+          UI._choiceResolve('dpad_move');
+        }
+      }
+    });
+  }
+}
 
 /* ───── 퀵 메뉴 설정 ───── */
 
@@ -344,8 +381,22 @@ async function startGameLoop() {
     if (currentArea) UI.addLog(`  ${currentArea.desc}`);
     UI.addLog('');
 
-    const menuLabels = ['지역 탐색', '이동', '인벤토리', '장비 장착', '상태 확인', '저장', '게임 종료'];
+    // D-pad 컨테이너 보이기
+    const dpad = document.getElementById('dpad-container');
+    if (dpad) dpad.classList.remove('hidden');
+
+    const menuLabels = ['지역 탐색', '인벤토리', '장비 장착', '상태 확인', '저장', '게임 종료'];
     const choice = await UI.showChoices(menuLabels);
+
+    // D-pad로 강제 이동 시그널이 온 경우 (루프 재시작)
+    if (choice === 'dpad_move') {
+      if (dpad) dpad.classList.add('hidden');
+      if (!player.isAlive()) return;
+      continue;
+    }
+
+    // 메뉴가 선택되었으므로 D-pad 감추기
+    if (dpad) dpad.classList.add('hidden');
 
     if (choice === 0) {
       const result = await EventEngine.runYamlEvent(player, player.currentLocation);
@@ -363,19 +414,16 @@ async function startGameLoop() {
       }
 
     } else if (choice === 1) {
-      await showTravelMenu(player);
-
-    } else if (choice === 2) {
       await UI.showInventory(player);
 
-    } else if (choice === 3) {
+    } else if (choice === 2) {
       await UI.showEquip(player);
 
-    } else if (choice === 4) {
+    } else if (choice === 3) {
       UI.showStatus(player);
       await UI.waitForTap();
 
-    } else if (choice === 5) {
+    } else if (choice === 4) {
       UI.clearLog();
       UI.addDivider('게임 저장');
       const slotLabels = [];
@@ -388,7 +436,7 @@ async function startGameLoop() {
         await UI.waitForTap();
       }
 
-    } else if (choice === 6) {
+    } else if (choice === 5) {
       UI.clearLog();
       UI.addLog('  정말 게임을 종료하시겠습니까?');
       const confirmChoice = await UI.showChoices(['계속하기', '종료']);
@@ -405,44 +453,7 @@ async function startGameLoop() {
 }
 
 
-/* ───── 이동 메뉴 ───── */
-
-async function showTravelMenu(player) {
-  let moving = true;
-  while (moving) {
-    UI.clearLog();
-    UI.addDivider(`이동 모드 - ${getAreaNameByPos(player.mapRow, player.mapCol)}`);
-    UI.addLog('');
-    UI.addLog('  북/남/동/서로 한 칸씩 이동합니다.');
-    UI.addLog('  (지도는 표시하지 않습니다)');
-
-    const choice = await UI.showChoices([
-      '↑ 북쪽으로 한 칸',
-      '↓ 남쪽으로 한 칸',
-      '← 서쪽으로 한 칸',
-      '→ 동쪽으로 한 칸',
-      '이동 종료',
-    ]);
-
-    if (choice === 4) {
-      moving = false;
-      break;
-    }
-
-    const dirMap = [
-      { dr: -1, dc: 0, name: '북' },
-      { dr: 1, dc: 0, name: '남' },
-      { dr: 0, dc: -1, name: '서' },
-      { dr: 0, dc: 1, name: '동' },
-    ];
-    const d = dirMap[choice];
-    const stepResult = await tryStepMove(player, d.dr, d.dc, d.name);
-    if (stepResult.gameover) {
-      await showGameOver(player);
-      return;
-    }
-  }
-}
+/* ───── 삭제된 목록형 이동 ───── */
 
 
 /* ───── 게임 오버 ───── */
