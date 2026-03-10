@@ -1,0 +1,141 @@
+harbor:
+  actions:
+    # 첫 방문
+    - action: if
+      cond: {not_flag: harbor_visited}
+      then:
+        - action: divider
+          title: "포구 마을"
+        - action: print
+          text: |
+
+            소금 냄새가 코를 찌르는 작은 항구 마을.
+            선원들이 술집에서 떠들고, 부두에는 낡은 배들이 정박해 있다.
+            벽에 낡은 현상 수배서가 붙어 있다: '해적단 두목 현상금 100G'
+        - action: set_flag
+          key: harbor_visited
+
+    # 메인 메뉴 루프
+    - action: loop
+      body:
+        - action: divider
+          title: "포구 마을"
+        - action: menu
+          options:
+            - label: "항구 상점 '파도의 보물'"
+              actions:
+                - action: open_shop
+
+            - label: "선원 술집 (정보)"
+              actions:
+                - action: goto
+                  scene: harbor_tavern
+
+            - label: "부두 낚시꾼"
+              actions:
+                - action: goto
+                  scene: fisherman
+
+            - label: "마을 탐색 종료"
+              actions:
+                - action: break
+
+  scenes:
+    # ─── 선원 술집 ───
+    harbor_tavern:
+      actions:
+        - action: if
+          cond: {flag: harbor_tavern_done}
+          then:
+            - action: print
+              text: "\n  선원: '해적들 조심하라고! 사막 쪽에서도 미라가 나온다더라.'"
+          else:
+            - action: divider
+              title: "선원 술집"
+            - action: print
+              text: |
+
+                거친 선원이 럼주를 마시며 말한다.
+                "최근 남쪽 바다에서 해적들이 날뛰고 있어.
+                 그리고 동쪽 사막... 피라미드에서 이상한 소리가 들린다더군.
+                 고대 파라오의 저주라나 뭐라나."
+            - action: menu
+              options:
+                - label: "해적에 대해 더 묻는다"
+                  actions:
+                    - action: set_flag
+                      key: pirate_info
+                    - action: print
+                      text: |
+
+                        선원: "해적단 두목 '검은 수염'은 마왕의 부하라는 소문이 있어.
+                               늪지대 깊은 곳에 그놈들의 보물이 숨겨져 있다 카더라."
+
+                        ▶ [단서] 해적단과 늪지대 보물 정보 획득!
+
+                - label: "피라미드에 대해 더 묻는다"
+                  actions:
+                    - action: set_flag
+                      key: pyramid_info
+                    - action: print
+                      text: |
+
+                        선원: "피라미드 안에 고대 파라오의 무기가 잠들어 있다더군.
+                               사하르 마을 원로에게 물어보면 입구를 알 수 있을 거야."
+
+                        ▶ [단서] 피라미드 정보 획득!
+            - action: set_flag
+              key: harbor_tavern_done
+
+    # ─── 부두 낚시꾼 ───
+    fisherman:
+      actions:
+        - action: if
+          cond: {flag: fisherman_done}
+          then:
+            - action: print
+              text: "\n  낚시꾼: '오늘은 잡히는 게 없네...'"
+          else:
+            - action: divider
+              title: "부두 낚시꾼"
+            - action: print
+              text: |
+
+                백발의 노인이 조용히 낚싯대를 드리우고 있다.
+                "어이, 여행자. 여기 앉아서 좀 쉬어가게."
+            - action: menu
+              options:
+                - label: "함께 낚시를 한다"
+                  actions:
+                    - action: heal
+                      amount: 40
+                    - action: random
+                      branches:
+                        - weight: 0.3
+                          actions:
+                            - action: add_item
+                              item: "대형 포션"
+                              message: false
+                            - action: print
+                              text: "  큰 물고기를 잡았다! HP 40 회복, 대형 포션 획득!"
+                        - weight: 0.4
+                          actions:
+                            - action: add_gold
+                              amount: 15
+                              message: false
+                            - action: print
+                              text: "  작은 물고기를 잡았다. HP 40 회복, 15G 획득!"
+                        - weight: 0.3
+                          actions:
+                            - action: add_item
+                              item: "해독제"
+                              message: false
+                            - action: print
+                              text: "  이상한 해조류를 건져 올렸다. HP 40 회복, 해독제 획득!"
+
+                - label: "바쁘다고 거절한다"
+                  actions:
+                    - action: print
+                      text: "  노인: '바쁜 건 좋지만, 가끔은 쉬어가는 것도 중요하지.'"
+            - action: set_flag
+              key: fisherman_done

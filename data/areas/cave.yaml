@@ -1,0 +1,218 @@
+cave:
+  actions:
+    - action: if
+      cond: {flag: cave_cleared}
+      then:
+        - action: print
+          text: "  동굴은 이미 정리되었습니다."
+      else:
+        - action: set_flag
+          key: route
+          value: "cave"
+        - action: goto
+          scene: cave_entrance
+        - action: goto
+          scene: cave_lake
+        - action: goto
+          scene: cave_boss
+        - action: set_flag
+          key: cave_cleared
+        - action: print
+          text: "  ▶ 동굴 공략 완료."
+
+  scenes:
+    # ─── 동굴 입구 ───
+    cave_entrance:
+      actions:
+        - action: divider
+          title: "동굴 입구"
+        - action: print
+          text: |
+
+            벽에 낡은 글씨가 새겨져 있다. "나를 지나치는 자여, 어둠을 두려워하라."
+            해골 전사가 비틀거리며 걸어나온다!
+        - action: battle
+          enemy: skeleton
+          on_lose:
+            - action: game_over
+        - action: print
+          text: |
+
+            해골을 부수자 갈림길이 보인다.
+            좁은 통로와 넓은 길이 있다.
+        - action: menu
+          options:
+            - label: "좁은 통로 (지름길, 위험할 수 있다)"
+              actions:
+                - action: random
+                  branches:
+                    - weight: 0.35
+                      actions:
+                        - action: damage
+                          amount: 20
+                          message: false
+                        - action: print
+                          text: "  바닥이 무너지며 함정! 데미지를 입었다. (HP {player.hp}/{player.max_hp})"
+                    - weight: 0.35
+                      actions:
+                        - action: add_gold
+                          amount: 35
+                          message: false
+                        - action: print
+                          text: "  숨겨진 통로에서 금화를 발견!"
+                    - weight: 0.30
+                      actions:
+                        - action: print
+                          text: "  무사히 통과했다."
+
+            - label: "넓은 길 (돌아가지만 안전하다)"
+              actions:
+                - action: print
+                  text: "  안전하게 넓은 길을 따라갔다."
+
+    # ─── 지하 호수 ───
+    cave_lake:
+      actions:
+        - action: divider
+          title: "지하 호수"
+        - action: print
+          text: |
+
+            어둠 속에 지하 호수가 펼쳐진다. 맑은 물이 희미하게 빛나고,
+            호수 가운데 작은 섬에 무언가가 반짝인다.
+        - action: menu
+          options:
+            - label: "헤엄쳐서 섬으로 간다"
+              actions:
+                - action: random
+                  branches:
+                    - weight: 0.55
+                      actions:
+                        - action: random
+                          branches:
+                            - weight: 1
+                              actions:
+                                - action: add_item
+                                  item: "대형 포션"
+                                  message: false
+                                - action: print
+                                  text: "  헤엄쳐 가보니 대형 포션이(가) 있었다! 획득!"
+                            - weight: 1
+                              actions:
+                                - action: add_item
+                                  item: "마법 지팡이"
+                                  message: false
+                                - action: print
+                                  text: "  헤엄쳐 가보니 마법 지팡이이(가) 있었다! 획득!"
+                            - weight: 1
+                              actions:
+                                - action: add_item
+                                  item: "도적의 단검"
+                                  message: false
+                                - action: print
+                                  text: "  헤엄쳐 가보니 도적의 단검이(가) 있었다! 획득!"
+                    - weight: 0.45
+                      actions:
+                        - action: print
+                          text: "  물 속에서 암흑 마법사가 튀어나왔다!"
+                        - action: battle
+                          enemy: dark_mage
+                          on_lose:
+                            - action: game_over
+                        - action: add_item
+                          item: "대형 포션"
+                          message: false
+                        - action: print
+                          text: "  물속 보물: 대형 포션 획득!"
+
+            - label: "주변에서 다른 길을 찾는다"
+              actions:
+                - action: add_item
+                  item: "소형 포션"
+                  message: false
+                - action: print
+                  text: "  호수 옆 바위 뒤에 숨겨진 계단을 발견했다! 소형 포션 획득!"
+
+            - label: "호수를 우회한다"
+              actions:
+                - action: print
+                  text: "  안전하게 우회했다."
+
+    # ─── 동굴 보스 (트롤) ───
+    cave_boss:
+      actions:
+        - action: divider
+          title: "동굴 심부"
+        - action: print
+          text: |
+
+            동굴 가장 깊은 곳. 거대한 트롤이 보물 더미 위에 앉아 있다.
+            횃불 빛에 비친 트롤의 그림자가 천장까지 닿는다.
+
+            트롤이 혼자 중얼거린다.
+            "...내 보물... 내 예쁜 보물들... 아무도 못 가져가...
+             다 내 거야... 다 내 거..."
+
+            발소리에 트롤이 고개를 돌렸다.
+            작은 눈이 당신을 발견하고 순식간에 분노로 가득 찼다.
+
+            트롤: "으르르... 침입자!! 보물 훔치러 왔지?!
+                   죽여버린다!!! 이 동굴은 내 거야!!!"
+        - action: menu
+          options:
+            - label: "'싸우겠다!'"
+              actions:
+                - action: battle
+                  enemy: troll
+                  on_lose:
+                    - action: game_over
+
+            - label: "'보물에는 관심 없다. 지나가게 해달라'"
+              actions:
+                - action: print
+                  text: |
+
+                    트롤이 잠시 고민하듯 머리를 긁더니 으르렁댄다.
+                    트롤: "...거짓말! 다들 그렇게 말하고 보물 가져가!
+                           믿을 수 없어! 죽여버린다!!!"
+                - action: print
+                  text: "  (트롤이 방심한 틈에 선공 기회! 트롤 HP 소폭 감소)"
+                - action: battle
+                  enemy: troll
+                  hp_multiply: 0.85
+                  on_lose:
+                    - action: game_over
+
+            - label: "보물 더미에서 반짝이는 걸 집어 반대편으로 던진다 (기습)"
+              actions:
+                - action: print
+                  text: |
+
+                    보물 더미에서 금화 한 움큼을 집어 트롤 반대편으로 힘껏 던졌다.
+
+                    트롤: "?! 내 보물!! 내 보물 어디 가—"
+
+                    트롤이 보물을 향해 달려드는 순간, 등 뒤에서 기습!
+                - action: print
+                  text: "  트롤이 완전히 방심했다! (HP 절반으로 시작)"
+                - action: battle
+                  enemy: troll
+                  hp_multiply: 0.5
+                  on_lose:
+                    - action: game_over
+
+        - action: set_flag
+          key: secret_passage
+        - action: print
+          text: |
+
+            트롤이 크게 흔들리다 무릎을 꿇었다.
+            마지막으로 보물 더미를 향해 손을 뻗으며 중얼거린다.
+
+            트롤: "...내 보물... 지켜야... 했는데..."
+
+            동굴이 진동하며 먼지가 쏟아진다.
+            보물 더미를 헤치자 낡은 양피지가 나왔다.
+            '마왕의 성 - 비밀 통로 위치 (상세 약도)'
+
+            ▶ [비밀 통로 지도 획득]

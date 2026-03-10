@@ -1,0 +1,257 @@
+elf_village:
+  actions:
+    - action: set_location
+      zone: elf_village
+    - action: divider
+      title: "엘프 마을"
+
+    - action: if
+      cond: {not_flag: elf_village_visited}
+      then:
+        - action: set_flag
+          key: elf_village_visited
+        - action: print
+          text: |
+
+            오래된 거목들 사이로 은빛 빛줄기가 스며드는 숨겨진 마을.
+            나무 위에 지어진 집들, 풀잎처럼 가벼운 발소리...
+            엘프 경비병이 당신을 경계하지만, 장로의 명으로 통과가 허락된다.
+
+            경비병: "외부인이 이 숲에 오는 건 오랜만이군요.
+                     장로님이 기다리고 계십니다."
+      else:
+        - action: print
+          text: "\n  엘프 마을에 다시 왔다. 나무 위의 불빛이 은은하게 빛난다.\n"
+
+    - action: loop
+      body:
+        - action: menu
+          options:
+            - label: "장로 아엘린드라"
+              actions:
+                - action: goto
+                  scene: elf_elder
+
+            - label: "엘프 치유사"
+              actions:
+                - action: goto
+                  scene: elf_healer
+
+            - label: "지식의 나무"
+              actions:
+                - action: goto
+                  scene: knowledge_tree
+
+            - label: "아픈 엘프 아이"
+              actions:
+                - action: goto
+                  scene: sick_child
+
+            - label: "떠난다"
+              actions:
+                - action: print
+                  text: "  경비병: '조심히 가시게. 숲이 당신을 지켜줄 것이오.'"
+                - action: break
+
+  scenes:
+    # ─── 장로 아엘린드라 ───
+    elf_elder:
+      actions:
+        - action: if
+          cond: {flag: lazarus_elf_clue}
+          then:
+            - action: print
+              text: |
+
+                아엘린드라: "라자러스를 조심하게. 그는 교활하고 잔인한 자야.
+                             엘프의 봉인술을 악용한 대가를 반드시 치르게 해야 해."
+          else:
+            - action: divider
+              title: "장로 아엘린드라"
+            - action: print
+              text: |
+
+                은빛 머리카락의 엘프 장로가 고요한 눈으로 당신을 바라본다.
+
+                아엘린드라: "오래 기다렸네, 인간의 용사여.
+                             내가 너에게 말해야 할 것이 있다."
+
+                아엘린드라: "15년 전, 라자러스라는 인간이 이 마을을 찾아왔네.
+                             자신을 학자라 소개했지. 봉인술을 연구하겠다고 했어.
+                             우리는 순수한 학구열인 줄 알았고, 지식을 나눠주었지."
+
+                아엘린드라: "하지만 그가 떠난 뒤, 왕국에서 끔찍한 소식이 들려왔네.
+                             봉인 반지가 사라지고, 한 마법사가 누명을 쓰고 추방되었다고.
+                             ...그 마법사가 젤드리온이었네."
+
+                아엘린드라: "라자러스는 우리에게서 배운 봉인술로
+                             봉인 반지의 마력을 조종할 방법을 알아낸 것이야.
+                             모든 것은 그의 계획이었네."
+            - action: set_flag
+              key: lazarus_elf_clue
+            - action: print
+              text: "  ▶ [라자러스의 엘프 단서] 획득! 라자러스의 과거가 밝혀졌다."
+            - action: if
+              cond: {any_flag: ["heard_maou_truth", "found_diary"]}
+              then:
+                - action: print
+                  text: |
+
+                    아엘린드라: "...너는 이미 진실의 일부를 알고 있군.
+                                 모든 퍼즐이 맞아떨어지고 있어."
+
+    # ─── 엘프 치유사 ───
+    elf_healer:
+      actions:
+        - action: if
+          cond: {flag: elf_healer_done}
+          then:
+            - action: print
+              text: "\n  치유사: '빛의 가호가 당신과 함께하길.'"
+            - action: heal
+              amount: "full"
+              message: false
+            - action: print
+              text: "  HP가 완전히 회복되었습니다. ({player.hp}/{player.max_hp})"
+          else:
+            - action: divider
+              title: "엘프 치유사"
+            - action: print
+              text: |
+
+                빛나는 샘물 앞에 앉아있는 치유사가 미소 짓는다.
+
+                치유사: "여행자여, 당신의 몸에 쌓인 피로가 느껴지는군요.
+                         이 샘의 빛으로 치유해 드리지요."
+            - action: heal
+              amount: "full"
+              message: false
+            - action: add_stat
+              max_hp: 15
+              message: false
+            - action: heal
+              amount: "full"
+              message: false
+            - action: set_flag
+              key: elf_healer_done
+            - action: print
+              text: "  ▶ HP 완전 회복! 최대 HP +15 증가! ({player.hp}/{player.max_hp})"
+            - action: if
+              cond: {flag: job_mage}
+              then:
+                - action: add_item
+                  item: "엘프의 로브"
+                  message: false
+                - action: print
+                  text: "  치유사: '마법사시군요. 이 로브가 도움이 될 거예요.'"
+                - action: print
+                  text: "  ▶ [엘프의 로브] 획득! (방어력 +6)"
+
+    # ─── 지식의 나무 ───
+    knowledge_tree:
+      actions:
+        - action: divider
+          title: "지식의 나무"
+        - action: print
+          text: |
+
+            거대한 고목의 내부에 마련된 서재.
+            수천 년의 지식이 나뭇잎 문자로 기록되어 있다.
+        - action: if
+          cond: {flag: seal_magic_understood}
+          then:
+            - action: print
+              text: "  이미 봉인술에 대한 이해를 완료했다."
+          else:
+            - action: if
+              cond: {any_flag: ["found_truth_book", "found_diary", "lazarus_elf_clue"]}
+              then:
+                - action: print
+                  text: |
+
+                    고대 엘프 문헌과 당신이 가진 단서를 교차 분석한다...
+
+                    "봉인술의 핵심은 정신적 연결이다.
+                     시전자가 봉인 대상과 마력으로 연결되어 있어야 한다.
+                     즉, 라자러스의 봉인 마법을 깨뜨리려면
+                     그 연결 자체를 끊어야 한다."
+
+                    ▶ [봉인술 이해] 획득! 라자러스의 방어막을 약화시킬 수 있다!
+                - action: set_flag
+                  key: seal_magic_understood
+              else:
+                - action: print
+                  text: "  고대 문헌이 잔뜩 있지만, 관련 단서 없이는 이해하기 어렵다."
+                - action: print
+                  text: "  (진실에 대한 단서를 먼저 찾아야 할 것 같다.)"
+
+    # ─── 아픈 엘프 아이 ───
+    sick_child:
+      actions:
+        - action: if
+          cond: {flag: elf_child_done}
+          then:
+            - action: if
+              cond: {flag: blessed_by_elves}
+              then:
+                - action: print
+                  text: "\n  엘프 아이가 밝게 웃으며 손을 흔든다. '고마워요, 영웅님!'"
+              else:
+                - action: print
+                  text: "\n  아이는 여전히 아프다. 엘프들의 시선이 차갑다."
+          else:
+            - action: divider
+              title: "아픈 엘프 아이"
+            - action: print
+              text: |
+
+                작은 침대에 엘프 아이가 누워 있다.
+                어둠의 저주에 걸려 얼굴이 창백하다.
+
+                어머니: "부디... 이 아이를 도와주실 수 없나요?
+                         대형 포션의 치유력이면 저주를 풀 수 있다고 합니다."
+            - action: menu
+              options:
+                - label: "대형 포션으로 치료한다 (대형 포션 소모)"
+                  actions:
+                    - action: if
+                      cond: {has_item: "대형 포션"}
+                      then:
+                        - action: set_flag
+                          key: elf_child_done
+                        - action: remove_item
+                          item: "대형 포션"
+                        - action: sub_dark
+                          amount: 1
+                          message: false
+                        - action: set_flag
+                          key: blessed_by_elves
+                        - action: print
+                          text: |
+
+                            포션의 빛이 아이를 감싸고, 저주의 기운이 소멸한다.
+                            아이가 눈을 뜨며 미소 짓는다.
+
+                            어머니: "감사합니다... 정말 감사합니다!"
+                            장로: "인간의 선한 마음에 엘프의 축복을 내리겠네."
+
+                            ▶ 어둠 점수 -1
+                            ▶ [엘프의 축복] 획득!
+                      else:
+                        - action: print
+                          text: "  대형 포션이 없습니다. 나중에 다시 와보자."
+
+                - label: "안타깝지만 지나친다"
+                  actions:
+                    - action: set_flag
+                      key: elf_child_done
+                    - action: add_dark
+                      amount: 1
+                      message: false
+                    - action: print
+                      text: |
+
+                        아이를 두고 돌아섰다.
+                        뒤에서 어머니의 흐느낌이 들린다.
+
+                        ▶ 어둠 점수 +1
