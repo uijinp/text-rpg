@@ -1,0 +1,69 @@
+cel_hall:
+  actions:
+    - action: if
+      cond: {not_flag: cel_hall_visited}
+      then:
+        - action: set_flag
+          key: cel_hall_visited
+          value: true
+        - action: print
+          text: "  거대한 전당에 빛의 저울이 떠 있다."
+        - action: print
+          text: "  \"죄인이여, 심판을 받아라!\" 천사의 목소리가 울려퍼진다."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "심판의 전당"
+
+        - action: menu
+          options:
+            - label: "전당 탐색"
+              when: {not_flag: cel_hall_cleared}
+              actions:
+                - action: print
+                  text: "  성기사가 검을 들고 돌격해온다!"
+                - action: battle
+                  enemy: holy_knight
+                  on_win:
+                    - action: print
+                      text: "  심판의 천사가 날개를 펼치며 내려왔다!"
+                    - action: battle
+                      enemy: judgment_angel
+                      on_win:
+                        - action: set_flag
+                          key: cel_hall_cleared
+                          value: true
+                        - action: print
+                          text: "  심판의 전당을 돌파했다! 빛의 무기고로 가는 문이 열렸다."
+                        - action: add_gold
+                          amount: 150
+                      on_lose:
+                        - action: print
+                          text: "  당신은 패배했다..."
+                  on_lose:
+                    - action: print
+                      text: "  당신은 패배했다..."
+
+            - label: "전당 탐색"
+              when: {flag: cel_hall_cleared}
+              actions:
+                - action: random
+                  options:
+                    - weight: 50
+                      actions:
+                        - action: print
+                          text: "  성기사가 나타났다!"
+                        - action: battle
+                          enemy: holy_knight
+                    - weight: 50
+                      actions:
+                        - action: print
+                          text: "  심판의 천사가 나타났다!"
+                        - action: battle
+                          enemy: judgment_angel
+
+            - label: "돌아가기"
+              actions:
+                - action: break

@@ -145,7 +145,7 @@ const UI = {
     const heading = document.querySelector('#screen-map .screen-heading');
     if (heading) heading.textContent = `${mapInfo.name} 지도`;
 
-    // 타일별 스타일 클래스 맵
+    // 타일별 스타일 클래스 맵 (맵별 동적 구성)
     const tileClasses = {
       '#': 'map-tile-mt', '^': 'map-tile-mt',
       'w': 'map-tile-water', '~': 'map-tile-water',
@@ -153,11 +153,23 @@ const UI = {
       'e': 'map-tile-forest', 'n': 'map-tile-forest',
       '=': 'map-tile-road', '_': 'map-tile-road',
       '.': 'map-tile-land',
-      '1': 'map-tile-bone', '2': 'map-tile-crystal',
-      '3': 'map-tile-lava', '4': 'map-tile-fortress',
-      '5': 'map-tile-abyss', '6': 'map-tile-market',
-      '7': 'map-tile-temple',
     };
+    if (mapId === 'underworld') {
+      Object.assign(tileClasses, {
+        '1': 'map-tile-bone', '2': 'map-tile-crystal',
+        '3': 'map-tile-lava', '4': 'map-tile-fortress',
+        '5': 'map-tile-abyss', '6': 'map-tile-market',
+        '7': 'map-tile-temple',
+      });
+    } else if (mapId === 'celestial') {
+      Object.assign(tileClasses, {
+        '*': 'map-tile-cloud-wall',
+        '1': 'map-tile-cel-garden', '2': 'map-tile-cel-hall',
+        '3': 'map-tile-cel-arsenal', '4': 'map-tile-cel-spire',
+        '5': 'map-tile-cel-throne', '6': 'map-tile-cel-market',
+        '7': 'map-tile-cel-sanctuary',
+      });
+    }
 
     // 각 거점 마커의 위치를 미리 수집
     const markerPositions = {};

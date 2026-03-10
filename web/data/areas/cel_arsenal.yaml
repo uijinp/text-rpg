@@ -1,0 +1,75 @@
+cel_arsenal:
+  actions:
+    - action: if
+      cond: {not_flag: cel_arsenal_visited}
+      then:
+        - action: set_flag
+          key: cel_arsenal_visited
+          value: true
+        - action: print
+          text: "  신성한 무기들이 벽에 즐비하게 걸려 있다."
+        - action: print
+          text: "  무기들이 스스로 떠올라 침입자를 향해 겨누고 있다!"
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "빛의 무기고"
+
+        - action: menu
+          options:
+            - label: "무기고 탐색"
+              when: {not_flag: cel_arsenal_cleared}
+              actions:
+                - action: print
+                  text: "  심판의 천사가 무기를 들고 돌격해온다!"
+                - action: battle
+                  enemy: judgment_angel
+                  on_win:
+                    - action: print
+                      text: "  신성 골렘이 벽에서 떨어져 나와 깨어났다!"
+                    - action: battle
+                      enemy: divine_golem
+                      on_win:
+                        - action: set_flag
+                          key: cel_arsenal_cleared
+                          value: true
+                        - action: print
+                          text: "  무기고를 정리했다! 빛나는 검이 바닥에 떨어졌다."
+                        - action: add_item
+                          item: "성광의 검"
+                        - action: print
+                          text: "  수정 첨탑으로 가는 길이 열렸다."
+                      on_lose:
+                        - action: print
+                          text: "  당신은 패배했다..."
+                  on_lose:
+                    - action: print
+                      text: "  당신은 패배했다..."
+
+            - label: "무기고 탐색"
+              when: {flag: cel_arsenal_cleared}
+              actions:
+                - action: random
+                  options:
+                    - weight: 40
+                      actions:
+                        - action: print
+                          text: "  심판의 천사가 나타났다!"
+                        - action: battle
+                          enemy: judgment_angel
+                    - weight: 40
+                      actions:
+                        - action: print
+                          text: "  신성 골렘이 깨어났다!"
+                        - action: battle
+                          enemy: divine_golem
+                    - weight: 20
+                      actions:
+                        - action: print
+                          text: "  무기고는 조용하다."
+
+            - label: "돌아가기"
+              actions:
+                - action: break

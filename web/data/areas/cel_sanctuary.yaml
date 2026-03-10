@@ -1,0 +1,52 @@
+cel_sanctuary:
+  actions:
+    - action: if
+      cond: {not_flag: cel_sanctuary_visited}
+      then:
+        - action: set_flag
+          key: cel_sanctuary_visited
+          value: true
+        - action: print
+          text: "  순수한 빛이 아직 남아있는 성소. 따뜻한 기운이 몸을 감싼다."
+        - action: print
+          text: "  이곳만은 대천사의 타락이 미치지 못한 듯하다."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "빛의 성소"
+
+        - action: menu
+          options:
+            - label: "성소에서 기도하기 (HP 회복)"
+              actions:
+                - action: print
+                  text: "  성스러운 빛이 온몸을 감싸며 모든 상처가 치유된다."
+                - action: heal
+                  amount: full
+
+            - label: "천사와 대화하기"
+              actions:
+                - action: random
+                  options:
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"대천사는 한때 우리의 자랑이었습니다... 어둠에 잠식되기 전까지는.\""
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"빛의 무기고에는 강력한 무기가 잠들어 있습니다. 하지만 골렘이 지키고 있지요.\""
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"수정 첨탑의 세라핌들은 가장 강력한 수호자입니다. 만반의 준비를 하세요.\""
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"당신이 대천사를 막아주세요. 이 세계의 마지막 희망입니다.\""
+
+            - label: "돌아가기"
+              actions:
+                - action: break

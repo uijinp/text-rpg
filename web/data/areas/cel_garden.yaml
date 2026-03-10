@@ -1,0 +1,69 @@
+cel_garden:
+  actions:
+    - action: if
+      cond: {not_flag: cel_garden_visited}
+      then:
+        - action: set_flag
+          key: cel_garden_visited
+          value: true
+        - action: print
+          text: "  한때 아름다웠을 정원이 성스러운 불꽃으로 타오르고 있다."
+        - action: print
+          text: "  꽃잎마다 빛의 칼날이 숨어있다..."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "천상의 정원"
+
+        - action: menu
+          options:
+            - label: "정원 탐색"
+              when: {not_flag: cel_garden_cleared}
+              actions:
+                - action: print
+                  text: "  정원 깊숙이 들어서자 구름 파수꾼이 나타났다!"
+                - action: battle
+                  enemy: cloud_sentinel
+                  on_win:
+                    - action: print
+                      text: "  파수꾼을 물리치자 빛의 정령이 나타났다!"
+                    - action: battle
+                      enemy: light_spirit
+                      on_win:
+                        - action: set_flag
+                          key: cel_garden_cleared
+                          value: true
+                        - action: print
+                          text: "  정원을 정리했다! 심판의 전당으로 가는 길이 열렸다."
+                        - action: add_gold
+                          amount: 100
+                      on_lose:
+                        - action: print
+                          text: "  당신은 패배했다..."
+                  on_lose:
+                    - action: print
+                      text: "  당신은 패배했다..."
+
+            - label: "정원 탐색"
+              when: {flag: cel_garden_cleared}
+              actions:
+                - action: random
+                  options:
+                    - weight: 60
+                      actions:
+                        - action: print
+                          text: "  구름 파수꾼이 나타났다!"
+                        - action: battle
+                          enemy: cloud_sentinel
+                    - weight: 40
+                      actions:
+                        - action: print
+                          text: "  빛의 정령이 나타났다!"
+                        - action: battle
+                          enemy: light_spirit
+
+            - label: "돌아가기"
+              actions:
+                - action: break

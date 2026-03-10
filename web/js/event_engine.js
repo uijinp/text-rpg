@@ -266,6 +266,12 @@ const EventEngine = {
       return null;
     }
 
+    if (act === 'open_cel_shop') {
+      await UI.showShop(player, CEL_SHOP_STOCK, '천상 상점');
+      UI.showScreen('screen-game');
+      return null;
+    }
+
     if (act === 'warp_map') {
       const targetMap = action.map;
       const targetZone = action.zone;

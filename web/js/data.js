@@ -50,6 +50,15 @@ const ENEMY_TABLE = {
   inferno_demon: { name: "지옥 악마", hp: 200, atk: 35, def: 10, exp: 170, gold: 90 },
   soul_wraith: { name: "원혼", hp: 100, atk: 32, def: 4, exp: 120, gold: 55 },
   abyss_lord: { name: "심연의 군주", hp: 300, atk: 40, def: 14, exp: 300, gold: 200 },
+
+  // ── 천상 세계 ──
+  cloud_sentinel: { name: "구름 파수꾼", hp: 130, atk: 26, def: 9, exp: 110, gold: 50 },
+  light_spirit: { name: "빛의 정령", hp: 110, atk: 30, def: 5, exp: 100, gold: 45 },
+  holy_knight: { name: "성기사", hp: 170, atk: 30, def: 13, exp: 150, gold: 75 },
+  judgment_angel: { name: "심판의 천사", hp: 190, atk: 34, def: 10, exp: 160, gold: 85 },
+  seraph_guardian: { name: "세라핌 수호자", hp: 220, atk: 36, def: 12, exp: 190, gold: 100 },
+  divine_golem: { name: "신성 골렘", hp: 250, atk: 28, def: 18, exp: 180, gold: 90 },
+  fallen_archangel: { name: "타락한 대천사", hp: 350, atk: 44, def: 16, exp: 350, gold: 250 },
 };
 
 const DROP_TABLE = {
@@ -95,6 +104,15 @@ const DROP_TABLE = {
   inferno_demon: [{ item: "지옥불 검", chance: 0.3 }, { item: "심연의 포션", chance: 0.6 }],
   soul_wraith: [{ item: "심연의 로브", chance: 0.15 }, { item: "심연의 포션", chance: 0.35 }],
   abyss_lord: [{ item: "심연의 왕관", chance: 1.0 }, { item: "심연의 포션", chance: 0.9 }],
+
+  // ── 천상 세계 ──
+  cloud_sentinel: [{ item: "천상의 영약", chance: 0.3 }, { item: "천상의 로브", chance: 0.1 }],
+  light_spirit: [{ item: "천상의 영약", chance: 0.25 }, { item: "고급 포션", chance: 0.3 }],
+  holy_knight: [{ item: "천상의 영약", chance: 0.5 }, { item: "세라핌의 갑옷", chance: 0.15 }],
+  judgment_angel: [{ item: "성광의 검", chance: 0.2 }, { item: "천상의 영약", chance: 0.5 }],
+  seraph_guardian: [{ item: "성광의 검", chance: 0.3 }, { item: "천상의 영약", chance: 0.6 }],
+  divine_golem: [{ item: "세라핌의 갑옷", chance: 0.25 }, { item: "천상의 영약", chance: 0.5 }],
+  fallen_archangel: [{ item: "여명의 왕관", chance: 1.0 }, { item: "천상의 영약", chance: 0.9 }],
 };
 
 const ITEMS = {
@@ -137,11 +155,20 @@ const ITEMS = {
   "심연의 로브": { type: "armor", defense_bonus: 10, price: 280, desc: "방어력 +10, 어둠의 기운을 두른 로브" },
   "지옥불 검": { type: "weapon", attack_bonus: 38, price: 0, desc: "공격력 +38, 지옥의 불꽃이 타오르는 마검" },
   "심연의 왕관": { type: "special", price: 0, desc: "심연의 군주가 쓰던 왕관. 어둠의 권능이 깃들어 있다" },
+
+  // ── 천상 세계 ──
+  "천상의 영약": { type: "consumable", effect: "heal", value: 250, price: 200, desc: "HP를 250 회복한다. 천상의 축복이 깃든 약" },
+  "성광의 검": { type: "weapon", attack_bonus: 36, price: 500, desc: "공격력 +36, 신성한 빛으로 벼린 검" },
+  "대천사의 대검": { type: "weapon", attack_bonus: 42, price: 0, desc: "공격력 +42, 대천사의 신성한 힘이 깃든 궁극의 검" },
+  "천상의 로브": { type: "armor", defense_bonus: 12, price: 350, desc: "방어력 +12, 성스러운 기운을 두른 로브" },
+  "세라핌의 갑옷": { type: "armor", defense_bonus: 16, price: 450, desc: "방어력 +16, 천사의 깃털로 만든 갑옷" },
+  "여명의 왕관": { type: "special", price: 0, desc: "타락한 대천사가 쓰던 왕관. 여명의 권능이 깃들어 있다" },
 };
 
 const SHOP_STOCK = ["소형 포션", "대형 포션", "해독제", "낡은 검", "강철 검", "가죽 갑옷", "사슬 갑옷"];
 const MERC_SHOP_STOCK = ["소형 포션", "대형 포션", "고급 포션", "해독제", "용병의 도끼", "강화 갑옷"];
 const UW_SHOP_STOCK = ["심연의 포션", "고급 포션", "해독제", "수정 대검", "뼈 갑옷", "심연의 로브"];
+const CEL_SHOP_STOCK = ["천상의 영약", "고급 포션", "해독제", "성광의 검", "세라핌의 갑옷", "천상의 로브"];
 
 const AREAS = {
   town: { name: "아르카디아", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "아르카디아 마을의 따뜻한 거리." },
@@ -194,6 +221,22 @@ AREAS.uw_crystal_terrain = { name: "수정 동굴", unlock_condition: { flag: "u
 AREAS.uw_lava_terrain = { name: "용암 지대", unlock_condition: { flag: "uw_crystal_cleared" }, lock_hint: "수정 동굴을 먼저 탐색하세요.", encounter_chance: 0.40, encounter_enemies: ["lava_worm", "inferno_demon"], desc: "뜨거운 용암이 흐르는 지대." };
 AREAS.uw_fortress_terrain = { name: "망자의 요새", unlock_condition: { flag: "uw_lava_lake_cleared" }, lock_hint: "용암 호수를 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["death_knight", "bone_warrior"], desc: "요새 주변의 황폐한 대지." };
 AREAS.uw_abyss_terrain = { name: "심연 지대", unlock_condition: { flag: "uw_fortress_cleared" }, lock_hint: "망자의 요새를 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["inferno_demon", "soul_wraith"], desc: "어둠이 깊어지는 심연." };
+
+// ── 천상 세계 지역 ──
+AREAS.cel_gate = { name: "구름의 문", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "구름을 뚫고 나타난 천상 왕국의 입구. 찬란한 빛이 눈을 멀게 한다." };
+AREAS.cel_garden = { name: "천상의 정원", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["cloud_sentinel", "light_spirit"], desc: "성스러운 불꽃이 타오르는 천상의 정원." };
+AREAS.cel_hall = { name: "심판의 전당", unlock_condition: { flag: "cel_garden_cleared" }, lock_hint: "천상의 정원을 먼저 정리하세요.", encounter_chance: 0.40, encounter_enemies: ["holy_knight", "judgment_angel"], desc: "거대한 심판의 저울이 놓인 전당." };
+AREAS.cel_arsenal = { name: "빛의 무기고", unlock_condition: { flag: "cel_hall_cleared" }, lock_hint: "심판의 전당을 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["judgment_angel", "divine_golem"], desc: "신성한 무기들이 스스로 움직이는 무기고." };
+AREAS.cel_spire = { name: "수정 첨탑", unlock_condition: { flag: "cel_arsenal_cleared" }, lock_hint: "빛의 무기고를 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["seraph_guardian", "divine_golem"], desc: "순수한 빛으로 이루어진 수정 첨탑." };
+AREAS.cel_throne = { name: "여명의 왕좌", unlock_condition: { flag: "cel_spire_cleared" }, lock_hint: "수정 첨탑을 먼저 정복하세요.", encounter_chance: 0, encounter_enemies: [], desc: "천상 왕국의 최정점. 타락한 대천사가 기다리는 곳." };
+AREAS.cel_market = { name: "반란 천사의 시장", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "대천사에 맞서는 반란 천사들이 모인 은밀한 시장." };
+AREAS.cel_sanctuary = { name: "빛의 성소", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "아직 순수한 빛이 남아있는 성소. 마음이 편안해진다." };
+
+AREAS.cel_garden_terrain = { name: "천상의 정원", unlock_condition: null, lock_hint: null, encounter_chance: 0.30, encounter_enemies: ["cloud_sentinel", "light_spirit"], desc: "신성한 꽃이 피어있는 구름 위의 정원." };
+AREAS.cel_hall_terrain = { name: "심판의 전당", unlock_condition: { flag: "cel_garden_cleared" }, lock_hint: "천상의 정원을 먼저 정리하세요.", encounter_chance: 0.35, encounter_enemies: ["holy_knight", "judgment_angel"], desc: "심판의 기운이 감도는 길." };
+AREAS.cel_arsenal_terrain = { name: "빛의 무기고", unlock_condition: { flag: "cel_hall_cleared" }, lock_hint: "심판의 전당을 먼저 돌파하세요.", encounter_chance: 0.40, encounter_enemies: ["judgment_angel", "divine_golem"], desc: "신성한 무기의 기운이 서린 지대." };
+AREAS.cel_spire_terrain = { name: "수정 첨탑", unlock_condition: { flag: "cel_arsenal_cleared" }, lock_hint: "빛의 무기고를 먼저 정복하세요.", encounter_chance: 0.45, encounter_enemies: ["seraph_guardian", "divine_golem"], desc: "빛나는 수정이 솟아있는 지대." };
+AREAS.cel_throne_terrain = { name: "여명의 왕좌 지대", unlock_condition: { flag: "cel_spire_cleared" }, lock_hint: "수정 첨탑을 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["seraph_guardian", "judgment_angel"], desc: "눈부신 빛이 쏟아지는 왕좌 주변." };
 
 AREAS.ice = {
   name: "빙하 지대",
@@ -363,7 +406,59 @@ const LOCATIONS_UNDERWORLD = {
   T: { name: "영혼의 신전", zone: "uw_temple" },
 };
 
+/* ═══════════════════════════════════════════════
+   천상 세계 맵
+   ═══════════════════════════════════════════════ */
+
+const RAW_MAP_CELESTIAL = [
+  "****************************************************",
+  "*...................................................*",
+  "*...11111111.........................................*",
+  "*...1111P111________222222222........................*",
+  "*...11111111........222H22222........................*",
+  "*...1111_111........222222222........................*",
+  "*......._..............._...........................*",
+  "*......._..............._...........................*",
+  "*...66666_66666....333_33333...44444444444...........*",
+  "*...66666M66666....333_33333...44444444444...........*",
+  "*...66666666666....3333333.....4444A44444............*",
+  "*............____________33333____444_4444............*",
+  "*.........._............33333......____..............*",
+  "*.777777777_7..................................55555.*",
+  "*.777R77777_7..................................55555.*",
+  "*.777777777....................................5T555.*",
+  "*..........____________________________________55555.*",
+  "*..........G.........................................*",
+  "*...................................................*",
+  "****************************************************",
+];
+
+const TERRAIN_CELESTIAL = {
+  "*": { passable: false, zone: null },
+  ".": { passable: true, zone: null },
+  "_": { passable: true, zone: null },
+  "1": { passable: true, zone: "cel_garden_terrain" },
+  "2": { passable: true, zone: "cel_hall_terrain" },
+  "3": { passable: true, zone: "cel_arsenal_terrain" },
+  "4": { passable: true, zone: "cel_spire_terrain" },
+  "5": { passable: true, zone: "cel_throne_terrain" },
+  "6": { passable: true, zone: "cel_market" },
+  "7": { passable: true, zone: "cel_sanctuary" },
+};
+
+const LOCATIONS_CELESTIAL = {
+  G: { name: "구름의 문", zone: "cel_gate" },
+  P: { name: "천상의 정원", zone: "cel_garden" },
+  H: { name: "심판의 전당", zone: "cel_hall" },
+  A: { name: "빛의 무기고", zone: "cel_arsenal" },
+  S: { name: "수정 첨탑", zone: "cel_spire" },
+  T: { name: "여명의 왕좌", zone: "cel_throne" },
+  M: { name: "반란 천사의 시장", zone: "cel_market" },
+  R: { name: "빛의 성소", zone: "cel_sanctuary" },
+};
+
 const MAP_REGISTRY = {
   mainland: { name: "지상 세계", raw: RAW_MAP, locations: LOCATIONS, terrain: TERRAIN },
   underworld: { name: "지하 세계", raw: RAW_MAP_UNDERWORLD, locations: LOCATIONS_UNDERWORLD, terrain: TERRAIN_UNDERWORLD },
+  celestial: { name: "천상 세계", raw: RAW_MAP_CELESTIAL, locations: LOCATIONS_CELESTIAL, terrain: TERRAIN_CELESTIAL },
 };

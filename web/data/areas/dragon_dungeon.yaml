@@ -57,6 +57,29 @@ dragon_dungeon:
                     이제 이 던전에서 나는 열기는 오직 화산의 지열뿐이다.
                 - action: pause
 
+            - label: "구름 위로 이어지는 포탈 조사"
+              when: {flag: dragon_dungeon_cleared}
+              actions:
+                - action: print
+                  text: "  드래곤의 둥지 최상부에서 구름을 뚫고 빛나는 포탈을 발견했다."
+                - action: print
+                  text: "  용의 심장이 반응하며 포탈이 활성화되기 시작한다..."
+                - action: menu
+                  options:
+                    - label: "구름 위로 올라간다"
+                      actions:
+                        - action: print
+                          text: "  포탈 속으로 빨려 들어가 구름을 뚫고 올라갔다..."
+                        - action: pause
+                        - action: warp_map
+                          map: celestial
+                          zone: cel_gate
+                        - action: break
+                    - label: "그만둔다"
+                      actions:
+                        - action: print
+                          text: "  아직 준비가 덜 된 것 같다."
+
             - label: "바깥쪽으로 돌아가기"
               actions:
                 - action: break

@@ -1229,6 +1229,16 @@ body {
 .map-tile-market { color: #cc9944; }
 .map-tile-temple { color: #88ddaa; }
 
+/* 천상 세계 타일 */
+.map-tile-cloud-wall { color: #ddd8f0; }
+.map-tile-cel-garden { color: #88ee88; }
+.map-tile-cel-hall { color: #f0e068; }
+.map-tile-cel-arsenal { color: #ffaa44; }
+.map-tile-cel-spire { color: #aaddff; }
+.map-tile-cel-throne { color: #ddaaff; }
+.map-tile-cel-market { color: #ffcc66; }
+.map-tile-cel-sanctuary { color: #aaffdd; }
+
 .map-player {
   color: #ff3333;
   font-weight: 900;

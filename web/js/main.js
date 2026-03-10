@@ -188,18 +188,20 @@ function getMovementFlavorText(row, col, prevZone, nextZone) {
   }
 
   if (ch === '=' || ch === '_') {
-    return getCurrentMapId() === 'underworld'
-      ? '어두운 지하 통로를 따라 조심스럽게 나아갔다.'
-      : '정비된 대로를 따라 차분히 걸음을 옮겼다.';
+    const mid = getCurrentMapId();
+    if (mid === 'underworld') return '어두운 지하 통로를 따라 조심스럽게 나아갔다.';
+    if (mid === 'celestial') return '황금빛 구름 위의 길을 따라 걸어갔다.';
+    return '정비된 대로를 따라 차분히 걸음을 옮겼다.';
   }
 
   if (ch === '.') {
     if (prevZone && AREAS[prevZone]) {
       return `${AREAS[prevZone].name}에서 이어지는 길을 천천히 걸어갔다.`;
     }
-    return getCurrentMapId() === 'underworld'
-      ? '어둠 속에서 한 발짝 앞으로 나아갔다.'
-      : '한적한 길 위로 발걸음을 옮겼다.';
+    const mid = getCurrentMapId();
+    if (mid === 'underworld') return '어둠 속에서 한 발짝 앞으로 나아갔다.';
+    if (mid === 'celestial') return '눈부신 구름 위에서 한 걸음 앞으로 나아갔다.';
+    return '한적한 길 위로 발걸음을 옮겼다.';
   }
 
   if (nextZone && AREAS[nextZone]) {
@@ -341,6 +343,12 @@ async function initStoryFlags() {
     uw_lava_lake_cleared: false,
     uw_fortress_cleared: false,
     uw_abyss_cleared: false,
+    // 천상 세계
+    cel_garden_cleared: false,
+    cel_hall_cleared: false,
+    cel_arsenal_cleared: false,
+    cel_spire_cleared: false,
+    cel_throne_cleared: false,
   };
   for (const [key, val] of Object.entries(defaults)) {
     if (!(key in player.storyFlags)) player.storyFlags[key] = val;
