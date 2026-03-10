@@ -183,20 +183,23 @@ const UI = {
           span.textContent = char;
         }
 
-        // 거점 마커에 이름 라벨 표시
-        const locName = markerPositions[`${r},${c}`];
-        if (locName) {
-          span.classList.add('map-marker-wrap');
-          const label = document.createElement('span');
-          label.className = 'map-label';
-          label.textContent = locName;
-          span.appendChild(label);
-        }
-
         rowDiv.appendChild(span);
       }
       container.appendChild(rowDiv);
     });
+
+    // 거점 라벨을 컨테이너 위에 절대 좌표로 배치
+    const tileSize = 14;
+    const pad = 20; // container padding
+    for (const [key, name] of Object.entries(markerPositions)) {
+      const [r, c] = key.split(',').map(Number);
+      const label = document.createElement('div');
+      label.className = 'map-label';
+      label.textContent = name;
+      label.style.top = `${pad + r * tileSize - 14}px`;
+      label.style.left = `${pad + c * tileSize}px`;
+      container.appendChild(label);
+    }
 
     // 현재 위치를 중앙으로 스크롤
     setTimeout(() => {
