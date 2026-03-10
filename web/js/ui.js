@@ -127,6 +127,65 @@ const UI = {
     }
   },
 
+  /* ───── 지도 UI ───── */
+
+  showMap(player) {
+    this.showScreen('screen-map');
+    const container = document.getElementById('map-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    // 타일별 스타일 클래스 맵
+    const tileClasses = {
+      '#': 'map-tile-mt',
+      '^': 'map-tile-mt',
+      'w': 'map-tile-water',
+      'f': 'map-tile-forest',
+      's': 'map-tile-forest',
+      'e': 'map-tile-forest',
+      'n': 'map-tile-forest',
+      '=': 'map-tile-road',
+      '.': 'map-tile-land',
+    };
+
+    RAW_MAP.forEach((rowStr, r) => {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'map-row';
+
+      for (let c = 0; c < rowStr.length; c++) {
+        const char = rowStr[c];
+        const span = document.createElement('span');
+
+        if (r === player.mapRow && c === player.mapCol) {
+          span.className = 'map-player';
+          span.textContent = '@';
+          span.id = 'map-player-marker';
+        } else {
+          span.className = 'map-tile';
+          // 대문자는 주요 거점(타운)
+          if (char >= 'A' && char <= 'Z') {
+            span.classList.add('map-tile-town');
+          } else {
+            const cls = tileClasses[char];
+            if (cls) span.classList.add(cls);
+          }
+          span.textContent = char;
+        }
+        rowDiv.appendChild(span);
+      }
+      container.appendChild(rowDiv);
+    });
+
+    // 현재 위치를 중앙으로 스크롤
+    setTimeout(() => {
+      const marker = document.getElementById('map-player-marker');
+      if (marker) {
+        marker.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+      }
+    }, 50);
+  },
+
   /* ───── 상점 UI ───── */
 
   async showShop(player, stock, shopName = '상점') {

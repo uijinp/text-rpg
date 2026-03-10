@@ -3,7 +3,9 @@
    ═══════════════════════════════════════════════ */
 
 /* ── 리셋 & 기본 ─────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -146,8 +148,17 @@ body {
 }
 
 @keyframes emblem-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.08); opacity: 1; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
 
 .title-name {
@@ -512,8 +523,15 @@ body {
 }
 
 @keyframes textFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 구분선 */
@@ -979,8 +997,15 @@ body {
 }
 
 @keyframes tapPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1057,7 +1082,8 @@ body {
    방향키 (D-pad) 
    ═══════════════════════════════════════════════ */
 .dpad-container {
-  position: absolute; /* .screen-game 기준으로 우하단 고정 */
+  position: absolute;
+  /* .screen-game 기준으로 우하단 고정 */
   bottom: max(20px, env(safe-area-inset-bottom));
   right: 20px;
   display: grid;
@@ -1066,7 +1092,8 @@ body {
     "left center right"
     ". down .";
   gap: 6px;
-  z-index: 50; /* 하단 선택지보다 위에 오도록 */
+  z-index: 50;
+  /* 하단 선택지보다 위에 오도록 */
   background: rgba(10, 10, 15, 0.4);
   padding: 10px;
   border-radius: 50%;
@@ -1114,7 +1141,111 @@ body {
   box-shadow: 0 0 10px rgba(212, 160, 23, 0.4);
 }
 
-.dpad-up { grid-area: up; }
-.dpad-down { grid-area: down; }
-.dpad-left { grid-area: left; }
-.dpad-right { grid-area: right; }
+.dpad-up {
+  grid-area: up;
+}
+
+.dpad-down {
+  grid-area: down;
+}
+
+.dpad-left {
+  grid-area: left;
+}
+
+.dpad-right {
+  grid-area: right;
+}
+
+/* ═══════════════════════════════════════════════
+   지도 화면 (Map UI)
+   ═══════════════════════════════════════════════ */
+.map-container {
+  flex: 1;
+  background: #050510;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 14px;
+  letter-spacing: 0;
+  padding: 20px;
+  white-space: pre;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.map-row {
+  display: block;
+}
+
+.map-tile {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.map-tile-land {
+  color: #555555;
+}
+
+.map-tile-forest {
+  color: #2ecc71;
+}
+
+.map-tile-water {
+  color: #3498db;
+}
+
+.map-tile-mt {
+  color: #95a5a6;
+}
+
+.map-tile-road {
+  color: #f1c40f;
+}
+
+.map-tile-town {
+  color: var(--gold-light);
+  font-weight: bold;
+}
+
+.map-player {
+  color: #ff3333;
+  font-weight: 900;
+  background: rgba(255, 51, 51, 0.2);
+  border-radius: 2px;
+  animation: mapPulse 1s ease-in-out infinite;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes mapPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.3);
+  }
+}
+
+.map-legend {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.map-player-icon {
+  color: #ff3333;
+  font-weight: bold;
+}

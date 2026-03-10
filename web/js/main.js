@@ -93,7 +93,7 @@ function setupQuickMenu() {
 /* ───── 돌아가기 버튼 ───── */
 
 function setupBackButtons() {
-  ['btn-shop-back', 'btn-inv-back', 'btn-status-back'].forEach(id => {
+  ['btn-shop-back', 'btn-inv-back', 'btn-status-back', 'btn-map-back'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.addEventListener('click', () => UI.showScreen('screen-game'));
   });
@@ -385,7 +385,7 @@ async function startGameLoop() {
     const dpad = document.getElementById('dpad-container');
     if (dpad) dpad.classList.remove('hidden');
 
-    const menuLabels = ['지역 탐색', '인벤토리', '장비 장착', '상태 확인', '저장', '게임 종료'];
+    const menuLabels = ['지도 보기', '지역 탐색', '인벤토리', '장비 장착', '상태 확인', '저장', '게임 종료'];
     const choice = await UI.showChoices(menuLabels);
 
     // D-pad로 강제 이동 시그널이 온 경우 (루프 재시작)
@@ -399,6 +399,10 @@ async function startGameLoop() {
     if (dpad) dpad.classList.add('hidden');
 
     if (choice === 0) {
+      UI.showMap(player);
+      // 지도는 별도 화면이므로 대기 필요 없음 (뒤로가기 버튼으로 제어)
+
+    } else if (choice === 1) {
       const result = await EventEngine.runYamlEvent(player, player.currentLocation);
       if (result === 'gameover') {
         await showGameOver(player);
@@ -413,17 +417,17 @@ async function startGameLoop() {
         await UI.waitForTap();
       }
 
-    } else if (choice === 1) {
+    } else if (choice === 2) {
       await UI.showInventory(player);
 
-    } else if (choice === 2) {
+    } else if (choice === 3) {
       await UI.showEquip(player);
 
-    } else if (choice === 3) {
+    } else if (choice === 4) {
       UI.showStatus(player);
       await UI.waitForTap();
 
-    } else if (choice === 4) {
+    } else if (choice === 5) {
       UI.clearLog();
       UI.addDivider('게임 저장');
       const slotLabels = [];
