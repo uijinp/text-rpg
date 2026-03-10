@@ -411,10 +411,9 @@ async function showTravelMenu(player) {
   while (moving) {
     UI.clearLog();
     UI.addDivider(`이동 모드 - ${getAreaNameByPos(player.mapRow, player.mapCol)}`);
-    renderMiniMap(player, 5).forEach(line => UI.addLog(line));
     UI.addLog('');
-    UI.addLog('  @ 내 위치 | ★ 로케이션');
-    UI.addLog('  한 칸씩 이동합니다.');
+    UI.addLog('  북/남/동/서로 한 칸씩 이동합니다.');
+    UI.addLog('  (지도는 표시하지 않습니다)');
 
     const choice = await UI.showChoices([
       '↑ 북쪽으로 한 칸',
