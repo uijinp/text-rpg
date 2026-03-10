@@ -129,7 +129,7 @@ const UI = {
 
   /* ───── 지도 UI ───── */
 
-  showMap(player) {
+  async showMap(player) {
     this.showScreen('screen-map');
     const container = document.getElementById('map-container');
     if (!container) return;
@@ -184,6 +184,17 @@ const UI = {
         marker.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
       }
     }, 50);
+
+    // 돌아가기 버튼을 누를 때까지 대기
+    await new Promise(resolve => {
+      const backBtn = document.getElementById('btn-map-back');
+      if (!backBtn) { resolve(); return; }
+      const handler = () => {
+        backBtn.removeEventListener('click', handler);
+        resolve();
+      };
+      backBtn.addEventListener('click', handler);
+    });
   },
 
   /* ───── 상점 UI ───── */

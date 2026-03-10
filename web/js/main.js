@@ -53,9 +53,10 @@ function setupDPad() {
 function setupDPadMap() {
   const btn = document.getElementById('dpad-map');
   if (!btn) return;
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
     if (!GameState.player) return;
-    UI.showMap(GameState.player);
+    await UI.showMap(GameState.player);
   });
 }
 
@@ -77,7 +78,7 @@ function setupQuickMenu() {
       if (!GameState.player) return;
 
       if (action === 'map') {
-        UI.showMap(GameState.player);
+        await UI.showMap(GameState.player);
       } else if (action === 'status') {
         UI.showStatus(GameState.player);
         await UI.waitForTap();
@@ -412,8 +413,7 @@ async function startGameLoop() {
     if (dpad) dpad.classList.add('hidden');
 
     if (choice === 0) {
-      UI.showMap(player);
-      // 지도는 별도 화면이므로 대기 필요 없음 (뒤로가기 버튼으로 제어)
+      await UI.showMap(player);
 
     } else if (choice === 1) {
       const result = await EventEngine.runYamlEvent(player, player.currentLocation);
