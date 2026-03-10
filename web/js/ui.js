@@ -149,6 +149,17 @@ const UI = {
       '.': 'map-tile-land',
     };
 
+    // 각 거점 마커의 위치를 미리 수집
+    const markerPositions = {};
+    RAW_MAP.forEach((rowStr, r) => {
+      for (let c = 0; c < rowStr.length; c++) {
+        const ch = rowStr[c];
+        if (ch >= 'A' && ch <= 'Z' && LOCATIONS[ch]) {
+          markerPositions[`${r},${c}`] = LOCATIONS[ch].name;
+        }
+      }
+    });
+
     RAW_MAP.forEach((rowStr, r) => {
       const rowDiv = document.createElement('div');
       rowDiv.className = 'map-row';
@@ -163,7 +174,6 @@ const UI = {
           span.id = 'map-player-marker';
         } else {
           span.className = 'map-tile';
-          // 대문자는 주요 거점(타운)
           if (char >= 'A' && char <= 'Z') {
             span.classList.add('map-tile-town');
           } else {
@@ -172,6 +182,17 @@ const UI = {
           }
           span.textContent = char;
         }
+
+        // 거점 마커에 이름 라벨 표시
+        const locName = markerPositions[`${r},${c}`];
+        if (locName) {
+          span.classList.add('map-marker-wrap');
+          const label = document.createElement('span');
+          label.className = 'map-label';
+          label.textContent = locName;
+          span.appendChild(label);
+        }
+
         rowDiv.appendChild(span);
       }
       container.appendChild(rowDiv);

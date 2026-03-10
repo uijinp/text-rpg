@@ -1245,6 +1245,29 @@ body {
   }
 }
 
+.map-marker-wrap {
+  position: relative;
+}
+
+.map-label {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  background: rgba(10, 10, 20, 0.85);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-light);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
 .map-legend {
   margin-top: 12px;
   font-size: 0.85rem;
