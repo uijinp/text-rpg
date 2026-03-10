@@ -1,0 +1,69 @@
+uw_boneyard:
+  actions:
+    - action: if
+      cond: {not_flag: uw_boneyard_visited}
+      then:
+        - action: set_flag
+          key: uw_boneyard_visited
+          value: true
+        - action: print
+          text: "  수없이 많은 해골이 널려 있다. 그 중 일부가 움직이고 있다..."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "뼈의 묘지"
+
+        - action: menu
+          options:
+            - label: "묘지 탐색"
+              when: {not_flag: uw_boneyard_cleared}
+              actions:
+                - action: print
+                  text: "  해골전투병들이 일어서며 공격해 온다!"
+                - action: battle
+                  enemy: bone_warrior
+                  on_win:
+                    - action: print
+                      text: "  묘지 깊은 곳에서 거대한 죽음의 기사가 나타났다!"
+                    - action: battle
+                      enemy: death_knight
+                      on_win:
+                        - action: set_flag
+                          key: uw_boneyard_cleared
+                          value: true
+                        - action: print
+                          text: "  죽음의 기사를 격파했다! 묘지가 고요해졌다."
+                        - action: print
+                          text: "  수정 동굴로 가는 길이 열렸다."
+                        - action: add_gold
+                          amount: 100
+                      on_lose:
+                        - action: print
+                          text: "  당신은 패배했다..."
+                  on_lose:
+                    - action: print
+                      text: "  당신은 패배했다..."
+
+            - label: "묘지 탐색"
+              when: {flag: uw_boneyard_cleared}
+              actions:
+                - action: random
+                  options:
+                    - weight: 60
+                      actions:
+                        - action: print
+                          text: "  해골전투병이 나타났다!"
+                        - action: battle
+                          enemy: bone_warrior
+                    - weight: 40
+                      actions:
+                        - action: print
+                          text: "  원혼이 나타났다!"
+                        - action: battle
+                          enemy: soul_wraith
+
+            - label: "돌아가기"
+              actions:
+                - action: break

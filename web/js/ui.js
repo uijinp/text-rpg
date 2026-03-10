@@ -136,31 +136,41 @@ const UI = {
 
     container.innerHTML = '';
 
+    const mapId = player.mapId || 'mainland';
+    const mapInfo = MAP_REGISTRY[mapId];
+    const rawMap = mapInfo.raw;
+    const locations = mapInfo.locations;
+
+    // 지도 화면 제목 업데이트
+    const heading = document.querySelector('#screen-map .screen-heading');
+    if (heading) heading.textContent = `${mapInfo.name} 지도`;
+
     // 타일별 스타일 클래스 맵
     const tileClasses = {
-      '#': 'map-tile-mt',
-      '^': 'map-tile-mt',
-      'w': 'map-tile-water',
-      'f': 'map-tile-forest',
-      's': 'map-tile-forest',
-      'e': 'map-tile-forest',
-      'n': 'map-tile-forest',
-      '=': 'map-tile-road',
+      '#': 'map-tile-mt', '^': 'map-tile-mt',
+      'w': 'map-tile-water', '~': 'map-tile-water',
+      'f': 'map-tile-forest', 's': 'map-tile-forest',
+      'e': 'map-tile-forest', 'n': 'map-tile-forest',
+      '=': 'map-tile-road', '_': 'map-tile-road',
       '.': 'map-tile-land',
+      '1': 'map-tile-bone', '2': 'map-tile-crystal',
+      '3': 'map-tile-lava', '4': 'map-tile-fortress',
+      '5': 'map-tile-abyss', '6': 'map-tile-market',
+      '7': 'map-tile-temple',
     };
 
     // 각 거점 마커의 위치를 미리 수집
     const markerPositions = {};
-    RAW_MAP.forEach((rowStr, r) => {
+    rawMap.forEach((rowStr, r) => {
       for (let c = 0; c < rowStr.length; c++) {
         const ch = rowStr[c];
-        if (ch >= 'A' && ch <= 'Z' && LOCATIONS[ch]) {
-          markerPositions[`${r},${c}`] = LOCATIONS[ch].name;
+        if (ch >= 'A' && ch <= 'Z' && locations[ch]) {
+          markerPositions[`${r},${c}`] = locations[ch].name;
         }
       }
     });
 
-    RAW_MAP.forEach((rowStr, r) => {
+    rawMap.forEach((rowStr, r) => {
       const rowDiv = document.createElement('div');
       rowDiv.className = 'map-row';
 

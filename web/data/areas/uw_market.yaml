@@ -1,0 +1,30 @@
+uw_market:
+  actions:
+    - action: if
+      cond: {not_flag: uw_market_visited}
+      then:
+        - action: set_flag
+          key: uw_market_visited
+          value: true
+        - action: print
+          text: "  어둠 속에서 희미한 불빛이 새어나온다."
+        - action: print
+          text: "  수상한 상인들이 모여 있는 암흑 시장이다."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "암흑 시장"
+
+        - action: menu
+          options:
+            - label: "암흑 상점 이용"
+              actions:
+                - action: print
+                  text: "  \"어서 오게... 좋은 물건이 많다네.\""
+                - action: open_uw_shop
+
+            - label: "돌아가기"
+              actions:
+                - action: break

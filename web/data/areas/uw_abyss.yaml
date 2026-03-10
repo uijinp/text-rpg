@@ -1,0 +1,84 @@
+uw_abyss:
+  actions:
+    - action: if
+      cond: {not_flag: uw_abyss_visited}
+      then:
+        - action: set_flag
+          key: uw_abyss_visited
+          value: true
+        - action: print
+          text: "  세계의 가장 깊은 곳. 심연의 심장에 도달했다."
+        - action: print
+          text: "  어둠의 기운이 온몸을 짓누른다..."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "심연의 심장"
+
+        - action: menu
+          options:
+            - label: "심연의 군주에게 도전"
+              when: {not_flag: uw_abyss_cleared}
+              actions:
+                - action: print
+                  text: "  심연의 가장 깊은 곳에서 거대한 존재가 눈을 떴다."
+                - action: print
+                  text: "  \"감히 이곳까지 오다니... 네 영혼을 거두마.\""
+                - action: pause
+                - action: print
+                  text: "  심연의 군주가 나타났다!"
+                - action: battle
+                  enemy: abyss_lord
+                  on_win:
+                    - action: set_flag
+                      key: uw_abyss_cleared
+                      value: true
+                    - action: print
+                      text: "  심연의 군주가 무릎을 꿇었다!"
+                    - action: print
+                      text: "  \"이런... 인간에게 패배하다니...\""
+                    - action: pause
+                    - action: print
+                      text: "  군주의 왕관이 바닥에 떨어졌다."
+                    - action: add_item
+                      item: "심연의 왕관"
+                    - action: add_gold
+                      amount: 300
+                    - action: print
+                      text: "  심연의 어둠이 걷히기 시작한다."
+                    - action: print
+                      text: "  당신은 지하 세계를 정복했다!"
+                    - action: pause
+                  on_lose:
+                    - action: print
+                      text: "  \"하찮은 인간이여... 영원히 이곳에서 잠들어라.\""
+                    - action: print
+                      text: "  당신은 패배했다..."
+
+            - label: "심연 탐색"
+              when: {flag: uw_abyss_cleared}
+              actions:
+                - action: random
+                  options:
+                    - weight: 30
+                      actions:
+                        - action: print
+                          text: "  심연에서 잔존하는 어둠의 기운이 형체를 이뤘다!"
+                        - action: battle
+                          enemy: soul_wraith
+                    - weight: 30
+                      actions:
+                        - action: print
+                          text: "  지옥 악마가 나타났다!"
+                        - action: battle
+                          enemy: inferno_demon
+                    - weight: 40
+                      actions:
+                        - action: print
+                          text: "  심연은 고요하다. 군주가 사라진 뒤 평화가 찾아왔다."
+
+            - label: "돌아가기"
+              actions:
+                - action: break

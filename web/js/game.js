@@ -20,6 +20,7 @@ class Player {
     this.visitedLocations = new Set();
     this.currentLocation = null;
     this.poisoned = false;
+    this.mapId = 'mainland';
     this.mapRow = null;
     this.mapCol = null;
   }
@@ -105,6 +106,7 @@ class Player {
       visitedLocations: [...this.visitedLocations],
       currentLocation: this.currentLocation,
       poisoned: this.poisoned,
+      mapId: this.mapId,
       mapRow: this.mapRow,
       mapCol: this.mapCol,
     };
@@ -125,6 +127,7 @@ class Player {
     p.visitedLocations = new Set(data.visitedLocations || []);
     p.currentLocation = data.currentLocation;
     p.poisoned = data.poisoned || false;
+    p.mapId = data.mapId || 'mainland';
     p.mapRow = Number.isInteger(data.mapRow) ? data.mapRow : null;
     p.mapCol = Number.isInteger(data.mapCol) ? data.mapCol : null;
     return p;

@@ -1,0 +1,52 @@
+uw_temple:
+  actions:
+    - action: if
+      cond: {not_flag: uw_temple_visited}
+      then:
+        - action: set_flag
+          key: uw_temple_visited
+          value: true
+        - action: print
+          text: "  푸른 빛이 감도는 신전. 죽은 자들의 영혼이 떠다닌다."
+        - action: print
+          text: "  이곳에서는 이상하게 마음이 편안해진다..."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "영혼의 신전"
+
+        - action: menu
+          options:
+            - label: "신전에서 기도하기 (HP 회복)"
+              actions:
+                - action: print
+                  text: "  신전의 빛이 온몸을 감싸며 상처가 치유된다."
+                - action: heal
+                  amount: full
+
+            - label: "영혼과 대화하기"
+              actions:
+                - action: random
+                  options:
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"이곳은 심연의 군주가 지배하는 땅... 조심하게나.\""
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"수정 동굴의 광물은 강력한 무기의 재료가 된다네.\""
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"용암 호수 너머에 망자의 요새가 있다... 그곳을 지나야 심연에 닿을 수 있지.\""
+                    - weight: 25
+                      actions:
+                        - action: print
+                          text: "  \"나도 한때는 모험가였다네... 이곳에서 영원히 떠돌게 되었지만.\""
+
+            - label: "돌아가기"
+              actions:
+                - action: break

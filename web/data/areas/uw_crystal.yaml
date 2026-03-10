@@ -1,0 +1,59 @@
+uw_crystal:
+  actions:
+    - action: if
+      cond: {not_flag: uw_crystal_visited}
+      then:
+        - action: set_flag
+          key: uw_crystal_visited
+          value: true
+        - action: print
+          text: "  거대한 수정이 푸른 빛을 내뿜고 있다. 아름답지만 위험하다."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "수정 동굴"
+
+        - action: menu
+          options:
+            - label: "수정 동굴 탐색"
+              when: {not_flag: uw_crystal_cleared}
+              actions:
+                - action: print
+                  text: "  수정 사이에서 거대한 골렘이 깨어났다!"
+                - action: battle
+                  enemy: crystal_golem
+                  on_win:
+                    - action: print
+                      text: "  더 깊은 곳에서 또 하나의 골렘이 움직인다!"
+                    - action: battle
+                      enemy: crystal_golem
+                      on_win:
+                        - action: set_flag
+                          key: uw_crystal_cleared
+                          value: true
+                        - action: print
+                          text: "  수정 골렘들을 모두 격파했다!"
+                        - action: print
+                          text: "  용암 호수로 가는 통로가 드러났다."
+                        - action: add_item
+                          item: "수정 대검"
+                      on_lose:
+                        - action: print
+                          text: "  당신은 패배했다..."
+                  on_lose:
+                    - action: print
+                      text: "  당신은 패배했다..."
+
+            - label: "수정 동굴 탐색"
+              when: {flag: uw_crystal_cleared}
+              actions:
+                - action: print
+                  text: "  수정 골렘이 나타났다!"
+                - action: battle
+                  enemy: crystal_golem
+
+            - label: "돌아가기"
+              actions:
+                - action: break

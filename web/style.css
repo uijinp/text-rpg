@@ -1220,6 +1220,15 @@ body {
   font-weight: bold;
 }
 
+/* 지하 세계 타일 */
+.map-tile-bone { color: #b8a88a; }
+.map-tile-crystal { color: #a0d0ff; }
+.map-tile-lava { color: #ff6633; }
+.map-tile-fortress { color: #8877aa; }
+.map-tile-abyss { color: #6633aa; }
+.map-tile-market { color: #cc9944; }
+.map-tile-temple { color: #88ddaa; }
+
 .map-player {
   color: #ff3333;
   font-weight: 900;

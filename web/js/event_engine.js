@@ -260,6 +260,38 @@ const EventEngine = {
       return null;
     }
 
+    if (act === 'open_uw_shop') {
+      await UI.showShop(player, UW_SHOP_STOCK, '암흑 시장');
+      UI.showScreen('screen-game');
+      return null;
+    }
+
+    if (act === 'warp_map') {
+      const targetMap = action.map;
+      const targetZone = action.zone;
+      const mapInfo = MAP_REGISTRY[targetMap];
+      if (!mapInfo) return null;
+      const locs = mapInfo.locations;
+      const marker = Object.entries(locs).find(([, v]) => v.zone === targetZone);
+      if (!marker) return null;
+      // 마커 위치 찾기
+      const raw = mapInfo.raw;
+      let pos = null;
+      for (let r = 0; r < raw.length && !pos; r++) {
+        const idx = raw[r].indexOf(marker[0]);
+        if (idx !== -1) pos = { row: r, col: idx };
+      }
+      if (!pos) return null;
+      player.mapId = targetMap;
+      player.mapRow = pos.row;
+      player.mapCol = pos.col;
+      player.currentLocation = targetZone;
+      player.visitedLocations.add(targetZone);
+      UI.updateHeader();
+      UI.addSystemMsg(`  ★ ${mapInfo.name} - ${locs[marker[0]].name}(으)로 이동했습니다!`);
+      return null;
+    }
+
     /* ── 인벤토리/상태 ── */
     if (act === 'show_inventory') {
       await UI.showInventory(player);
@@ -389,7 +421,7 @@ const EventEngine = {
   /* ───── 랜덤 분기 ───── */
 
   async runRandom(action, player, scenes) {
-    const branches = action.branches || [];
+    const branches = action.branches || action.options || [];
     if (branches.length === 0) return null;
 
     const weights = branches.map(b => b.weight || 1.0);

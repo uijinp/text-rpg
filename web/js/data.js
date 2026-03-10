@@ -41,6 +41,15 @@ const ENEMY_TABLE = {
   shadow_knight: { name: "그림자기사", hp: 100, atk: 22, def: 9, exp: 85, gold: 40 },
   dark_sentinel: { name: "어둠의파수꾼", hp: 120, atk: 25, def: 9, exp: 90, gold: 45 },
   shadow_lazarus: { name: "그림자라자러스", hp: 190, atk: 34, def: 10, exp: 180, gold: 120 },
+
+  // ── 지하 세계 ──
+  bone_warrior: { name: "해골전투병", hp: 120, atk: 24, def: 8, exp: 100, gold: 45 },
+  death_knight: { name: "죽음의 기사", hp: 160, atk: 30, def: 12, exp: 140, gold: 70 },
+  crystal_golem: { name: "수정 골렘", hp: 180, atk: 22, def: 15, exp: 130, gold: 60 },
+  lava_worm: { name: "용암 지렁이", hp: 140, atk: 28, def: 6, exp: 110, gold: 50 },
+  inferno_demon: { name: "지옥 악마", hp: 200, atk: 35, def: 10, exp: 170, gold: 90 },
+  soul_wraith: { name: "원혼", hp: 100, atk: 32, def: 4, exp: 120, gold: 55 },
+  abyss_lord: { name: "심연의 군주", hp: 300, atk: 40, def: 14, exp: 300, gold: 200 },
 };
 
 const DROP_TABLE = {
@@ -77,6 +86,15 @@ const DROP_TABLE = {
   shadow_knight: [{ item: "대형 포션", chance: 0.4 }, { item: "사슬 갑옷", chance: 0.2 }],
   dark_sentinel: [{ item: "대형 포션", chance: 0.5 }, { item: "강철 검", chance: 0.25 }],
   shadow_lazarus: [{ item: "고급 포션", chance: 0.8 }, { item: "강화 갑옷", chance: 0.5 }],
+
+  // ── 지하 세계 ──
+  bone_warrior: [{ item: "심연의 포션", chance: 0.3 }, { item: "뼈 갑옷", chance: 0.1 }],
+  death_knight: [{ item: "심연의 포션", chance: 0.5 }, { item: "뼈 갑옷", chance: 0.2 }],
+  crystal_golem: [{ item: "수정 대검", chance: 0.15 }, { item: "심연의 포션", chance: 0.4 }],
+  lava_worm: [{ item: "심연의 포션", chance: 0.4 }, { item: "고급 포션", chance: 0.3 }],
+  inferno_demon: [{ item: "지옥불 검", chance: 0.3 }, { item: "심연의 포션", chance: 0.6 }],
+  soul_wraith: [{ item: "심연의 로브", chance: 0.15 }, { item: "심연의 포션", chance: 0.35 }],
+  abyss_lord: [{ item: "심연의 왕관", chance: 1.0 }, { item: "심연의 포션", chance: 0.9 }],
 };
 
 const ITEMS = {
@@ -111,10 +129,19 @@ const ITEMS = {
   "용의 심장": { type: "special", price: 0, desc: "뜨겁게 고동치는 전설적인 드래곤의 심장" },
   "세계수의 잎사귀": { type: "consumable", effect: "heal", value: 150, price: 80, desc: "HP를 150 회복한다. 숲의 축복" },
   "세계수의 이슬": { type: "consumable", effect: "heal", value: 300, price: 500, desc: "HP를 300 회복한다. 정령의 축복" },
+
+  // ── 지하 세계 ──
+  "심연의 포션": { type: "consumable", effect: "heal", value: 200, price: 150, desc: "HP를 200 회복한다. 지하 세계의 약초" },
+  "수정 대검": { type: "weapon", attack_bonus: 32, price: 400, desc: "공격력 +32, 빛나는 수정으로 벼린 대검" },
+  "뼈 갑옷": { type: "armor", defense_bonus: 14, price: 350, desc: "방어력 +14, 거대한 뼈로 만든 갑옷" },
+  "심연의 로브": { type: "armor", defense_bonus: 10, price: 280, desc: "방어력 +10, 어둠의 기운을 두른 로브" },
+  "지옥불 검": { type: "weapon", attack_bonus: 38, price: 0, desc: "공격력 +38, 지옥의 불꽃이 타오르는 마검" },
+  "심연의 왕관": { type: "special", price: 0, desc: "심연의 군주가 쓰던 왕관. 어둠의 권능이 깃들어 있다" },
 };
 
 const SHOP_STOCK = ["소형 포션", "대형 포션", "해독제", "낡은 검", "강철 검", "가죽 갑옷", "사슬 갑옷"];
 const MERC_SHOP_STOCK = ["소형 포션", "대형 포션", "고급 포션", "해독제", "용병의 도끼", "강화 갑옷"];
+const UW_SHOP_STOCK = ["심연의 포션", "고급 포션", "해독제", "수정 대검", "뼈 갑옷", "심연의 로브"];
 
 const AREAS = {
   town: { name: "아르카디아", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "아르카디아 마을의 따뜻한 거리." },
@@ -152,6 +179,22 @@ AREAS.desert = {
   encounter_enemies: ["sand_scorpion", "bandit"],
   desc: "뜨거운 모래바람이 시야를 가린다.",
 };
+// ── 지하 세계 지역 ──
+AREAS.uw_entrance = { name: "심연의 입구", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "지상에서 내려온 깊은 동굴 입구. 차갑고 축축한 바람이 분다." };
+AREAS.uw_boneyard = { name: "뼈의 묘지", unlock_condition: null, lock_hint: null, encounter_chance: 0.40, encounter_enemies: ["bone_warrior", "soul_wraith"], desc: "수없이 많은 해골이 널려 있는 묘지." };
+AREAS.uw_crystal = { name: "수정 동굴", unlock_condition: { flag: "uw_boneyard_cleared" }, lock_hint: "뼈의 묘지를 먼저 정리하세요.", encounter_chance: 0.35, encounter_enemies: ["crystal_golem", "bone_warrior"], desc: "거대한 수정이 빛을 내뿜는 동굴." };
+AREAS.uw_lava_lake = { name: "용암 호수", unlock_condition: { flag: "uw_crystal_cleared" }, lock_hint: "수정 동굴을 먼저 탐색하세요.", encounter_chance: 0.45, encounter_enemies: ["lava_worm", "inferno_demon"], desc: "끓어오르는 용암 호수. 열기가 숨을 막는다." };
+AREAS.uw_fortress = { name: "망자의 요새", unlock_condition: { flag: "uw_lava_lake_cleared" }, lock_hint: "용암 호수를 먼저 돌파하세요.", encounter_chance: 0.50, encounter_enemies: ["death_knight", "soul_wraith"], desc: "죽은 자들이 지키는 거대한 요새." };
+AREAS.uw_abyss = { name: "심연의 심장", unlock_condition: { flag: "uw_fortress_cleared" }, lock_hint: "망자의 요새를 먼저 정복하세요.", encounter_chance: 0, encounter_enemies: [], desc: "세계의 끝. 심연의 군주가 기다리는 곳." };
+AREAS.uw_market = { name: "암흑 시장", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "수상한 상인들이 모인 지하 시장." };
+AREAS.uw_temple = { name: "영혼의 신전", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "고대 신전. 희미한 빛이 상처를 치유한다." };
+
+AREAS.uw_bone_terrain = { name: "뼈의 묘지", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["bone_warrior", "soul_wraith"], desc: "해골이 널린 땅." };
+AREAS.uw_crystal_terrain = { name: "수정 동굴", unlock_condition: { flag: "uw_boneyard_cleared" }, lock_hint: "뼈의 묘지를 먼저 정리하세요.", encounter_chance: 0.30, encounter_enemies: ["crystal_golem"], desc: "수정이 빛나는 통로." };
+AREAS.uw_lava_terrain = { name: "용암 지대", unlock_condition: { flag: "uw_crystal_cleared" }, lock_hint: "수정 동굴을 먼저 탐색하세요.", encounter_chance: 0.40, encounter_enemies: ["lava_worm", "inferno_demon"], desc: "뜨거운 용암이 흐르는 지대." };
+AREAS.uw_fortress_terrain = { name: "망자의 요새", unlock_condition: { flag: "uw_lava_lake_cleared" }, lock_hint: "용암 호수를 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["death_knight", "bone_warrior"], desc: "요새 주변의 황폐한 대지." };
+AREAS.uw_abyss_terrain = { name: "심연 지대", unlock_condition: { flag: "uw_fortress_cleared" }, lock_hint: "망자의 요새를 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["inferno_demon", "soul_wraith"], desc: "어둠이 깊어지는 심연." };
+
 AREAS.ice = {
   name: "빙하 지대",
   unlock_condition: { flag: "castle_gate_cleared" },
@@ -267,3 +310,60 @@ const RAW_MAP = [
   "#.^^^^^...zzzzzzzz=zzzzzzzz............................======.............#",
   "###########################################################################",
 ];
+
+/* ═══════════════════════════════════════════════
+   지하 세계 맵
+   ═══════════════════════════════════════════════ */
+
+const RAW_MAP_UNDERWORLD = [
+  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+  "~.....................................................~",
+  "~.....111111111........................................~",
+  "~.....111111111........222222222.......................~",
+  "~.....1111B1111________222C2222.......................~",
+  "~.....111111111........22222222.......................~",
+  "~.....1111_1111........2222_222.......................~",
+  "~........._..................._.......................~",
+  "~........._..................._.......................~",
+  "~...66666_66666...........333_333...444444444.........~",
+  "~...66666M66666...........333_333...444444444.........~",
+  "~...66666666666...........3333333...4444F4444.........~",
+  "~..........._______________33L33_____444_4444.........~",
+  "~..........._..............33333......____.............~",
+  "~.777777777_7.................................555555...~",
+  "~.777T77777_7.................................555555...~",
+  "~.777777777...................................55D55...~",
+  "~..........___________________________________55555...~",
+  "~..........N..........................................~",
+  "~.....................................................~",
+  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+];
+
+const TERRAIN_UNDERWORLD = {
+  "~": { passable: false, zone: null },
+  ".": { passable: true, zone: null },
+  "_": { passable: true, zone: null },
+  "1": { passable: true, zone: "uw_bone_terrain" },
+  "2": { passable: true, zone: "uw_crystal_terrain" },
+  "3": { passable: true, zone: "uw_lava_terrain" },
+  "4": { passable: true, zone: "uw_fortress_terrain" },
+  "5": { passable: true, zone: "uw_abyss_terrain" },
+  "6": { passable: true, zone: "uw_market" },
+  "7": { passable: true, zone: "uw_temple" },
+};
+
+const LOCATIONS_UNDERWORLD = {
+  N: { name: "심연의 입구", zone: "uw_entrance" },
+  B: { name: "뼈의 묘지", zone: "uw_boneyard" },
+  C: { name: "수정 동굴", zone: "uw_crystal" },
+  L: { name: "용암 호수", zone: "uw_lava_lake" },
+  F: { name: "망자의 요새", zone: "uw_fortress" },
+  D: { name: "심연의 심장", zone: "uw_abyss" },
+  M: { name: "암흑 시장", zone: "uw_market" },
+  T: { name: "영혼의 신전", zone: "uw_temple" },
+};
+
+const MAP_REGISTRY = {
+  mainland: { name: "지상 세계", raw: RAW_MAP, locations: LOCATIONS, terrain: TERRAIN },
+  underworld: { name: "지하 세계", raw: RAW_MAP_UNDERWORLD, locations: LOCATIONS_UNDERWORLD, terrain: TERRAIN_UNDERWORLD },
+};

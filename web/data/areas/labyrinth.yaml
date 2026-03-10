@@ -1,0 +1,85 @@
+labyrinth:
+  actions:
+    - action: if
+      cond: {not_flag: labyrinth_visited}
+      then:
+        - action: set_flag
+          key: labyrinth_visited
+          value: true
+        - action: print
+          text: "  지하로 이어지는 미궁의 입구에 도착했다."
+        - action: print
+          text: "  차가운 바람이 아래에서 불어온다..."
+        - action: pause
+
+    - action: loop
+      body:
+        - action: divider
+          title: "지하 미궁"
+
+        - action: menu
+          options:
+            - label: "미궁 탐색"
+              actions:
+                - action: if
+                  cond: {not_flag: labyrinth_cleared}
+                  then:
+                    - action: print
+                      text: "  미궁 깊은 곳에서 수호자의 기척이 느껴진다!"
+                    - action: battle
+                      enemy: labyrinth_golem
+                      on_win:
+                        - action: set_flag
+                          key: labyrinth_cleared
+                          value: true
+                        - action: print
+                          text: "  미궁 골렘을 격파했다!"
+                        - action: print
+                          text: "  미궁의 가장 깊은 곳에서 아래로 이어지는 균열을 발견했다..."
+                        - action: add_item
+                          item: "지도 조각"
+                      on_lose:
+                        - action: print
+                          text: "  당신은 패배했다..."
+                  else:
+                    - action: print
+                      text: "  이미 정복한 미궁이다. 조용하다."
+                    - action: random
+                      options:
+                        - weight: 50
+                          actions:
+                            - action: print
+                              text: "  미궁 속에서 적을 만났다!"
+                            - action: battle
+                              enemy: labyrinth_guardian
+                        - weight: 50
+                          actions:
+                            - action: print
+                              text: "  아무 일 없이 돌아왔다."
+
+            - label: "지하 세계로 내려가기"
+              when: {flag: labyrinth_cleared}
+              actions:
+                - action: print
+                  text: "  균열 사이로 뜨거운 바람과 함께 어둠의 기운이 느껴진다."
+                - action: print
+                  text: "  정말 내려가시겠습니까?"
+                - action: menu
+                  options:
+                    - label: "내려간다"
+                      actions:
+                        - action: print
+                          text: "  깊고 깊은 균열 속으로 내려갔다..."
+                        - action: pause
+                        - action: warp_map
+                          map: underworld
+                          zone: uw_entrance
+                        - action: break
+                    - label: "그만둔다"
+                      actions:
+                        - action: print
+                          text: "  아직 준비가 덜 된 것 같다."
+
+            - label: "돌아가기"
+              actions:
+                - action: break

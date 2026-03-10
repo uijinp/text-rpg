@@ -113,60 +113,93 @@ function setupBackButtons() {
   });
 }
 
-const TILE_MAP = RAW_MAP.map(row => row.split(''));
+/* ───── 멀티맵 시스템 ───── */
 
-function findMarkerPosition(markerChar) {
-  for (let r = 0; r < TILE_MAP.length; r++) {
-    for (let c = 0; c < TILE_MAP[r].length; c++) {
-      if (TILE_MAP[r][c] === markerChar) return { row: r, col: c };
+const TILE_MAPS = {};
+for (const [mapId, info] of Object.entries(MAP_REGISTRY)) {
+  TILE_MAPS[mapId] = info.raw.map(row => row.split(''));
+}
+
+function getCurrentMapId() {
+  return GameState.player?.mapId || 'mainland';
+}
+
+function getCurrentTileMap() {
+  return TILE_MAPS[getCurrentMapId()];
+}
+
+function getCurrentLocations() {
+  return MAP_REGISTRY[getCurrentMapId()].locations;
+}
+
+function getCurrentTerrain() {
+  return MAP_REGISTRY[getCurrentMapId()].terrain;
+}
+
+function findMarkerPosition(markerChar, mapId) {
+  const tileMap = TILE_MAPS[mapId || getCurrentMapId()];
+  for (let r = 0; r < tileMap.length; r++) {
+    for (let c = 0; c < tileMap[r].length; c++) {
+      if (tileMap[r][c] === markerChar) return { row: r, col: c };
     }
   }
   return null;
 }
 
 function getTileChar(row, col) {
-  if (row < 0 || row >= TILE_MAP.length) return '#';
-  if (col < 0 || col >= TILE_MAP[0].length) return '#';
-  return TILE_MAP[row][col];
+  const tileMap = getCurrentTileMap();
+  if (row < 0 || row >= tileMap.length) return '#';
+  if (col < 0 || col >= tileMap[0].length) return '#';
+  return tileMap[row][col];
 }
 
 function canMoveTo(row, col) {
   const ch = getTileChar(row, col);
-  if (ch in LOCATIONS) return true;
-  return !!TERRAIN[ch]?.passable;
+  const locs = getCurrentLocations();
+  if (ch in locs) return true;
+  const terrain = getCurrentTerrain();
+  return !!terrain[ch]?.passable;
 }
 
 function getZoneAt(row, col) {
   const ch = getTileChar(row, col);
-  if (LOCATIONS[ch]) return LOCATIONS[ch].zone;
-  return TERRAIN[ch]?.zone ?? null;
+  const locs = getCurrentLocations();
+  if (locs[ch]) return locs[ch].zone;
+  const terrain = getCurrentTerrain();
+  return terrain[ch]?.zone ?? null;
 }
 
 function getAreaNameByPos(row, col) {
   const ch = getTileChar(row, col);
-  if (LOCATIONS[ch]) return LOCATIONS[ch].name;
+  const locs = getCurrentLocations();
+  if (locs[ch]) return locs[ch].name;
   const zone = getZoneAt(row, col);
   return AREAS[zone]?.name || '이동 중';
 }
 
 function getMovementFlavorText(row, col, prevZone, nextZone) {
   const ch = getTileChar(row, col);
+  const locs = getCurrentLocations();
 
-  if (LOCATIONS[ch]) {
-    const location = LOCATIONS[ch];
+  if (locs[ch]) {
+    const location = locs[ch];
     const area = AREAS[location.zone];
     return area?.desc || `${location.name}에 도착했다.`;
   }
 
-  if (ch === '=') {
-    return '정비된 대로를 따라 차분히 걸음을 옮겼다.';
+  if (ch === '=' || ch === '_') {
+    return getCurrentMapId() === 'underworld'
+      ? '어두운 지하 통로를 따라 조심스럽게 나아갔다.'
+      : '정비된 대로를 따라 차분히 걸음을 옮겼다.';
   }
 
   if (ch === '.') {
     if (prevZone && AREAS[prevZone]) {
       return `${AREAS[prevZone].name}에서 이어지는 길을 천천히 걸어갔다.`;
     }
-    return '한적한 길 위로 발걸음을 옮겼다.';
+    return getCurrentMapId() === 'underworld'
+      ? '어둠 속에서 한 발짝 앞으로 나아갔다.'
+      : '한적한 길 위로 발걸음을 옮겼다.';
   }
 
   if (nextZone && AREAS[nextZone]) {
@@ -195,10 +228,11 @@ async function tryStepMove(player, dr, dc, label) {
   player.mapCol = nc;
 
   const ch = getTileChar(nr, nc);
-  if (LOCATIONS[ch]) {
-    player.currentLocation = LOCATIONS[ch].zone;
+  const locs = getCurrentLocations();
+  if (locs[ch]) {
+    player.currentLocation = locs[ch].zone;
     player.visitedLocations.add(player.currentLocation);
-    UI.addSystemMsg(`  ★ ${LOCATIONS[ch].name}에 도착했습니다.`);
+    UI.addSystemMsg(`  ★ ${locs[ch].name}에 도착했습니다.`);
   } else if (nextZone) {
     player.currentLocation = nextZone;
     player.visitedLocations.add(nextZone);
@@ -257,7 +291,8 @@ async function startNewGame() {
       GameState.player = new Player(playerName, selectedJob, stats.hp, stats.attack, stats.defense);
       GameState.player.currentLocation = 'town';
       GameState.player.visitedLocations.add('town');
-      const startPos = findMarkerPosition('T');
+      GameState.player.mapId = 'mainland';
+      const startPos = findMarkerPosition('T', 'mainland');
       if (startPos) {
         GameState.player.mapRow = startPos.row;
         GameState.player.mapCol = startPos.col;
@@ -300,6 +335,12 @@ async function initStoryFlags() {
     mercenary_joined: false,
     dark_tower_cleared: false,
     volcano_cleared: false,
+    // 지하 세계
+    uw_boneyard_cleared: false,
+    uw_crystal_cleared: false,
+    uw_lava_lake_cleared: false,
+    uw_fortress_cleared: false,
+    uw_abyss_cleared: false,
   };
   for (const [key, val] of Object.entries(defaults)) {
     if (!(key in player.storyFlags)) player.storyFlags[key] = val;
@@ -370,14 +411,16 @@ async function startGameLoop() {
     player.currentLocation = 'town';
     player.visitedLocations.add('town');
   }
+  if (!player.mapId) player.mapId = 'mainland';
   if (!Number.isInteger(player.mapRow) || !Number.isInteger(player.mapCol)) {
-    const currentMarker = Object.entries(LOCATIONS).find(([, v]) => v.zone === player.currentLocation)?.[0] || 'T';
+    const locs = getCurrentLocations();
+    const currentMarker = Object.entries(locs).find(([, v]) => v.zone === player.currentLocation)?.[0] || 'T';
     const pos = findMarkerPosition(currentMarker);
     if (pos) {
       player.mapRow = pos.row;
       player.mapCol = pos.col;
     } else {
-      const townPos = findMarkerPosition('T');
+      const townPos = findMarkerPosition('T', 'mainland');
       player.mapRow = townPos ? townPos.row : 28;
       player.mapCol = townPos ? townPos.col : 36;
     }
