@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupQuickMenu();
   setupBackButtons();
   setupDPad();
+  setupDPadMap();
 });
 
 /* ───── 방향키 (D-pad) 설정 ───── */
@@ -48,6 +49,16 @@ function setupDPad() {
   }
 }
 
+/* ───── D-pad 중앙 지도 버튼 ───── */
+function setupDPadMap() {
+  const btn = document.getElementById('dpad-map');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    if (!GameState.player) return;
+    UI.showMap(GameState.player);
+  });
+}
+
 /* ───── 퀵 메뉴 설정 ───── */
 
 function setupQuickMenu() {
@@ -65,7 +76,9 @@ function setupQuickMenu() {
       if (action === 'close') return;
       if (!GameState.player) return;
 
-      if (action === 'status') {
+      if (action === 'map') {
+        UI.showMap(GameState.player);
+      } else if (action === 'status') {
         UI.showStatus(GameState.player);
         await UI.waitForTap();
       } else if (action === 'inventory') {

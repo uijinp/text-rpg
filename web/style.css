@@ -1157,6 +1157,13 @@ body {
   grid-area: right;
 }
 
+.dpad-center {
+  grid-area: center;
+  font-size: 1rem;
+  background: rgba(212, 160, 23, 0.08);
+  border-color: rgba(212, 160, 23, 0.4);
+}
+
 /* ═══════════════════════════════════════════════
    지도 화면 (Map UI)
    ═══════════════════════════════════════════════ */
