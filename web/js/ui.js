@@ -1,0 +1,396 @@
+/* ui.js - UI 관리 */
+
+const UI = {
+  _choiceResolve: null,
+  _tapResolve: null,
+  _previousScreen: 'screen-game',
+
+  showScreen(screenId) {
+    const prev = document.querySelector('.screen.active');
+    if (prev) this._previousScreen = prev.id;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(screenId);
+    if (el) el.classList.add('active');
+  },
+
+  goBack() {
+    this.showScreen(this._previousScreen || 'screen-game');
+  },
+
+  addLog(text, cssClass = '') {
+    const log = document.getElementById('game-log');
+    if (!log) return;
+    const p = document.createElement('p');
+    p.className = `text-appear ${cssClass}`.trim();
+    p.textContent = text;
+    log.appendChild(p);
+    log.scrollTop = log.scrollHeight;
+  },
+
+  clearLog() {
+    const log = document.getElementById('game-log');
+    if (log) log.innerHTML = '';
+  },
+
+  addDivider(title = '') {
+    const log = document.getElementById('game-log');
+    if (!log) return;
+    if (title) {
+      const h = document.createElement('p');
+      h.className = 'text-appear text-important';
+      h.textContent = `── ${title} ──`;
+      log.appendChild(h);
+    }
+    const hr = document.createElement('hr');
+    hr.className = 'divider';
+    log.appendChild(hr);
+    log.scrollTop = log.scrollHeight;
+  },
+
+  addSystemMsg(text) {
+    this.addLog(text, 'system-msg');
+  },
+
+  showChoices(options) {
+    return new Promise(resolve => {
+      this._choiceResolve = resolve;
+      const container = document.getElementById('game-choices');
+      if (!container) { resolve(0); return; }
+      container.innerHTML = '';
+
+      options.forEach((label, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = `${idx + 1}. ${label}`;
+        btn.addEventListener('click', () => {
+          this.hideChoices();
+          resolve(idx);
+        });
+        container.appendChild(btn);
+      });
+
+      const log = document.getElementById('game-log');
+      if (log) log.scrollTop = log.scrollHeight;
+    });
+  },
+
+  hideChoices() {
+    const container = document.getElementById('game-choices');
+    if (container) container.innerHTML = '';
+    this._choiceResolve = null;
+  },
+
+  async waitForTap() {
+    this.addLog('[ 터치하여 계속... ]', 'tap-prompt');
+    return new Promise(resolve => {
+      this._tapResolve = resolve;
+      const gameLog = document.getElementById('game-log');
+      const handler = (e) => {
+        if (gameLog) gameLog.removeEventListener('click', handler);
+        document.removeEventListener('keydown', handler);
+        const prompts = document.querySelectorAll('.tap-prompt');
+        prompts.forEach(p => p.remove());
+        this._tapResolve = null;
+        resolve();
+      };
+      if (gameLog) gameLog.addEventListener('click', handler, { once: true });
+      document.addEventListener('keydown', handler, { once: true });
+    });
+  },
+
+  updateHeader() {
+    const p = GameState.player;
+    if (!p) return;
+
+    const set = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+
+    set('header-name', p.name);
+    set('header-level', `Lv.${p.level}`);
+    set('header-job', p.job);
+    set('header-gold', `💰 ${p.gold}G`);
+    set('header-hp-text', `${p.hp}/${p.maxHp}`);
+
+    const loc = AREAS[p.currentLocation];
+    set('header-location', `📍 ${loc ? loc.name : '???'}`);
+
+    const hpBar = document.getElementById('header-hp-bar');
+    if (hpBar) {
+      hpBar.style.width = `${p.maxHp > 0 ? (p.hp / p.maxHp) * 100 : 0}%`;
+    }
+  },
+
+  /* ───── 상점 UI ───── */
+
+  async showShop(player, stock, shopName = '상점') {
+    this.showScreen('screen-game');
+    while (true) {
+      this.clearLog();
+      this.addDivider(shopName);
+      this.addLog(`  보유 골드: ${player.gold}G`);
+      this.addLog('');
+
+      const labels = stock.map(name => {
+        const info = ITEMS[name];
+        return info ? `${name} (${info.price}G) - ${info.desc}` : name;
+      });
+      labels.push('나가기');
+
+      const choice = await this.showChoices(labels);
+      if (choice >= stock.length) break;
+
+      const itemName = stock[choice];
+      const info = ITEMS[itemName];
+      if (!info) continue;
+
+      if (player.gold >= info.price) {
+        player.gold -= info.price;
+        player.inventory.push(itemName);
+        this.addSystemMsg(`  ${itemName}을(를) 구매했습니다! (잔여: ${player.gold}G)`);
+      } else {
+        this.addSystemMsg('  골드가 부족합니다!');
+      }
+      this.updateHeader();
+      await this.waitForTap();
+    }
+  },
+
+  /* ───── 인벤토리 UI ───── */
+
+  async showInventory(player) {
+    this.showScreen('screen-game');
+    this.clearLog();
+    this.addDivider('인벤토리');
+
+    const weapon = player.equippedWeapon ? player.equippedWeapon.name : '없음';
+    const armor = player.equippedArmor ? player.equippedArmor.name : '없음';
+    this.addLog(`  장착 무기: ${weapon}`);
+    this.addLog(`  장착 방어구: ${armor}`);
+    this.addLog('');
+
+    if (player.inventory.length === 0) {
+      this.addLog('  인벤토리가 비어있습니다.');
+      await this.waitForTap();
+      return;
+    }
+
+    const counts = {};
+    player.inventory.forEach(item => { counts[item] = (counts[item] || 0) + 1; });
+    const items = Object.entries(counts);
+
+    const labels = items.map(([name, cnt]) => {
+      const info = ITEMS[name];
+      return `${name} x${cnt}${info ? ' (' + info.desc + ')' : ''}`;
+    });
+    labels.push('닫기');
+
+    const choice = await this.showChoices(labels);
+    if (choice >= items.length) return;
+
+    const [itemName] = items[choice];
+    const info = ITEMS[itemName];
+    if (!info) return;
+
+    if (info.type === 'consumable') {
+      await this._useConsumable(player, itemName, info);
+    } else if (info.type === 'weapon' || info.type === 'armor') {
+      await this._equipFromInventory(player, itemName, info);
+    } else {
+      this.addLog(`  ${itemName}: ${info.desc}`);
+      await this.waitForTap();
+    }
+  },
+
+  async _useConsumable(player, itemName, info) {
+    const idx = player.inventory.indexOf(itemName);
+    if (idx === -1) return;
+
+    this.addLog(`  ${itemName}을(를) 사용하시겠습니까?`);
+    const c = await this.showChoices(['사용', '취소']);
+    if (c !== 0) return;
+
+    player.inventory.splice(idx, 1);
+    if (info.effect === 'heal') {
+      const healed = player.heal(info.value);
+      this.addSystemMsg(`  HP가 ${healed} 회복되었습니다! (${player.hp}/${player.maxHp})`);
+    } else if (info.effect === 'cure') {
+      player.poisoned = false;
+      this.addSystemMsg('  독 상태가 해제되었습니다!');
+    }
+    this.updateHeader();
+  },
+
+  async _equipFromInventory(player, itemName, info) {
+    this.addLog(`  ${itemName}을(를) 장착하시겠습니까?`);
+    const c = await this.showChoices(['장착', '취소']);
+    if (c !== 0) return;
+
+    const idx = player.inventory.indexOf(itemName);
+    if (idx === -1) return;
+    player.inventory.splice(idx, 1);
+
+    if (info.type === 'weapon') {
+      if (player.equippedWeapon) player.inventory.push(player.equippedWeapon.name);
+      player.equippedWeapon = { name: itemName, attack_bonus: info.attack_bonus };
+      this.addSystemMsg(`  ${itemName} 장착! (공격력 +${info.attack_bonus})`);
+    } else {
+      if (player.equippedArmor) player.inventory.push(player.equippedArmor.name);
+      player.equippedArmor = { name: itemName, defense_bonus: info.defense_bonus };
+      this.addSystemMsg(`  ${itemName} 장착! (방어력 +${info.defense_bonus})`);
+    }
+    this.updateHeader();
+  },
+
+  async showEquip(player) {
+    this.clearLog();
+    this.addDivider('장비 장착');
+
+    const equippable = player.inventory.filter(name => {
+      const info = ITEMS[name];
+      return info && (info.type === 'weapon' || info.type === 'armor');
+    });
+
+    if (equippable.length === 0) {
+      this.addLog('  장착할 수 있는 장비가 없습니다.');
+      await this.waitForTap();
+      return;
+    }
+
+    const unique = [...new Set(equippable)];
+    const labels = unique.map(name => {
+      const info = ITEMS[name];
+      return `${name} (${info.desc})`;
+    });
+    labels.push('취소');
+
+    const choice = await this.showChoices(labels);
+    if (choice >= unique.length) return;
+
+    const itemName = unique[choice];
+    const info = ITEMS[itemName];
+    await this._equipFromInventory(player, itemName, info);
+  },
+
+  showStatus(player) {
+    this.clearLog();
+    this.addDivider('캐릭터 상태');
+    this.addLog(`  이름: ${player.name}`);
+    this.addLog(`  직업: ${player.job}`);
+    this.addLog(`  레벨: Lv.${player.level} (EXP: ${player.exp}/${player.expToNext})`);
+    this.addLog(`  HP: ${player.hp}/${player.maxHp}`);
+    const atkBonus = player.equippedWeapon ? ` (+${player.equippedWeapon.attack_bonus})` : '';
+    const defBonus = player.equippedArmor ? ` (+${player.equippedArmor.defense_bonus})` : '';
+    this.addLog(`  공격력: ${player.attack}${atkBonus}`);
+    this.addLog(`  방어력: ${player.defense}${defBonus}`);
+    this.addLog(`  골드: ${player.gold}G`);
+    this.addLog(`  어둠 점수: ${player.darkPoints}`);
+    if (player.equippedWeapon) this.addLog(`  무기: ${player.equippedWeapon.name}`);
+    if (player.equippedArmor) this.addLog(`  방어구: ${player.equippedArmor.name}`);
+    if (player.poisoned) this.addLog('  상태: 중독 ☠');
+  },
+
+  /* ───── 전투 UI ───── */
+
+  showBattleScreen() {
+    this.showScreen('screen-battle');
+  },
+
+  updateBattleUI(player, enemy, turn) {
+    const set = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
+    const setW = (id, pct) => { const e = document.getElementById(id); if (e) e.style.width = `${pct}%`; };
+
+    set('battle-enemy-name', enemy.name);
+    set('battle-enemy-hp-text', `${Math.max(0, enemy.hp)}/${enemy.maxHp}`);
+    setW('battle-enemy-hp-bar', enemy.maxHp > 0 ? (Math.max(0, enemy.hp) / enemy.maxHp) * 100 : 0);
+
+    set('battle-player-name', player.name);
+    set('battle-player-level', `Lv.${player.level}`);
+    set('battle-player-hp-text', `${player.hp}/${player.maxHp}`);
+    setW('battle-player-hp-bar', player.maxHp > 0 ? (player.hp / player.maxHp) * 100 : 0);
+
+    set('battle-turn', `턴 ${turn}`);
+  },
+
+  showBattleLog(text) {
+    const log = document.getElementById('battle-log');
+    if (!log) return;
+    const p = document.createElement('p');
+    p.className = 'text-appear';
+    p.textContent = text;
+    log.appendChild(p);
+    log.scrollTop = log.scrollHeight;
+  },
+
+  clearBattleLog() {
+    const log = document.getElementById('battle-log');
+    if (log) log.innerHTML = '';
+  },
+
+  async showBattleChoices(skills = []) {
+    return new Promise(resolve => {
+      const container = document.getElementById('battle-actions');
+      if (!container) { resolve(0); return; }
+      container.innerHTML = '';
+
+      const actions = [{ label: '⚔ 공격', idx: 0 }];
+      skills.forEach((sk, i) => actions.push({ label: `✦ ${sk.name}`, idx: i + 1 }));
+      actions.push({ label: '🧪 아이템', idx: skills.length + 1 });
+      actions.push({ label: '💨 도망', idx: skills.length + 2 });
+
+      actions.forEach(act => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-battle';
+        btn.textContent = act.label;
+        btn.addEventListener('click', () => {
+          container.innerHTML = '';
+          resolve(act.idx);
+        });
+        container.appendChild(btn);
+      });
+    });
+  },
+
+  async showBattleItemMenu(player) {
+    const consumables = player.inventory.filter(name => {
+      const info = ITEMS[name];
+      return info && info.type === 'consumable';
+    });
+
+    if (consumables.length === 0) {
+      this.showBattleLog('  사용할 아이템이 없습니다!');
+      return null;
+    }
+
+    const counts = {};
+    consumables.forEach(item => { counts[item] = (counts[item] || 0) + 1; });
+    const items = Object.entries(counts);
+
+    return new Promise(resolve => {
+      const container = document.getElementById('battle-actions');
+      if (!container) { resolve(null); return; }
+      container.innerHTML = '';
+
+      items.forEach(([name, cnt], idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-battle';
+        btn.textContent = `${name} x${cnt}`;
+        btn.addEventListener('click', () => {
+          container.innerHTML = '';
+          resolve(name);
+        });
+        container.appendChild(btn);
+      });
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-battle';
+      cancelBtn.textContent = '취소';
+      cancelBtn.addEventListener('click', () => {
+        container.innerHTML = '';
+        resolve(null);
+      });
+      container.appendChild(cancelBtn);
+    });
+  },
+};
