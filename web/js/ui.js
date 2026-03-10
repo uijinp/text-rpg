@@ -81,19 +81,24 @@ const UI = {
   },
 
   async waitForTap() {
-    this.addLog('[ 터치하여 계속... ]', 'tap-prompt');
+    const activeScreen = document.querySelector('.screen.active');
+    if (activeScreen && activeScreen.id === 'screen-battle') {
+      this.showBattleLog('[ 터치하여 계속... ]', 'tap-prompt');
+    } else {
+      this.addLog('[ 터치하여 계속... ]', 'tap-prompt');
+    }
     return new Promise(resolve => {
       this._tapResolve = resolve;
-      const gameLog = document.getElementById('game-log');
       const handler = (e) => {
-        if (gameLog) gameLog.removeEventListener('click', handler);
+        document.removeEventListener('click', handler);
         document.removeEventListener('keydown', handler);
         const prompts = document.querySelectorAll('.tap-prompt');
         prompts.forEach(p => p.remove());
         this._tapResolve = null;
         resolve();
       };
-      if (gameLog) gameLog.addEventListener('click', handler, { once: true });
+      // 전투 화면/게임 화면 어디서든 탭으로 진행되도록 문서 전체를 감시한다.
+      document.addEventListener('click', handler, { once: true });
       document.addEventListener('keydown', handler, { once: true });
     });
   },
@@ -313,11 +318,11 @@ const UI = {
     set('battle-turn', `턴 ${turn}`);
   },
 
-  showBattleLog(text) {
+  showBattleLog(text, cssClass = '') {
     const log = document.getElementById('battle-log');
     if (!log) return;
     const p = document.createElement('p');
-    p.className = 'text-appear';
+    p.className = `text-appear ${cssClass}`.trim();
     p.textContent = text;
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
