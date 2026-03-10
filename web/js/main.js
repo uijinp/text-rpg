@@ -62,6 +62,112 @@ function setupBackButtons() {
   });
 }
 
+const TILE_MAP = RAW_MAP.map(row => row.split(''));
+
+function findMarkerPosition(markerChar) {
+  for (let r = 0; r < TILE_MAP.length; r++) {
+    for (let c = 0; c < TILE_MAP[r].length; c++) {
+      if (TILE_MAP[r][c] === markerChar) return { row: r, col: c };
+    }
+  }
+  return null;
+}
+
+function getTileChar(row, col) {
+  if (row < 0 || row >= TILE_MAP.length) return '#';
+  if (col < 0 || col >= TILE_MAP[0].length) return '#';
+  return TILE_MAP[row][col];
+}
+
+function canMoveTo(row, col) {
+  const ch = getTileChar(row, col);
+  if (ch in LOCATIONS) return true;
+  return !!TERRAIN[ch]?.passable;
+}
+
+function getZoneAt(row, col) {
+  const ch = getTileChar(row, col);
+  if (LOCATIONS[ch]) return LOCATIONS[ch].zone;
+  return TERRAIN[ch]?.zone ?? null;
+}
+
+function getAreaNameByPos(row, col) {
+  const ch = getTileChar(row, col);
+  if (LOCATIONS[ch]) return LOCATIONS[ch].name;
+  const zone = getZoneAt(row, col);
+  return AREAS[zone]?.name || '이동 중';
+}
+
+function renderMiniMap(player, radius = 5) {
+  const lines = [];
+  const startR = Math.max(0, player.mapRow - radius);
+  const endR = Math.min(TILE_MAP.length - 1, player.mapRow + radius);
+  const startC = Math.max(0, player.mapCol - radius);
+  const endC = Math.min(TILE_MAP[0].length - 1, player.mapCol + radius);
+
+  for (let r = startR; r <= endR; r++) {
+    let line = '';
+    for (let c = startC; c <= endC; c++) {
+      if (r === player.mapRow && c === player.mapCol) {
+        line += '@ ';
+        continue;
+      }
+      const ch = getTileChar(r, c);
+      if (ch in LOCATIONS) line += '★ ';
+      else if (ch === '#') line += '■ ';
+      else if (ch === '^') line += '▲ ';
+      else if (ch === 'w') line += '≈ ';
+      else if (ch === '=' || ch === '.') line += '· ';
+      else line += '□ ';
+    }
+    lines.push(line.trimEnd());
+  }
+  return lines;
+}
+
+async function tryStepMove(player, dr, dc, label) {
+  const nr = player.mapRow + dr;
+  const nc = player.mapCol + dc;
+  if (!canMoveTo(nr, nc)) {
+    UI.addSystemMsg(`  ${label}: 더 이상 갈 수 없습니다.`);
+    return { ok: false };
+  }
+
+  const curZone = getZoneAt(player.mapRow, player.mapCol);
+  const nextZone = getZoneAt(nr, nc);
+  if (nextZone && nextZone !== curZone && EventEngine.isZoneLocked(player, nextZone)) {
+    UI.addSystemMsg(`  [잠김] ${EventEngine.getLockHint(nextZone)}`);
+    return { ok: false };
+  }
+
+  player.mapRow = nr;
+  player.mapCol = nc;
+
+  const ch = getTileChar(nr, nc);
+  if (LOCATIONS[ch]) {
+    player.currentLocation = LOCATIONS[ch].zone;
+    player.visitedLocations.add(player.currentLocation);
+    UI.addSystemMsg(`  ★ ${LOCATIONS[ch].name}에 도착했습니다.`);
+  } else if (nextZone) {
+    player.currentLocation = nextZone;
+    player.visitedLocations.add(nextZone);
+  }
+
+  UI.updateHeader();
+  const zoneMeta = AREAS[nextZone];
+  if (!zoneMeta || zoneMeta.encounter_chance <= 0) return { ok: true };
+  if (Math.random() >= zoneMeta.encounter_chance) return { ok: true };
+
+  const enemies = zoneMeta.encounter_enemies || [];
+  if (enemies.length === 0) return { ok: true };
+  const enemyKey = enemies[Math.floor(Math.random() * enemies.length)];
+  UI.addLog(`  이동 중 ${ENEMY_TABLE[enemyKey]?.name || '적'}과 조우!`);
+  await UI.waitForTap();
+  const result = await CombatSystem.startBattle(player, enemyKey);
+  if (result === 'lose') return { ok: false, gameover: true };
+  return { ok: true };
+}
+
 
 /* ───── 새 게임 ───── */
 
@@ -99,6 +205,11 @@ async function startNewGame() {
       GameState.player = new Player(playerName, selectedJob, stats.hp, stats.attack, stats.defense);
       GameState.player.currentLocation = 'town';
       GameState.player.visitedLocations.add('town');
+      const startPos = findMarkerPosition('T');
+      if (startPos) {
+        GameState.player.mapRow = startPos.row;
+        GameState.player.mapCol = startPos.col;
+      }
 
       resolve();
     };
@@ -207,6 +318,18 @@ async function startGameLoop() {
     player.currentLocation = 'town';
     player.visitedLocations.add('town');
   }
+  if (!Number.isInteger(player.mapRow) || !Number.isInteger(player.mapCol)) {
+    const currentMarker = Object.entries(LOCATIONS).find(([, v]) => v.zone === player.currentLocation)?.[0] || 'T';
+    const pos = findMarkerPosition(currentMarker);
+    if (pos) {
+      player.mapRow = pos.row;
+      player.mapCol = pos.col;
+    } else {
+      const townPos = findMarkerPosition('T');
+      player.mapRow = townPos ? townPos.row : 28;
+      player.mapCol = townPos ? townPos.col : 36;
+    }
+  }
 
   while (player.isAlive()) {
     UI.showScreen('screen-game');
@@ -284,66 +407,41 @@ async function startGameLoop() {
 /* ───── 이동 메뉴 ───── */
 
 async function showTravelMenu(player) {
-  UI.clearLog();
-  UI.addDivider('지역 이동');
+  let moving = true;
+  while (moving) {
+    UI.clearLog();
+    UI.addDivider(`이동 모드 - ${getAreaNameByPos(player.mapRow, player.mapCol)}`);
+    renderMiniMap(player, 5).forEach(line => UI.addLog(line));
+    UI.addLog('');
+    UI.addLog('  @ 내 위치 | ★ 로케이션');
+    UI.addLog('  한 칸씩 이동합니다.');
 
-  const available = [];
-  const labels = [];
+    const choice = await UI.showChoices([
+      '↑ 북쪽으로 한 칸',
+      '↓ 남쪽으로 한 칸',
+      '← 서쪽으로 한 칸',
+      '→ 동쪽으로 한 칸',
+      '이동 종료',
+    ]);
 
-  for (const [zone, info] of Object.entries(AREAS)) {
-    if (zone === player.currentLocation) continue;
-
-    const locked = EventEngine.isZoneLocked(player, zone);
-    if (locked) {
-      labels.push(`🔒 ${info.name} - ${EventEngine.getLockHint(zone)}`);
-    } else {
-      labels.push(info.name);
+    if (choice === 4) {
+      moving = false;
+      break;
     }
-    available.push({ zone, locked });
-  }
-  labels.push('취소');
 
-  const choice = await UI.showChoices(labels);
-  if (choice >= available.length) return;
-
-  const target = available[choice];
-  if (target.locked) {
-    UI.addSystemMsg(`  ${EventEngine.getLockHint(target.zone)}`);
-    await UI.waitForTap();
-    return;
-  }
-
-  const area = AREAS[target.zone];
-
-  if (area.encounter_chance > 0 && Math.random() < area.encounter_chance) {
-    const enemies = area.encounter_enemies;
-    if (enemies.length > 0) {
-      const enemyKey = enemies[Math.floor(Math.random() * enemies.length)];
-      const enemyInfo = ENEMY_TABLE[enemyKey];
-      UI.clearLog();
-      UI.addLog(`  ${area.name}(으)로 이동 중...`);
-      UI.addLog(`  ${enemyInfo ? enemyInfo.name : '적'}이(가) 나타났다!`);
-      await UI.waitForTap();
-
-      const result = await CombatSystem.startBattle(player, enemyKey);
-      if (result === 'lose') {
-        await showGameOver(player);
-        return;
-      }
-      if (result === 'fled') {
-        UI.showScreen('screen-game');
-        UI.clearLog();
-        UI.addSystemMsg('  도망쳐서 원래 위치로 돌아왔다.');
-        await UI.waitForTap();
-        return;
-      }
+    const dirMap = [
+      { dr: -1, dc: 0, name: '북' },
+      { dr: 1, dc: 0, name: '남' },
+      { dr: 0, dc: -1, name: '서' },
+      { dr: 0, dc: 1, name: '동' },
+    ];
+    const d = dirMap[choice];
+    const stepResult = await tryStepMove(player, d.dr, d.dc, d.name);
+    if (stepResult.gameover) {
+      await showGameOver(player);
+      return;
     }
   }
-
-  player.currentLocation = target.zone;
-  player.visitedLocations.add(target.zone);
-  UI.addSystemMsg(`  ★ ${area.name}에 도착했습니다!`);
-  UI.updateHeader();
 }
 
 

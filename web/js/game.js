@@ -20,6 +20,8 @@ class Player {
     this.visitedLocations = new Set();
     this.currentLocation = null;
     this.poisoned = false;
+    this.mapRow = null;
+    this.mapCol = null;
   }
 
   /* Python player 호환 프로퍼티: YAML {player.xxx} 치환에서 사용 */
@@ -103,6 +105,8 @@ class Player {
       visitedLocations: [...this.visitedLocations],
       currentLocation: this.currentLocation,
       poisoned: this.poisoned,
+      mapRow: this.mapRow,
+      mapCol: this.mapCol,
     };
   }
 
@@ -121,6 +125,8 @@ class Player {
     p.visitedLocations = new Set(data.visitedLocations || []);
     p.currentLocation = data.currentLocation;
     p.poisoned = data.poisoned || false;
+    p.mapRow = Number.isInteger(data.mapRow) ? data.mapRow : null;
+    p.mapCol = Number.isInteger(data.mapCol) ? data.mapCol : null;
     return p;
   }
 }

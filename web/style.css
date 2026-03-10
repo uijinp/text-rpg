@@ -503,6 +503,7 @@ body {
   line-height: 1.8;
   margin-bottom: 8px;
   color: var(--text);
+  white-space: pre-wrap;
 }
 
 /* 텍스트 등장 애니메이션 */
