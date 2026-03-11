@@ -460,6 +460,37 @@ const UI = {
     if (player.poisoned) this.addLog('  상태: 중독 ☠');
   },
 
+  showQuestLog(questData) {
+    this.clearLog();
+    this.addDivider('퀘스트 로그');
+
+    const main = questData.main || [];
+    const side = questData.side || [];
+    const hints = questData.hints || [];
+
+    if (main.length === 0 && side.length === 0 && hints.length === 0) {
+      this.addLog('  진행 중인 퀘스트가 없습니다.');
+      return;
+    }
+
+    if (main.length > 0) {
+      this.addLog('  [메인 목표]');
+      main.forEach((q) => this.addLog(`  • ${q}`));
+      this.addLog('');
+    }
+
+    if (side.length > 0) {
+      this.addLog('  [서브 목표]');
+      side.forEach((q) => this.addLog(`  • ${q}`));
+      this.addLog('');
+    }
+
+    if (hints.length > 0) {
+      this.addLog('  [진행 힌트]');
+      hints.forEach((h) => this.addLog(`  • ${h}`));
+    }
+  },
+
   /* ───── 전투 UI ───── */
 
   showBattleScreen() {

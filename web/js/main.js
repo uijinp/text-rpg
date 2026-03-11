@@ -108,6 +108,9 @@ function setupQuickMenu() {
 
       if (action === 'map') {
         await UI.showMap(GameState.player);
+      } else if (action === 'quest') {
+        UI.showQuestLog(buildQuestData(GameState.player));
+        await UI.waitForTap();
       } else if (action === 'status') {
         UI.showStatus(GameState.player);
         await UI.waitForTap();
@@ -130,6 +133,53 @@ function setupQuickMenu() {
       }
     });
   });
+}
+
+function buildQuestData(player) {
+  const flags = player.storyFlags || {};
+  const main = [];
+  const side = [];
+  const hints = [];
+
+  // 메인 진행 퀘스트
+  if (!flags.forest_cleared) {
+    main.push('어두운 숲을 정리해 다음 지역으로 향하는 길을 확보한다.');
+  } else if (!(flags.cave_cleared || flags.river_cleared || flags.ruins_cleared)) {
+    main.push('몬스터 동굴 / 안개 강가 / 저주받은 폐허 중 한 곳을 해결한다.');
+  } else if (!flags.bandit_camp_cleared) {
+    main.push('산적 야영지를 정리해 마왕의 성으로 가는 길을 연다.');
+  } else if (!flags.castle_gate_cleared) {
+    main.push('마왕의 성 정문을 돌파한다.');
+  } else if (!flags.castle_inside_cleared) {
+    main.push('성 내부를 탐색해 마왕과의 결전을 준비한다.');
+  } else if (!flags.lazarus_defeated) {
+    main.push('어둠의 탑을 추적하거나 마왕의 방으로 진입한다.');
+  } else {
+    main.push('최종 결전을 준비한다.');
+  }
+
+  // 서브/생활 퀘스트
+  if (flags.blacksmith_quest && !flags.rescued_kai) {
+    side.push("대장장이 브론의 아들 '카이'를 찾아 구출한다.");
+  }
+  if (!flags.child_done) {
+    side.push('아르카디아 골목의 어린아이 부탁을 확인한다.');
+  }
+  if (!flags.desert_explored && flags.forest_cleared) {
+    side.push('사하르 마을을 탐색해 사막 라인을 개척한다.');
+  }
+
+  // 잠긴 지역 힌트 (최대 5개)
+  const lockedHints = [];
+  for (const [zone, info] of Object.entries(AREAS)) {
+    if (!info || !info.unlock_condition) continue;
+    if (EventEngine.isZoneLocked(player, zone)) {
+      lockedHints.push(`${info.name}: ${EventEngine.getLockHint(zone)}`);
+    }
+  }
+  hints.push(...lockedHints.slice(0, 5));
+
+  return { main, side, hints };
 }
 
 
@@ -561,7 +611,7 @@ async function startGameLoop() {
     const dpad = document.getElementById('dpad-container');
     if (dpad) dpad.classList.remove('hidden');
 
-    const menuLabels = ['지도 보기', '지역 탐색', '인벤토리', '장비 장착', '상태 확인', '저장', '게임 종료'];
+    const menuLabels = ['지도 보기', '퀘스트', '지역 탐색', '인벤토리', '장비 장착', '상태 확인', '저장', '게임 종료'];
     const choice = await UI.showChoices(menuLabels);
 
     // D-pad로 강제 이동 시그널이 온 경우 (루프 재시작)
@@ -578,6 +628,10 @@ async function startGameLoop() {
       await UI.showMap(player);
 
     } else if (choice === 1) {
+      UI.showQuestLog(buildQuestData(player));
+      await UI.waitForTap();
+
+    } else if (choice === 2) {
       const result = await EventEngine.runYamlEvent(player, player.currentLocation);
       if (result === 'gameover') {
         await showGameOver(player);
@@ -592,17 +646,17 @@ async function startGameLoop() {
         await UI.waitForTap();
       }
 
-    } else if (choice === 2) {
+    } else if (choice === 3) {
       await UI.showInventory(player);
 
-    } else if (choice === 3) {
+    } else if (choice === 4) {
       await UI.showEquip(player);
 
-    } else if (choice === 4) {
+    } else if (choice === 5) {
       UI.showStatus(player);
       await UI.waitForTap();
 
-    } else if (choice === 5) {
+    } else if (choice === 6) {
       UI.clearLog();
       UI.addDivider('게임 저장');
       const slotLabels = [];
@@ -619,7 +673,7 @@ async function startGameLoop() {
         await UI.waitForTap();
       }
 
-    } else if (choice === 5) {
+    } else if (choice === 7) {
       UI.clearLog();
       UI.addLog('  정말 게임을 종료하시겠습니까?');
       const confirmChoice = await UI.showChoices(['계속하기', '종료']);
