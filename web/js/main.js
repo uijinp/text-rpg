@@ -10,11 +10,32 @@ document.addEventListener('DOMContentLoaded', () => {
   setupBackButtons();
   setupDPad();
   setupDPadMap();
+  setupMiniMapToggle();
 });
 
 function pick(lines) {
   if (!Array.isArray(lines) || lines.length === 0) return '';
   return lines[Math.floor(Math.random() * lines.length)];
+}
+
+let miniMapEnabled = localStorage.getItem('mini_map_enabled') !== '0';
+
+function setupMiniMapToggle() {
+  const btn = document.getElementById('btn-minimap-toggle');
+  if (!btn) return;
+
+  const applyVisual = () => {
+    btn.style.borderColor = miniMapEnabled ? 'rgba(212, 160, 23, 0.55)' : '';
+    btn.style.color = miniMapEnabled ? '#f0c040' : '';
+  };
+  applyVisual();
+
+  btn.addEventListener('click', () => {
+    miniMapEnabled = !miniMapEnabled;
+    localStorage.setItem('mini_map_enabled', miniMapEnabled ? '1' : '0');
+    applyVisual();
+    updateMiniMap(GameState.player);
+  });
 }
 
 /* ───── 방향키 (D-pad) 설정 ───── */
@@ -219,14 +240,61 @@ function getMovementFlavorText(row, col, prevZone, nextZone) {
   return '조심스럽게 한 걸음 앞으로 나아갔다.';
 }
 
+function buildMiniMapLines(player, radius = 5) {
+  const tileMap = getCurrentTileMap();
+  const locs = getCurrentLocations();
+  const lines = [];
+  const startR = Math.max(0, player.mapRow - radius);
+  const endR = Math.min(tileMap.length - 1, player.mapRow + radius);
+  const startC = Math.max(0, player.mapCol - radius);
+  const endC = Math.min(tileMap[0].length - 1, player.mapCol + radius);
+
+  for (let r = startR; r <= endR; r++) {
+    let line = '';
+    for (let c = startC; c <= endC; c++) {
+      if (r === player.mapRow && c === player.mapCol) {
+        line += '@';
+        continue;
+      }
+      const ch = tileMap[r][c];
+      if (locs[ch]) line += '★';
+      else if (ch === '#' || ch === '^' || ch === '~' || ch === '*') line += '■';
+      else if (ch === 'w') line += '≈';
+      else if (ch === '=' || ch === '_' || ch === '.') line += '·';
+      else line += '□';
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+function updateMiniMap(player) {
+  const widget = document.getElementById('minimap-widget');
+  const grid = document.getElementById('minimap-grid');
+  const caption = document.getElementById('minimap-caption');
+  if (!widget || !grid || !caption) return;
+
+  if (!miniMapEnabled || !player || !Number.isInteger(player.mapRow) || !Number.isInteger(player.mapCol)) {
+    widget.classList.add('hidden');
+    return;
+  }
+
+  widget.classList.remove('hidden');
+  grid.textContent = buildMiniMapLines(player, 5).join('\n');
+  caption.textContent = `${getAreaNameByPos(player.mapRow, player.mapCol)} (${player.mapRow}, ${player.mapCol})`;
+}
+
 async function tryStepMove(player, dr, dc, label) {
+  const prevRow = player.mapRow;
+  const prevCol = player.mapCol;
+  const prevAreaName = getAreaNameByPos(prevRow, prevCol);
   const nr = player.mapRow + dr;
   const nc = player.mapCol + dc;
   if (!canMoveTo(nr, nc)) {
     UI.addSystemMsg(pick([
-      `  ${label}: 더 이상 갈 수 없습니다.`,
-      `  ${label}쪽 길은 막혀 있습니다.`,
-      `  ${label} 방향으로는 진행할 수 없습니다.`,
+      `  ${label} 이동 실패: 더 이상 갈 수 없습니다. (현재: ${prevAreaName})`,
+      `  ${label} 이동 실패: ${label}쪽 길은 막혀 있습니다. (현재: ${prevAreaName})`,
+      `  ${label} 이동 실패: ${label} 방향으로는 진행할 수 없습니다. (현재: ${prevAreaName})`,
     ]));
     return { ok: false };
   }
@@ -235,8 +303,8 @@ async function tryStepMove(player, dr, dc, label) {
   const nextZone = getZoneAt(nr, nc);
   if (nextZone && nextZone !== curZone && EventEngine.isZoneLocked(player, nextZone)) {
     UI.addSystemMsg(pick([
-      `  [잠김] ${EventEngine.getLockHint(nextZone)}`,
-      `  길을 막는 기운이 느껴집니다. ${EventEngine.getLockHint(nextZone)}`,
+      `  ${label} 이동 실패: [잠김] ${EventEngine.getLockHint(nextZone)}`,
+      `  ${label} 이동 실패: 길을 막는 기운이 느껴집니다. ${EventEngine.getLockHint(nextZone)}`,
     ]));
     return { ok: false };
   }
@@ -259,7 +327,16 @@ async function tryStepMove(player, dr, dc, label) {
     player.visitedLocations.add(nextZone);
   }
 
+  const nextAreaName = getAreaNameByPos(player.mapRow, player.mapCol);
+  if (prevAreaName === nextAreaName) {
+    UI.addSystemMsg(`  ${label}으로 한 칸 이동했습니다. (${nextAreaName} 내부)`);
+  } else {
+    UI.addSystemMsg(`  ${label}으로 한 칸 이동했습니다. (${prevAreaName} → ${nextAreaName})`);
+  }
+  UI.addLog(`  위치: [${prevRow}, ${prevCol}] → [${nr}, ${nc}]`);
+
   UI.updateHeader();
+  updateMiniMap(player);
   UI.addLog(`  ${getMovementFlavorText(nr, nc, curZone, nextZone)}`);
   const zoneMeta = AREAS[nextZone];
   if (!zoneMeta || zoneMeta.encounter_chance <= 0) return { ok: true };
@@ -446,6 +523,7 @@ async function startGameLoop() {
   const player = GameState.player;
   UI.showScreen('screen-game');
   UI.updateHeader();
+  updateMiniMap(player);
 
   if (!player.currentLocation) {
     player.currentLocation = 'town';
@@ -470,6 +548,7 @@ async function startGameLoop() {
     UI.showScreen('screen-game');
     UI.clearLog();
     UI.updateHeader();
+    updateMiniMap(player);
 
     const currentArea = AREAS[player.currentLocation];
     const areaName = currentArea ? currentArea.name : player.currentLocation;

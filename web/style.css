@@ -1165,6 +1165,52 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
+   미니맵 위젯
+   ═══════════════════════════════════════════════ */
+.minimap-widget {
+  position: absolute;
+  right: 14px;
+  top: 110px;
+  z-index: 35;
+  width: 152px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(8, 8, 14, 0.86);
+  border: 1px solid rgba(212, 160, 23, 0.28);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(2px);
+}
+
+.minimap-title {
+  font-size: 0.72rem;
+  color: var(--gold-light);
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.minimap-grid {
+  margin: 0;
+  white-space: pre;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  line-height: 10px;
+  letter-spacing: 0;
+  color: #d8d8d8;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 4px;
+  min-height: 118px;
+}
+
+.minimap-caption {
+  margin-top: 5px;
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════
    지도 화면 (Map UI)
    ═══════════════════════════════════════════════ */
 .map-container {
