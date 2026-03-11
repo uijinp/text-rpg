@@ -130,6 +130,26 @@ const UI = {
     if (hpBar) {
       hpBar.style.width = `${p.maxHp > 0 ? (p.hp / p.maxHp) * 100 : 0}%`;
     }
+
+    this.setAreaBackground(p.currentLocation);
+  },
+
+  resolveAreaBackgroundPath(areaKey) {
+    const file = AREA_BG_IMAGE[areaKey];
+    if (!file) return null;
+    return `bg_image/${file}`;
+  },
+
+  setAreaBackground(areaKey) {
+    const path = this.resolveAreaBackgroundPath(areaKey);
+    const root = document.documentElement;
+    if (!root) return;
+    if (!path) {
+      root.style.removeProperty('--game-bg-overlay');
+      return;
+    }
+    const overlay = `linear-gradient(180deg, rgba(4, 4, 8, 0.64), rgba(4, 4, 8, 0.78)), url("${path}")`;
+    root.style.setProperty('--game-bg-overlay', overlay);
   },
 
   /* ───── 지도 UI ───── */

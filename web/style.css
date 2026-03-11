@@ -38,6 +38,7 @@
   --radius: 8px;
   --radius-lg: 12px;
   --transition: 0.25s ease;
+  --game-bg-overlay: linear-gradient(170deg, var(--bg-dark) 0%, var(--bg-light) 100%);
 }
 
 html {
@@ -399,6 +400,11 @@ body {
   max-width: 480px;
   width: 100%;
   margin: 0 auto;
+  background-image: var(--game-bg-overlay);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-image 0.35s ease;
 }
 
 /* 상단 헤더 */
