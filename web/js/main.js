@@ -570,51 +570,70 @@ async function showMoreMenu(player) {
   while (true) {
     UI.clearLog();
     UI.addDivider('메뉴 더보기');
-    const choice = await UI.showChoices(['퀘스트', '지도 보기', '상태 확인', '저장', '게임 종료', '돌아가기']);
+    const choice = await UI.showChoices(['정보 보기', '시스템', '돌아가기']);
 
     if (choice === 0) {
-      UI.showQuestLog(buildQuestData(player));
-      await UI.waitForTap();
-      continue;
-    }
+      while (true) {
+        UI.clearLog();
+        UI.addDivider('정보 보기');
+        const infoChoice = await UI.showChoices(['퀘스트', '지도 보기', '상태 확인', '돌아가기']);
 
-    if (choice === 1) {
-      await UI.showMap(player);
-      continue;
-    }
-
-    if (choice === 2) {
-      UI.showStatus(player);
-      await UI.waitForTap();
-      continue;
-    }
-
-    if (choice === 3) {
-      UI.clearLog();
-      UI.addDivider('게임 저장');
-      const slotLabels = [];
-      for (let i = 0; i < 5; i++) slotLabels.push(`슬롯 ${i + 1}`);
-      slotLabels.push('취소');
-      const slot = await UI.showChoices(slotLabels);
-      if (slot < 5) {
-        GameState.saveToLocal(slot);
-        UI.addSystemMsg(pick([
-          `  슬롯 ${slot + 1}에 저장되었습니다!`,
-          `  여정의 기록이 슬롯 ${slot + 1}에 각인되었습니다.`,
-          `  저장 완료. 언제든 이 순간으로 돌아올 수 있습니다. (슬롯 ${slot + 1})`,
-        ]));
-        await UI.waitForTap();
+        if (infoChoice === 0) {
+          UI.showQuestLog(buildQuestData(player));
+          await UI.waitForTap();
+          continue;
+        }
+        if (infoChoice === 1) {
+          await UI.showMap(player);
+          continue;
+        }
+        if (infoChoice === 2) {
+          UI.showStatus(player);
+          await UI.waitForTap();
+          continue;
+        }
+        break;
       }
       continue;
     }
 
-    if (choice === 4) {
-      UI.clearLog();
-      UI.addLog('  정말 게임을 종료하시겠습니까?');
-      const confirmChoice = await UI.showChoices(['계속하기', '종료']);
-      if (confirmChoice === 1) {
-        UI.showScreen('screen-title');
-        return 'title';
+    if (choice === 1) {
+      while (true) {
+        UI.clearLog();
+        UI.addDivider('시스템');
+        const sysChoice = await UI.showChoices(['저장', '타이틀로', '돌아가기']);
+
+        if (sysChoice === 0) {
+          UI.clearLog();
+          UI.addDivider('게임 저장');
+          const slotLabels = [];
+          for (let i = 0; i < 5; i++) slotLabels.push(`슬롯 ${i + 1}`);
+          slotLabels.push('취소');
+          const slot = await UI.showChoices(slotLabels);
+          if (slot < 5) {
+            GameState.saveToLocal(slot);
+            UI.addSystemMsg(pick([
+              `  슬롯 ${slot + 1}에 저장되었습니다!`,
+              `  여정의 기록이 슬롯 ${slot + 1}에 각인되었습니다.`,
+              `  저장 완료. 언제든 이 순간으로 돌아올 수 있습니다. (슬롯 ${slot + 1})`,
+            ]));
+            await UI.waitForTap();
+          }
+          continue;
+        }
+
+        if (sysChoice === 1) {
+          UI.clearLog();
+          UI.addLog('  정말 게임을 종료하시겠습니까?');
+          const confirmChoice = await UI.showChoices(['계속하기', '종료']);
+          if (confirmChoice === 1) {
+            UI.showScreen('screen-title');
+            return 'title';
+          }
+          continue;
+        }
+
+        break;
       }
       continue;
     }

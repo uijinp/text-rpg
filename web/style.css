@@ -1176,7 +1176,8 @@ body {
 .minimap-widget {
   position: absolute;
   right: 14px;
-  top: 110px;
+  top: auto;
+  bottom: calc(max(20px, env(safe-area-inset-bottom)) + 180px);
   z-index: 35;
   width: 152px;
   padding: 8px;
@@ -1214,6 +1215,12 @@ body {
   font-size: 0.66rem;
   color: var(--text-dim);
   text-align: center;
+}
+
+@media (min-width: 481px) {
+  .minimap-widget {
+    bottom: 210px;
+  }
 }
 
 /* ═══════════════════════════════════════════════
