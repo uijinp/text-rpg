@@ -41,8 +41,11 @@ function setupDPad() {
         // 현재 showChoices 대기 상태를 강제로 취소(resolve 0 등)할 필요가 있습니다.
         if (UI._choiceResolve) {
           // hack: 강제로 '이동을 통해 화면 갱신' 용도의 특수 반환값 전달
+          // hideChoices()가 _choiceResolve를 null로 만들기 때문에
+          // resolver를 먼저 보관한 뒤 호출해야 루프가 정상 재개된다.
+          const resolveChoice = UI._choiceResolve;
           UI.hideChoices();
-          UI._choiceResolve('dpad_move');
+          resolveChoice('dpad_move');
         }
       }
     });
