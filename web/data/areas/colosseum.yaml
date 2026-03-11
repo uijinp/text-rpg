@@ -1,0 +1,147 @@
+colosseum:
+  actions:
+    # 1. 첫 방문 연출
+    - action: if
+      cond: {not_flag: colosseum_visited}
+      then:
+        - action: divider
+          title: "고대 투기장"
+        - action: print
+          text: |
+
+            황혼빛에 물든 거대한 원형 투기장.
+            수백 년 전 용사들이 무예를 겨루던 이곳은 폐허가 되었지만,
+            여전히 도전자들이 찾아오고 있다.
+            바닥에 새겨진 룬 문양이 희미하게 빛나고 있다.
+        - action: set_flag
+          key: colosseum_visited
+          value: true
+        - action: pause
+
+    # 2. 메인 루프
+    - action: loop
+      body:
+        - action: divider
+          title: "고대 투기장"
+
+        - action: menu
+          options:
+            - label: "투기장에 도전하기"
+              when: {not_flag: colosseum_cleared}
+              actions:
+                - action: goto
+                  scene: arena_challenge
+
+            - label: "투기장에 다시 도전하기 (클리어 후)"
+              when: {flag: colosseum_cleared}
+              actions:
+                - action: print
+                  text: "\n  이미 챔피언을 쓰러뜨렸지만, 투기장은 언제든 도전할 수 있다."
+                - action: print
+                  text: "  이번에는 보상 없이 실전 훈련이다!"
+                - action: battle
+                  enemy: orc
+                  on_win:
+                    - action: print
+                      text: "  첫 번째 상대를 물리쳤다!"
+                    - action: battle
+                      enemy: mercenary_duelist
+                      on_win:
+                        - action: print
+                          text: "  훌륭한 전투였다!"
+                        - action: add_gold
+                          amount: 50
+                      on_lose:
+                        - action: print
+                          text: "  훈련 중 쓰러졌다..."
+                  on_lose:
+                    - action: print
+                      text: "  훈련 중 쓰러졌다..."
+
+            - label: "투기장 주변 탐색"
+              actions:
+                - action: print
+                  text: "\n  투기장 관중석 사이를 뒤적거렸다."
+                - action: random
+                  branches:
+                    - weight: 0.4
+                      actions:
+                        - action: add_gold
+                          amount: 30
+                    - weight: 0.3
+                      actions:
+                        - action: print
+                          text: "  관중석에 숨어있던 적과 마주쳤다!"
+                        - action: battle
+                          enemy: bandit
+                    - weight: 0.3
+                      actions:
+                        - action: print
+                          text: "  아무것도 찾지 못했다."
+
+            - label: "돌아가기"
+              actions:
+                - action: break
+
+  # 3. 투기장 3연전 씬
+  scenes:
+    arena_challenge:
+      actions:
+        - action: divider
+          title: "투기장 도전 - 제1전"
+        - action: print
+          text: |
+
+            투기장 중앙에 서자, 룬 문양이 붉게 빛나기 시작한다.
+            "도전자여! 세 번의 시련을 이겨내라!"
+            첫 번째 상대가 나타난다!
+        - action: battle
+          enemy: orc
+          on_win:
+            - action: divider
+              title: "투기장 도전 - 제2전"
+            - action: print
+              text: |
+
+                "좋다! 다음 상대다!"
+                두 번째 상대가 모습을 드러낸다!
+            - action: battle
+              enemy: bandit
+              on_win:
+                - action: divider
+                  title: "투기장 도전 - 최종전"
+                - action: print
+                  text: |
+
+                    "마지막이다! 투기장의 챔피언과 맞서라!"
+                    사나운 눈빛의 용병결투사가 검을 빼들었다!
+                - action: battle
+                  name: "투기장 챔피언"
+                  enemy: mercenary_duelist
+                  hp_multiply: 1.5
+                  on_win:
+                    - action: divider
+                      title: "투기장 정복!"
+                    - action: print
+                      text: |
+
+                        챔피언이 무릎을 꿇었다.
+                        "대단하군... 이 투기장의 새로운 주인이 나타났다."
+                        룬 문양이 환하게 빛나며, 투사의 반지가 솟아올랐다!
+                    - action: set_flag
+                      key: colosseum_cleared
+                      value: true
+                    - action: add_item
+                      item: "투사의 반지"
+                    - action: add_gold
+                      amount: 300
+                    - action: pause
+                  on_lose:
+                    - action: print
+                      text: "\n  챔피언의 압도적인 실력 앞에 쓰러졌다..."
+              on_lose:
+                - action: print
+                  text: "\n  두 번째 시련에서 쓰러졌다..."
+          on_lose:
+            - action: print
+              text: "\n  첫 번째 시련에서 쓰러졌다..."

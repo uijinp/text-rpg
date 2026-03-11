@@ -512,6 +512,9 @@ async function initStoryFlags() {
     cel_arsenal_cleared: false,
     cel_spire_cleared: false,
     cel_throne_cleared: false,
+    // 남부 지역
+    colosseum_cleared: false,
+    temple_cleared: false,
   };
   for (const [key, val] of Object.entries(defaults)) {
     if (!(key in player.storyFlags)) player.storyFlags[key] = val;

@@ -639,8 +639,70 @@ body {
 }
 
 .battle-enemy-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border-color: rgba(231, 76, 60, 0.2);
   transition: border-color 0.2s, opacity 0.3s;
+}
+
+.battle-enemy-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(231, 76, 60, 0.25);
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 적 2마리: 100px */
+.enemies-2 .battle-enemy-img {
+  width: 100px;
+  height: 100px;
+}
+
+/* 적 3마리: 72px */
+.enemies-3 .battle-enemy-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+}
+.enemies-3 .battle-enemy-entry {
+  padding: 8px 10px;
+}
+
+/* 적 4마리: 56px */
+.enemies-4 .battle-enemy-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+}
+.enemies-4 .battle-enemy-entry {
+  padding: 6px 10px;
+  gap: 8px;
+}
+
+.battle-enemy-info .hp-bar-container {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.battle-enemy-info .hp-bar {
+  border-radius: 4px;
+}
+
+.battle-enemy-info .hp-text {
+  font-size: 0.7rem;
+}
+
+.battle-enemy-entry.dead .battle-enemy-img {
+  filter: grayscale(1);
+}
+
+.battle-enemy-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .battle-enemy-entry.targeted {
@@ -1325,6 +1387,8 @@ body {
 .map-tile-cel-throne { color: #ddaaff; }
 .map-tile-cel-market { color: #ffcc66; }
 .map-tile-cel-sanctuary { color: #aaffdd; }
+.map-tile-colosseum { color: #cc8844; }
+.map-tile-temple-old { color: #77aa99; }
 
 .map-player {
   color: #ff3333;

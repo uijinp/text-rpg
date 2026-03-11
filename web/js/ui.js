@@ -178,6 +178,7 @@ const UI = {
       'e': 'map-tile-forest', 'n': 'map-tile-forest',
       '=': 'map-tile-road', '_': 'map-tile-road',
       '.': 'map-tile-land',
+      'p': 'map-tile-colosseum', 'o': 'map-tile-temple-old',
     };
     if (mapId === 'underworld') {
       Object.assign(tileClasses, {
@@ -526,11 +527,28 @@ const UI = {
     if (container) {
       container.innerHTML = '';
       const arr = Array.isArray(enemies) ? enemies : [enemies];
+      /* 적 수에 따라 크기 클래스 부여 */
+      container.className = 'battle-enemies-container';
+      if (arr.length >= 4) container.classList.add('enemies-4');
+      else if (arr.length === 3) container.classList.add('enemies-3');
+      else if (arr.length === 2) container.classList.add('enemies-2');
       arr.forEach((e, i) => {
         const entry = document.createElement('div');
         entry.className = 'battle-enemy-entry';
         if (e.hp <= 0) entry.classList.add('dead');
         if (i === targetIdx && e.hp > 0) entry.classList.add('targeted');
+
+        /* 몬스터 이미지 */
+        const img = document.createElement('img');
+        img.className = 'battle-enemy-img';
+        img.src = `monster_image/${e.key}.webp`;
+        img.alt = e.label || e.name;
+        img.loading = 'lazy';
+        img.onerror = function() { this.style.display = 'none'; };
+
+        /* 이름 + HP 정보 영역 */
+        const info = document.createElement('div');
+        info.className = 'battle-enemy-info';
 
         const nameRow = document.createElement('div');
         nameRow.className = 'battle-enemy-name';
@@ -549,8 +567,11 @@ const UI = {
         hpBar.style.width = `${e.maxHp > 0 ? (Math.max(0, e.hp) / e.maxHp) * 100 : 0}%`;
         hpCont.appendChild(hpBar);
 
-        entry.appendChild(nameRow);
-        entry.appendChild(hpCont);
+        info.appendChild(nameRow);
+        info.appendChild(hpCont);
+
+        entry.appendChild(img);
+        entry.appendChild(info);
         container.appendChild(entry);
       });
     }

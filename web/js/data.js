@@ -163,6 +163,10 @@ const ITEMS = {
   "천상의 로브": { type: "armor", defense_bonus: 12, price: 350, desc: "방어력 +12, 성스러운 기운을 두른 로브" },
   "세라핌의 갑옷": { type: "armor", defense_bonus: 16, price: 450, desc: "방어력 +16, 천사의 깃털로 만든 갑옷" },
   "여명의 왕관": { type: "special", price: 0, desc: "타락한 대천사가 쓰던 왕관. 여명의 권능이 깃들어 있다" },
+
+  // ── 남부 지역 ──
+  "투사의 반지": { type: "special", attack_bonus: 5, price: 0, desc: "공격력 +5, 투기장 챔피언의 증표" },
+  "고대의 부적": { type: "special", defense_bonus: 5, price: 0, desc: "방어력 +5, 잊혀진 신전에서 발견된 부적" },
 };
 
 const SHOP_STOCK = ["소형 포션", "대형 포션", "해독제", "낡은 검", "강철 검", "가죽 갑옷", "사슬 갑옷"];
@@ -238,6 +242,24 @@ AREAS.cel_arsenal_terrain = { name: "빛의 무기고", unlock_condition: { flag
 AREAS.cel_spire_terrain = { name: "수정 첨탑", unlock_condition: { flag: "cel_arsenal_cleared" }, lock_hint: "빛의 무기고를 먼저 정복하세요.", encounter_chance: 0.45, encounter_enemies: ["seraph_guardian", "divine_golem"], desc: "빛나는 수정이 솟아있는 지대." };
 AREAS.cel_throne_terrain = { name: "여명의 왕좌 지대", unlock_condition: { flag: "cel_spire_cleared" }, lock_hint: "수정 첨탑을 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["seraph_guardian", "judgment_angel"], desc: "눈부신 빛이 쏟아지는 왕좌 주변." };
 
+// ── 남부 지역 ──
+AREAS.colosseum = {
+  name: "고대 투기장",
+  unlock_condition: { flag: "forest_cleared" },
+  lock_hint: "숲을 먼저 정리해야 합니다.",
+  encounter_chance: 0,
+  encounter_enemies: [],
+  desc: "거대한 원형 투기장. 관중석의 환호가 메아리친다.",
+};
+AREAS.forgotten_temple = {
+  name: "잊혀진 신전",
+  unlock_condition: { flag: "forest_cleared" },
+  lock_hint: "숲을 먼저 정리해야 합니다.",
+  encounter_chance: 0.25,
+  encounter_enemies: ["corrupted_spirit", "labyrinth_guardian"],
+  desc: "이끼 낀 고대 신전. 타락한 기운이 감돈다.",
+};
+
 AREAS.ice = {
   name: "빙하 지대",
   unlock_condition: { flag: "castle_gate_cleared" },
@@ -274,6 +296,8 @@ const AREA_BG_IMAGE = {
   dark_tower: "castle_inside.webp",
   volcano: "boss_chamber.webp",
   dragon_dungeon: "boss_chamber.webp",
+  colosseum: "ruins.webp",
+  forgotten_temple: "cave.webp",
   uw_entrance: "underworld.webp",
   uw_boneyard: "underworld.webp",
   uw_crystal: "underworld.webp",
@@ -328,6 +352,8 @@ const TERRAIN = {
   "t": { passable: true, zone: "dark_tower" },
   "v": { passable: true, zone: "volcano" },
   "z": { passable: true, zone: "dragon_dungeon" },
+  "p": { passable: true, zone: "colosseum" },
+  "o": { passable: true, zone: "forgotten_temple" },
 };
 
 const LOCATIONS = {
@@ -355,6 +381,8 @@ const LOCATIONS = {
   A: { name: "어둠의 탑", zone: "dark_tower" },
   V: { name: "화산 지대", zone: "volcano" },
   Z: { name: "드래곤의 던전", zone: "dragon_dungeon" },
+  X: { name: "고대 투기장", zone: "colosseum" },
+  N: { name: "잊혀진 신전", zone: "forgotten_temple" },
 };
 
 const RAW_MAP = [
@@ -396,11 +424,11 @@ const RAW_MAP = [
   "#wwwwww.nnnnnWnnnnn.................................dddddddddd=dddddddd...#",
   "#wwwwww.nnnnnnnnnnn.................................ddddddddddPdddddddd...#",
   "#wwwwww.nnnnnnnnnnn.................................dddddddddd=dddddddd...#",
-  "#wwwwww.............................................dddddddddd=dddddddd...#",
-  "#wwwwww.............................................ddddddddddOdddddddd...#",
-  "#wwwwww.............................................dddddddddd=dddddddd...#",
-  "#wwwwww.............................................dddvvvvvvv=vvvvvvdd...#",
-  "#...................................................dddvvvvvvv=vvvvvvdd...#",
+  "#wwwwww.......pppppppppppp=oooooooooooo.............dddddddddd=dddddddd...#",
+  "#wwwwww.......pppppXpppppp=oooooNoooooo.............ddddddddddOdddddddd...#",
+  "#wwwwww.......pppppppppppp=oooooooooooo.............dddddddddd=dddddddd...#",
+  "#wwwwww.......pppppppppppp=oooooooooooo.............dddvvvvvvv=vvvvvvdd...#",
+  "#.............pppppppppppp=oooooooooooo.............dddvvvvvvv=vvvvvvdd...#",
   "#.^^^^^.............................................dddvvvvvvvVvvvvvvdd...#",
   "#.^^^^^.............................................dddvvvvvvv=vvvvvvdd...#",
   "#.^^^^^...zzzzzzzz...zzzzzz............................vvvvvv=vvvvvvv.....#",
