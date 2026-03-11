@@ -12,6 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDPadMap();
 });
 
+function pick(lines) {
+  if (!Array.isArray(lines) || lines.length === 0) return '';
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
 /* ───── 방향키 (D-pad) 설정 ───── */
 function setupDPad() {
   const dirMap = {
@@ -218,14 +223,21 @@ async function tryStepMove(player, dr, dc, label) {
   const nr = player.mapRow + dr;
   const nc = player.mapCol + dc;
   if (!canMoveTo(nr, nc)) {
-    UI.addSystemMsg(`  ${label}: 더 이상 갈 수 없습니다.`);
+    UI.addSystemMsg(pick([
+      `  ${label}: 더 이상 갈 수 없습니다.`,
+      `  ${label}쪽 길은 막혀 있습니다.`,
+      `  ${label} 방향으로는 진행할 수 없습니다.`,
+    ]));
     return { ok: false };
   }
 
   const curZone = getZoneAt(player.mapRow, player.mapCol);
   const nextZone = getZoneAt(nr, nc);
   if (nextZone && nextZone !== curZone && EventEngine.isZoneLocked(player, nextZone)) {
-    UI.addSystemMsg(`  [잠김] ${EventEngine.getLockHint(nextZone)}`);
+    UI.addSystemMsg(pick([
+      `  [잠김] ${EventEngine.getLockHint(nextZone)}`,
+      `  길을 막는 기운이 느껴집니다. ${EventEngine.getLockHint(nextZone)}`,
+    ]));
     return { ok: false };
   }
 
@@ -237,7 +249,11 @@ async function tryStepMove(player, dr, dc, label) {
   if (locs[ch]) {
     player.currentLocation = locs[ch].zone;
     player.visitedLocations.add(player.currentLocation);
-    UI.addSystemMsg(`  ★ ${locs[ch].name}에 도착했습니다.`);
+    UI.addSystemMsg(pick([
+      `  ★ ${locs[ch].name}에 도착했습니다.`,
+      `  ★ ${locs[ch].name}의 경계에 발을 들였습니다.`,
+      `  ★ 목적지 도착: ${locs[ch].name}`,
+    ]));
   } else if (nextZone) {
     player.currentLocation = nextZone;
     player.visitedLocations.add(nextZone);
@@ -252,7 +268,12 @@ async function tryStepMove(player, dr, dc, label) {
   const enemies = zoneMeta.encounter_enemies || [];
   if (enemies.length === 0) return { ok: true };
   const enemyKey = enemies[Math.floor(Math.random() * enemies.length)];
-  UI.addLog(`  이동 중 ${ENEMY_TABLE[enemyKey]?.name || '적'}과 조우!`);
+  const enemyName = ENEMY_TABLE[enemyKey]?.name || '적';
+  UI.addLog(pick([
+    `  이동 중 ${enemyName}과 조우!`,
+    `  어둠 속에서 ${enemyName}이(가) 모습을 드러냈다!`,
+    `  길목을 막아선 것은 ${enemyName}이었다!`,
+  ]));
   await UI.waitForTap();
   const result = await CombatSystem.startBattle(player, enemyKey);
   if (result === 'lose') return { ok: false, gameover: true };
@@ -362,7 +383,11 @@ async function initStoryFlags() {
   UI.clearLog();
   UI.addDivider('모험의 시작');
   UI.addLog('');
-  UI.addLog(`  ${player.name}(${player.job})의 모험이 시작됩니다!`);
+  UI.addLog(pick([
+    `  ${player.name}(${player.job})의 모험이 시작됩니다!`,
+    `  ${player.name}, 이제 운명의 여정이 시작됩니다.`,
+    `  낯선 바람과 함께 ${player.name}의 발걸음이 움직입니다.`,
+  ]));
   UI.addSystemMsg('  ▶ 장로에게 소형 포션 x2를 받았습니다.');
   UI.addLog('');
   await UI.waitForTap();
@@ -400,7 +425,11 @@ async function loadGame() {
 
   const slot = saves[choice].slot;
   if (GameState.loadFromLocal(slot)) {
-    UI.addSystemMsg('  게임을 불러왔습니다!');
+    UI.addSystemMsg(pick([
+      '  게임을 불러왔습니다!',
+      '  저장된 여정을 이어갑니다.',
+      '  기억이 되살아났습니다. 모험을 계속합니다.',
+    ]));
     await UI.waitForTap();
     await startGameLoop();
   } else {
@@ -503,7 +532,11 @@ async function startGameLoop() {
       const slot = await UI.showChoices(slotLabels);
       if (slot < 5) {
         GameState.saveToLocal(slot);
-        UI.addSystemMsg(`  슬롯 ${slot + 1}에 저장되었습니다!`);
+        UI.addSystemMsg(pick([
+          `  슬롯 ${slot + 1}에 저장되었습니다!`,
+          `  여정의 기록이 슬롯 ${slot + 1}에 각인되었습니다.`,
+          `  저장 완료. 언제든 이 순간으로 돌아올 수 있습니다. (슬롯 ${slot + 1})`,
+        ]));
         await UI.waitForTap();
       }
 
@@ -534,7 +567,11 @@ async function showGameOver(player) {
   UI.clearLog();
   UI.addDivider('GAME OVER');
   UI.addLog('');
-  UI.addLog('  당신은 쓰러졌습니다...');
+  UI.addLog(pick([
+    '  당신은 쓰러졌습니다...',
+    '  눈앞이 점점 어두워집니다...',
+    '  마지막 일격이 몸을 꿰뚫었습니다...',
+  ]));
   UI.addLog(`  최종 레벨: Lv.${player.level}`);
   UI.addLog(`  마지막 위치: ${AREAS[player.currentLocation]?.name || player.currentLocation}`);
   UI.addLog('');
@@ -565,7 +602,11 @@ async function showEnding(player, endingType) {
   UI.addLog(`  ${player.name} (${player.job}) Lv.${player.level}`);
   UI.addLog(`  어둠 점수: ${player.darkPoints}`);
   UI.addLog('');
-  UI.addLog('  축하합니다! 게임을 클리어했습니다!');
+  UI.addLog(pick([
+    '  축하합니다! 게임을 클리어했습니다!',
+    '  긴 여정 끝에 마침내 결말에 도달했습니다!',
+    '  전설은 이제 당신의 이름을 기억할 것입니다.',
+  ]));
   UI.addLog('');
 
   await UI.showChoices(['타이틀로 돌아가기']);

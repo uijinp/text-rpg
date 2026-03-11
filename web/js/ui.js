@@ -5,6 +5,11 @@ const UI = {
   _tapResolve: null,
   _previousScreen: 'screen-game',
 
+  pick(lines) {
+    if (!Array.isArray(lines) || lines.length === 0) return '';
+    return lines[Math.floor(Math.random() * lines.length)];
+  },
+
   showScreen(screenId) {
     const prev = document.querySelector('.screen.active');
     if (prev) this._previousScreen = prev.id;
@@ -250,6 +255,21 @@ const UI = {
     while (true) {
       this.clearLog();
       this.addDivider(shopName);
+      const greet = shopName.includes('암흑')
+        ? this.pick([
+            '  상인: "비밀 거래라면, 값은 묻지 않는 게 좋지..."',
+            '  암시장 상인: "금화가 많을수록 입은 가벼워진다네."',
+          ])
+        : shopName.includes('천상')
+          ? this.pick([
+              '  천사 상인: "빛의 가호가 당신과 함께하길."',
+              '  상인: "정결한 장비가 어둠을 가릅니다."',
+            ])
+          : this.pick([
+              '  상인: "좋은 물건은 주인을 알아보지."',
+              '  상인: "모험 전 준비는 생존의 절반이야."',
+            ]);
+      this.addLog(greet);
       this.addLog(`  보유 골드: ${player.gold}G`);
       this.addLog('');
 
@@ -269,9 +289,17 @@ const UI = {
       if (player.gold >= info.price) {
         player.gold -= info.price;
         player.inventory.push(itemName);
-        this.addSystemMsg(`  ${itemName}을(를) 구매했습니다! (잔여: ${player.gold}G)`);
+        this.addSystemMsg(this.pick([
+          `  ${itemName}을(를) 구매했습니다! (잔여: ${player.gold}G)`,
+          `  ${itemName} 확보 완료. 지갑이 조금 가벼워졌습니다. (${player.gold}G)`,
+          `  거래 성립! ${itemName}이(가) 가방에 들어갔습니다. (${player.gold}G)`,
+        ]));
       } else {
-        this.addSystemMsg('  골드가 부족합니다!');
+        this.addSystemMsg(this.pick([
+          '  골드가 부족합니다!',
+          '  상인: "돈이 모자라네. 다음에 다시 오게."',
+          '  주머니를 뒤졌지만 금화가 모자랍니다.',
+        ]));
       }
       this.updateHeader();
       await this.waitForTap();
@@ -292,7 +320,11 @@ const UI = {
     this.addLog('');
 
     if (player.inventory.length === 0) {
-      this.addLog('  인벤토리가 비어있습니다.');
+      this.addLog(this.pick([
+        '  인벤토리가 비어있습니다.',
+        '  배낭이 텅 비었습니다. 보급이 필요해 보입니다.',
+        '  챙겨둔 물건이 없습니다.',
+      ]));
       await this.waitForTap();
       return;
     }
@@ -335,10 +367,18 @@ const UI = {
     player.inventory.splice(idx, 1);
     if (info.effect === 'heal') {
       const healed = player.heal(info.value);
-      this.addSystemMsg(`  HP가 ${healed} 회복되었습니다! (${player.hp}/${player.maxHp})`);
+      this.addSystemMsg(this.pick([
+        `  HP가 ${healed} 회복되었습니다! (${player.hp}/${player.maxHp})`,
+        `  상처가 가라앉습니다. HP +${healed} (${player.hp}/${player.maxHp})`,
+        `  따뜻한 기운이 퍼집니다. HP ${healed} 회복!`,
+      ]));
     } else if (info.effect === 'cure') {
       player.poisoned = false;
-      this.addSystemMsg('  독 상태가 해제되었습니다!');
+      this.addSystemMsg(this.pick([
+        '  독 상태가 해제되었습니다!',
+        '  몸속 독기가 사라졌습니다.',
+        '  해독 효과로 상태가 안정되었습니다.',
+      ]));
     }
     this.updateHeader();
   },
@@ -355,11 +395,19 @@ const UI = {
     if (info.type === 'weapon') {
       if (player.equippedWeapon) player.inventory.push(player.equippedWeapon.name);
       player.equippedWeapon = { name: itemName, attack_bonus: info.attack_bonus };
-      this.addSystemMsg(`  ${itemName} 장착! (공격력 +${info.attack_bonus})`);
+      this.addSystemMsg(this.pick([
+        `  ${itemName} 장착! (공격력 +${info.attack_bonus})`,
+        `  무기를 바꿔 쥐었습니다. 공격력이 상승합니다.`,
+        `  손에 익은 감각이 듭니다. ${itemName} 장착 완료.`,
+      ]));
     } else {
       if (player.equippedArmor) player.inventory.push(player.equippedArmor.name);
       player.equippedArmor = { name: itemName, defense_bonus: info.defense_bonus };
-      this.addSystemMsg(`  ${itemName} 장착! (방어력 +${info.defense_bonus})`);
+      this.addSystemMsg(this.pick([
+        `  ${itemName} 장착! (방어력 +${info.defense_bonus})`,
+        '  갑옷 끈을 단단히 조였습니다. 방어가 안정됩니다.',
+        `  장비를 정돈했습니다. 몸이 한결 든든합니다.`,
+      ]));
     }
     this.updateHeader();
   },
