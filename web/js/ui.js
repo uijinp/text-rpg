@@ -123,8 +123,15 @@ const UI = {
     set('header-gold', `💰 ${p.gold}G`);
     set('header-hp-text', `${p.hp}/${p.maxHp}`);
 
-    const loc = AREAS[p.currentLocation];
-    set('header-location', `📍 ${loc ? loc.name : '???'}`);
+    const posName = (typeof getAreaNameByPos === 'function')
+      ? getAreaNameByPos(p.mapRow, p.mapCol)
+      : (AREAS[p.currentLocation]?.name || '???');
+    const posZone = (typeof getZoneAt === 'function')
+      ? getZoneAt(p.mapRow, p.mapCol) : null;
+    const zoneData = posZone ? AREAS[posZone] : null;
+    const recLvl = zoneData?.recommendedLevel;
+    const lvlTag = (recLvl > 0) ? ` [Lv.${recLvl}]` : '';
+    set('header-location', `📍 ${posName}${lvlTag}`);
 
     const hpBar = document.getElementById('header-hp-bar');
     if (hpBar) {

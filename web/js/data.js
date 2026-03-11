@@ -175,30 +175,30 @@ const UW_SHOP_STOCK = ["심연의 포션", "고급 포션", "해독제", "수정
 const CEL_SHOP_STOCK = ["천상의 영약", "고급 포션", "해독제", "성광의 검", "세라핌의 갑옷", "천상의 로브"];
 
 const AREAS = {
-  town: { name: "아르카디아", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "아르카디아 마을의 따뜻한 거리." },
-  forest: { name: "어두운 숲", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["goblin", "wolf"], desc: "어둠이 짙은 숲." },
-  cave: { name: "몬스터 동굴", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.40, encounter_enemies: ["skeleton", "dark_mage"], desc: "음침한 동굴 입구." },
-  dwarf_mine: { name: "드워프 광산", unlock_condition: { flag: "cave_cleared" }, lock_hint: "동굴을 먼저 탐색해야 광산으로 가는 길이 열립니다.", encounter_chance: 0.30, encounter_enemies: ["goblin", "dwarf_golem"], desc: "거대한 지하 광산. 곡괭이 소리가 울려퍼진다." },
-  river: { name: "안개 강가", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.20, encounter_enemies: ["wolf", "bandit"], desc: "안개가 자욱한 강가." },
-  ruins: { name: "저주받은 폐허", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.45, encounter_enemies: ["skeleton", "vampire"], desc: "무너진 폐허." },
-  bandit_camp: { name: "산적 야영지", unlock_condition: { any_flag: ["cave_cleared", "river_cleared", "ruins_cleared"] }, lock_hint: "동굴/강가/폐허 중 한 곳을 먼저 해결하세요.", encounter_chance: 0.25, encounter_enemies: ["bandit", "orc"], desc: "산적들의 야영지." },
-  castle_gate: { name: "마왕의 성 정문", unlock_condition: { flag: "bandit_camp_cleared" }, lock_hint: "산적 야영지를 먼저 해결하세요.", encounter_chance: 0.50, encounter_enemies: ["undead_knight"], desc: "거대한 검은 성벽." },
-  castle_inside: { name: "성 내부", unlock_condition: { flag: "castle_gate_cleared" }, lock_hint: "성문을 먼저 돌파하세요.", encounter_chance: 0.30, encounter_enemies: ["undead_knight", "dark_mage"], desc: "차가운 성 복도." },
-  throne: { name: "마왕의 방", unlock_condition: { flag: "castle_inside_cleared" }, lock_hint: "성 내부를 먼저 탐색하세요.", encounter_chance: 0, encounter_enemies: [], desc: "거대한 왕좌의 방." },
-  harbor: { name: "포구 마을", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "파도 소리와 갈매기 울음." },
-  swamp: { name: "독안개 늪", unlock_condition: null, lock_hint: null, encounter_chance: 0.40, encounter_enemies: ["swamp_snake", "swamp_witch"], desc: "독안개가 피어오르는 늪지대." },
-  desert_town: { name: "사하르 마을", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "이국적인 향신료 냄새." },
-  pyramid: { name: "파라오의 피라미드", unlock_condition: { flag: "desert_explored" }, lock_hint: "사하르 마을을 먼저 탐색하세요.", encounter_chance: 0.50, encounter_enemies: ["mummy", "skeleton"], desc: "거대한 피라미드." },
-  oasis: { name: "오아시스", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "사막의 오아시스." },
-  ice_cave: { name: "빙하 동굴", unlock_condition: { flag: "castle_gate_cleared" }, lock_hint: "성 정문을 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["ice_golem", "frost_wyrm"], desc: "빙하 동굴." },
-  elf_village: { name: "엘프 마을", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.15, encounter_enemies: ["elf_guardian"], desc: "고요한 엘프 숲." },
-  spirit_forest: { name: "정령왕의 숲", unlock_condition: { flag: "elf_village_visited" }, lock_hint: "엘프 마을을 먼저 방문해야 비밀 통로가 열립니다.", encounter_chance: 0.35, encounter_enemies: ["corrupted_spirit", "wolf"], desc: "타락한 마력이 맴도는 울창한 숲." },
-  moonlight_lake: { name: "달빛 호수", unlock_condition: null, lock_hint: null, encounter_chance: 0.10, encounter_enemies: ["lake_spirit"], desc: "달빛이 수면 위에 춤추는 호수." },
-  labyrinth: { name: "지하 미궁", unlock_condition: { flag: "ruins_cleared" }, lock_hint: "폐허를 먼저 정리하세요.", encounter_chance: 0.45, encounter_enemies: ["labyrinth_guardian", "skeleton"], desc: "어둠 속 미궁 통로." },
-  mercenary_camp: { name: "용병단 야영지", unlock_condition: { flag: "bandit_camp_cleared" }, lock_hint: "산적 야영지를 먼저 해결하세요.", encounter_chance: 0.10, encounter_enemies: ["mercenary_duelist"], desc: "용병들의 야영지." },
-  dark_tower: { name: "어둠의 탑", unlock_condition: { flag: "castle_inside_cleared" }, lock_hint: "성 내부를 먼저 탐색하세요.", encounter_chance: 0.50, encounter_enemies: ["shadow_knight", "dark_sentinel"], desc: "검은 탑. 그림자가 일렁인다." },
-  volcano: { name: "화산 지대", unlock_condition: { flag: "pyramid_cleared" }, lock_hint: "피라미드를 먼저 공략하세요.", encounter_chance: 0.40, encounter_enemies: ["fire_elemental", "lava_drake"], desc: "화산 열기가 대기를 달군다." },
-  dragon_dungeon: { name: "드래곤의 던전", unlock_condition: { flag: "volcano_cleared" }, lock_hint: "화산 지대를 먼저 정복해야 합니다.", encounter_chance: 0.50, encounter_enemies: ["dragon_whelp", "lava_drake"], desc: "숨 쉬기조차 힘든 초고온의 거대한 둥지." },
+  town: { name: "아르카디아", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "아르카디아 마을의 따뜻한 거리.", recommendedLevel: 0 },
+  forest: { name: "어두운 숲", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["goblin", "wolf"], desc: "어둠이 짙은 숲.", recommendedLevel: 1, minEnemies: 1, maxEnemies: 2 },
+  cave: { name: "몬스터 동굴", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.40, encounter_enemies: ["skeleton", "dark_mage"], desc: "음침한 동굴 입구.", recommendedLevel: 2, minEnemies: 1, maxEnemies: 2 },
+  dwarf_mine: { name: "드워프 광산", unlock_condition: { flag: "cave_cleared" }, lock_hint: "동굴을 먼저 탐색해야 광산으로 가는 길이 열립니다.", encounter_chance: 0.30, encounter_enemies: ["goblin", "dwarf_golem"], desc: "거대한 지하 광산. 곡괭이 소리가 울려퍼진다.", recommendedLevel: 3, minEnemies: 1, maxEnemies: 2 },
+  river: { name: "안개 강가", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.20, encounter_enemies: ["wolf", "bandit"], desc: "안개가 자욱한 강가.", recommendedLevel: 2, minEnemies: 1, maxEnemies: 2 },
+  ruins: { name: "저주받은 폐허", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.45, encounter_enemies: ["skeleton", "vampire"], desc: "무너진 폐허.", recommendedLevel: 2, minEnemies: 1, maxEnemies: 3 },
+  bandit_camp: { name: "산적 야영지", unlock_condition: { any_flag: ["cave_cleared", "river_cleared", "ruins_cleared"] }, lock_hint: "동굴/강가/폐허 중 한 곳을 먼저 해결하세요.", encounter_chance: 0.25, encounter_enemies: ["bandit", "orc"], desc: "산적들의 야영지.", recommendedLevel: 3, minEnemies: 1, maxEnemies: 2 },
+  castle_gate: { name: "마왕의 성 정문", unlock_condition: { flag: "bandit_camp_cleared" }, lock_hint: "산적 야영지를 먼저 해결하세요.", encounter_chance: 0.50, encounter_enemies: ["undead_knight"], desc: "거대한 검은 성벽.", recommendedLevel: 4, minEnemies: 2, maxEnemies: 3 },
+  castle_inside: { name: "성 내부", unlock_condition: { flag: "castle_gate_cleared" }, lock_hint: "성문을 먼저 돌파하세요.", encounter_chance: 0.30, encounter_enemies: ["undead_knight", "dark_mage"], desc: "차가운 성 복도.", recommendedLevel: 5, minEnemies: 2, maxEnemies: 3 },
+  throne: { name: "마왕의 방", unlock_condition: { flag: "castle_inside_cleared" }, lock_hint: "성 내부를 먼저 탐색하세요.", encounter_chance: 0, encounter_enemies: [], desc: "거대한 왕좌의 방.", recommendedLevel: 6 },
+  harbor: { name: "포구 마을", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "파도 소리와 갈매기 울음.", recommendedLevel: 0 },
+  swamp: { name: "독안개 늪", unlock_condition: null, lock_hint: null, encounter_chance: 0.40, encounter_enemies: ["swamp_snake", "swamp_witch"], desc: "독안개가 피어오르는 늪지대.", recommendedLevel: 2, minEnemies: 1, maxEnemies: 2 },
+  desert_town: { name: "사하르 마을", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "이국적인 향신료 냄새.", recommendedLevel: 0 },
+  pyramid: { name: "파라오의 피라미드", unlock_condition: { flag: "desert_explored" }, lock_hint: "사하르 마을을 먼저 탐색하세요.", encounter_chance: 0.50, encounter_enemies: ["mummy", "skeleton"], desc: "거대한 피라미드.", recommendedLevel: 5, minEnemies: 2, maxEnemies: 3 },
+  oasis: { name: "오아시스", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "사막의 오아시스.", recommendedLevel: 0 },
+  ice_cave: { name: "빙하 동굴", unlock_condition: { flag: "castle_gate_cleared" }, lock_hint: "성 정문을 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["ice_golem", "frost_wyrm"], desc: "빙하 동굴.", recommendedLevel: 6, minEnemies: 2, maxEnemies: 3 },
+  elf_village: { name: "엘프 마을", unlock_condition: { flag: "forest_cleared" }, lock_hint: "숲을 먼저 정리해야 합니다.", encounter_chance: 0.15, encounter_enemies: ["elf_guardian"], desc: "고요한 엘프 숲.", recommendedLevel: 3, minEnemies: 1, maxEnemies: 1 },
+  spirit_forest: { name: "정령왕의 숲", unlock_condition: { flag: "elf_village_visited" }, lock_hint: "엘프 마을을 먼저 방문해야 비밀 통로가 열립니다.", encounter_chance: 0.35, encounter_enemies: ["corrupted_spirit", "wolf"], desc: "타락한 마력이 맴도는 울창한 숲.", recommendedLevel: 4, minEnemies: 1, maxEnemies: 3 },
+  moonlight_lake: { name: "달빛 호수", unlock_condition: null, lock_hint: null, encounter_chance: 0.10, encounter_enemies: ["lake_spirit"], desc: "달빛이 수면 위에 춤추는 호수.", recommendedLevel: 3, minEnemies: 1, maxEnemies: 1 },
+  labyrinth: { name: "지하 미궁", unlock_condition: { flag: "ruins_cleared" }, lock_hint: "폐허를 먼저 정리하세요.", encounter_chance: 0.45, encounter_enemies: ["labyrinth_guardian", "skeleton"], desc: "어둠 속 미궁 통로.", recommendedLevel: 4, minEnemies: 1, maxEnemies: 3 },
+  mercenary_camp: { name: "용병단 야영지", unlock_condition: { flag: "bandit_camp_cleared" }, lock_hint: "산적 야영지를 먼저 해결하세요.", encounter_chance: 0.10, encounter_enemies: ["mercenary_duelist"], desc: "용병들의 야영지.", recommendedLevel: 4, minEnemies: 1, maxEnemies: 1 },
+  dark_tower: { name: "어둠의 탑", unlock_condition: { flag: "castle_inside_cleared" }, lock_hint: "성 내부를 먼저 탐색하세요.", encounter_chance: 0.50, encounter_enemies: ["shadow_knight", "dark_sentinel"], desc: "검은 탑. 그림자가 일렁인다.", recommendedLevel: 6, minEnemies: 2, maxEnemies: 3 },
+  volcano: { name: "화산 지대", unlock_condition: { flag: "pyramid_cleared" }, lock_hint: "피라미드를 먼저 공략하세요.", encounter_chance: 0.40, encounter_enemies: ["fire_elemental", "lava_drake"], desc: "화산 열기가 대기를 달군다.", recommendedLevel: 7, minEnemies: 2, maxEnemies: 3 },
+  dragon_dungeon: { name: "드래곤의 던전", unlock_condition: { flag: "volcano_cleared" }, lock_hint: "화산 지대를 먼저 정복해야 합니다.", encounter_chance: 0.50, encounter_enemies: ["dragon_whelp", "lava_drake"], desc: "숨 쉬기조차 힘든 초고온의 거대한 둥지.", recommendedLevel: 8, minEnemies: 2, maxEnemies: 4 },
 };
 
 // 타일 기반 이동용 추가 지역(이벤트는 없고 이동/조우용)
@@ -209,38 +209,39 @@ AREAS.desert = {
   encounter_chance: 0.30,
   encounter_enemies: ["sand_scorpion", "bandit"],
   desc: "뜨거운 모래바람이 시야를 가린다.",
+  recommendedLevel: 3, minEnemies: 1, maxEnemies: 2,
 };
 // ── 지하 세계 지역 ──
-AREAS.uw_entrance = { name: "심연의 입구", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "지상에서 내려온 깊은 동굴 입구. 차갑고 축축한 바람이 분다." };
-AREAS.uw_boneyard = { name: "뼈의 묘지", unlock_condition: null, lock_hint: null, encounter_chance: 0.40, encounter_enemies: ["bone_warrior", "soul_wraith"], desc: "수없이 많은 해골이 널려 있는 묘지." };
-AREAS.uw_crystal = { name: "수정 동굴", unlock_condition: { flag: "uw_boneyard_cleared" }, lock_hint: "뼈의 묘지를 먼저 정리하세요.", encounter_chance: 0.35, encounter_enemies: ["crystal_golem", "bone_warrior"], desc: "거대한 수정이 빛을 내뿜는 동굴." };
-AREAS.uw_lava_lake = { name: "용암 호수", unlock_condition: { flag: "uw_crystal_cleared" }, lock_hint: "수정 동굴을 먼저 탐색하세요.", encounter_chance: 0.45, encounter_enemies: ["lava_worm", "inferno_demon"], desc: "끓어오르는 용암 호수. 열기가 숨을 막는다." };
-AREAS.uw_fortress = { name: "망자의 요새", unlock_condition: { flag: "uw_lava_lake_cleared" }, lock_hint: "용암 호수를 먼저 돌파하세요.", encounter_chance: 0.50, encounter_enemies: ["death_knight", "soul_wraith"], desc: "죽은 자들이 지키는 거대한 요새." };
-AREAS.uw_abyss = { name: "심연의 심장", unlock_condition: { flag: "uw_fortress_cleared" }, lock_hint: "망자의 요새를 먼저 정복하세요.", encounter_chance: 0, encounter_enemies: [], desc: "세계의 끝. 심연의 군주가 기다리는 곳." };
-AREAS.uw_market = { name: "암흑 시장", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "수상한 상인들이 모인 지하 시장." };
-AREAS.uw_temple = { name: "영혼의 신전", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "고대 신전. 희미한 빛이 상처를 치유한다." };
+AREAS.uw_entrance = { name: "심연의 입구", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "지상에서 내려온 깊은 동굴 입구. 차갑고 축축한 바람이 분다.", recommendedLevel: 8 };
+AREAS.uw_boneyard = { name: "뼈의 묘지", unlock_condition: null, lock_hint: null, encounter_chance: 0.40, encounter_enemies: ["bone_warrior", "soul_wraith"], desc: "수없이 많은 해골이 널려 있는 묘지.", recommendedLevel: 8, minEnemies: 2, maxEnemies: 3 };
+AREAS.uw_crystal = { name: "수정 동굴", unlock_condition: { flag: "uw_boneyard_cleared" }, lock_hint: "뼈의 묘지를 먼저 정리하세요.", encounter_chance: 0.35, encounter_enemies: ["crystal_golem", "bone_warrior"], desc: "거대한 수정이 빛을 내뿜는 동굴.", recommendedLevel: 8, minEnemies: 2, maxEnemies: 3 };
+AREAS.uw_lava_lake = { name: "용암 호수", unlock_condition: { flag: "uw_crystal_cleared" }, lock_hint: "수정 동굴을 먼저 탐색하세요.", encounter_chance: 0.45, encounter_enemies: ["lava_worm", "inferno_demon"], desc: "끓어오르는 용암 호수. 열기가 숨을 막는다.", recommendedLevel: 9, minEnemies: 2, maxEnemies: 4 };
+AREAS.uw_fortress = { name: "망자의 요새", unlock_condition: { flag: "uw_lava_lake_cleared" }, lock_hint: "용암 호수를 먼저 돌파하세요.", encounter_chance: 0.50, encounter_enemies: ["death_knight", "soul_wraith"], desc: "죽은 자들이 지키는 거대한 요새.", recommendedLevel: 9, minEnemies: 2, maxEnemies: 4 };
+AREAS.uw_abyss = { name: "심연의 심장", unlock_condition: { flag: "uw_fortress_cleared" }, lock_hint: "망자의 요새를 먼저 정복하세요.", encounter_chance: 0, encounter_enemies: [], desc: "세계의 끝. 심연의 군주가 기다리는 곳.", recommendedLevel: 10 };
+AREAS.uw_market = { name: "암흑 시장", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "수상한 상인들이 모인 지하 시장.", recommendedLevel: 8 };
+AREAS.uw_temple = { name: "영혼의 신전", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "고대 신전. 희미한 빛이 상처를 치유한다.", recommendedLevel: 8 };
 
-AREAS.uw_bone_terrain = { name: "뼈의 묘지", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["bone_warrior", "soul_wraith"], desc: "해골이 널린 땅." };
-AREAS.uw_crystal_terrain = { name: "수정 동굴", unlock_condition: { flag: "uw_boneyard_cleared" }, lock_hint: "뼈의 묘지를 먼저 정리하세요.", encounter_chance: 0.30, encounter_enemies: ["crystal_golem"], desc: "수정이 빛나는 통로." };
-AREAS.uw_lava_terrain = { name: "용암 지대", unlock_condition: { flag: "uw_crystal_cleared" }, lock_hint: "수정 동굴을 먼저 탐색하세요.", encounter_chance: 0.40, encounter_enemies: ["lava_worm", "inferno_demon"], desc: "뜨거운 용암이 흐르는 지대." };
-AREAS.uw_fortress_terrain = { name: "망자의 요새", unlock_condition: { flag: "uw_lava_lake_cleared" }, lock_hint: "용암 호수를 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["death_knight", "bone_warrior"], desc: "요새 주변의 황폐한 대지." };
-AREAS.uw_abyss_terrain = { name: "심연 지대", unlock_condition: { flag: "uw_fortress_cleared" }, lock_hint: "망자의 요새를 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["inferno_demon", "soul_wraith"], desc: "어둠이 깊어지는 심연." };
+AREAS.uw_bone_terrain = { name: "뼈의 묘지", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["bone_warrior", "soul_wraith"], desc: "해골이 널린 땅.", recommendedLevel: 8, minEnemies: 2, maxEnemies: 3 };
+AREAS.uw_crystal_terrain = { name: "수정 동굴", unlock_condition: { flag: "uw_boneyard_cleared" }, lock_hint: "뼈의 묘지를 먼저 정리하세요.", encounter_chance: 0.30, encounter_enemies: ["crystal_golem"], desc: "수정이 빛나는 통로.", recommendedLevel: 8, minEnemies: 2, maxEnemies: 3 };
+AREAS.uw_lava_terrain = { name: "용암 지대", unlock_condition: { flag: "uw_crystal_cleared" }, lock_hint: "수정 동굴을 먼저 탐색하세요.", encounter_chance: 0.40, encounter_enemies: ["lava_worm", "inferno_demon"], desc: "뜨거운 용암이 흐르는 지대.", recommendedLevel: 9, minEnemies: 2, maxEnemies: 4 };
+AREAS.uw_fortress_terrain = { name: "망자의 요새", unlock_condition: { flag: "uw_lava_lake_cleared" }, lock_hint: "용암 호수를 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["death_knight", "bone_warrior"], desc: "요새 주변의 황폐한 대지.", recommendedLevel: 9, minEnemies: 2, maxEnemies: 4 };
+AREAS.uw_abyss_terrain = { name: "심연 지대", unlock_condition: { flag: "uw_fortress_cleared" }, lock_hint: "망자의 요새를 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["inferno_demon", "soul_wraith"], desc: "어둠이 깊어지는 심연.", recommendedLevel: 10, minEnemies: 2, maxEnemies: 4 };
 
 // ── 천상 세계 지역 ──
-AREAS.cel_gate = { name: "구름의 문", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "구름을 뚫고 나타난 천상 왕국의 입구. 찬란한 빛이 눈을 멀게 한다." };
-AREAS.cel_garden = { name: "천상의 정원", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["cloud_sentinel", "light_spirit"], desc: "성스러운 불꽃이 타오르는 천상의 정원." };
-AREAS.cel_hall = { name: "심판의 전당", unlock_condition: { flag: "cel_garden_cleared" }, lock_hint: "천상의 정원을 먼저 정리하세요.", encounter_chance: 0.40, encounter_enemies: ["holy_knight", "judgment_angel"], desc: "거대한 심판의 저울이 놓인 전당." };
-AREAS.cel_arsenal = { name: "빛의 무기고", unlock_condition: { flag: "cel_hall_cleared" }, lock_hint: "심판의 전당을 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["judgment_angel", "divine_golem"], desc: "신성한 무기들이 스스로 움직이는 무기고." };
-AREAS.cel_spire = { name: "수정 첨탑", unlock_condition: { flag: "cel_arsenal_cleared" }, lock_hint: "빛의 무기고를 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["seraph_guardian", "divine_golem"], desc: "순수한 빛으로 이루어진 수정 첨탑." };
-AREAS.cel_throne = { name: "여명의 왕좌", unlock_condition: { flag: "cel_spire_cleared" }, lock_hint: "수정 첨탑을 먼저 정복하세요.", encounter_chance: 0, encounter_enemies: [], desc: "천상 왕국의 최정점. 타락한 대천사가 기다리는 곳." };
-AREAS.cel_market = { name: "반란 천사의 시장", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "대천사에 맞서는 반란 천사들이 모인 은밀한 시장." };
-AREAS.cel_sanctuary = { name: "빛의 성소", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "아직 순수한 빛이 남아있는 성소. 마음이 편안해진다." };
+AREAS.cel_gate = { name: "구름의 문", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "구름을 뚫고 나타난 천상 왕국의 입구. 찬란한 빛이 눈을 멀게 한다.", recommendedLevel: 10 };
+AREAS.cel_garden = { name: "천상의 정원", unlock_condition: null, lock_hint: null, encounter_chance: 0.35, encounter_enemies: ["cloud_sentinel", "light_spirit"], desc: "성스러운 불꽃이 타오르는 천상의 정원.", recommendedLevel: 10, minEnemies: 2, maxEnemies: 3 };
+AREAS.cel_hall = { name: "심판의 전당", unlock_condition: { flag: "cel_garden_cleared" }, lock_hint: "천상의 정원을 먼저 정리하세요.", encounter_chance: 0.40, encounter_enemies: ["holy_knight", "judgment_angel"], desc: "거대한 심판의 저울이 놓인 전당.", recommendedLevel: 11, minEnemies: 2, maxEnemies: 3 };
+AREAS.cel_arsenal = { name: "빛의 무기고", unlock_condition: { flag: "cel_hall_cleared" }, lock_hint: "심판의 전당을 먼저 돌파하세요.", encounter_chance: 0.45, encounter_enemies: ["judgment_angel", "divine_golem"], desc: "신성한 무기들이 스스로 움직이는 무기고.", recommendedLevel: 11, minEnemies: 2, maxEnemies: 4 };
+AREAS.cel_spire = { name: "수정 첨탑", unlock_condition: { flag: "cel_arsenal_cleared" }, lock_hint: "빛의 무기고를 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["seraph_guardian", "divine_golem"], desc: "순수한 빛으로 이루어진 수정 첨탑.", recommendedLevel: 12, minEnemies: 3, maxEnemies: 4 };
+AREAS.cel_throne = { name: "여명의 왕좌", unlock_condition: { flag: "cel_spire_cleared" }, lock_hint: "수정 첨탑을 먼저 정복하세요.", encounter_chance: 0, encounter_enemies: [], desc: "천상 왕국의 최정점. 타락한 대천사가 기다리는 곳.", recommendedLevel: 13 };
+AREAS.cel_market = { name: "반란 천사의 시장", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "대천사에 맞서는 반란 천사들이 모인 은밀한 시장.", recommendedLevel: 10 };
+AREAS.cel_sanctuary = { name: "빛의 성소", unlock_condition: null, lock_hint: null, encounter_chance: 0, encounter_enemies: [], desc: "아직 순수한 빛이 남아있는 성소. 마음이 편안해진다.", recommendedLevel: 10 };
 
-AREAS.cel_garden_terrain = { name: "천상의 정원", unlock_condition: null, lock_hint: null, encounter_chance: 0.30, encounter_enemies: ["cloud_sentinel", "light_spirit"], desc: "신성한 꽃이 피어있는 구름 위의 정원." };
-AREAS.cel_hall_terrain = { name: "심판의 전당", unlock_condition: { flag: "cel_garden_cleared" }, lock_hint: "천상의 정원을 먼저 정리하세요.", encounter_chance: 0.35, encounter_enemies: ["holy_knight", "judgment_angel"], desc: "심판의 기운이 감도는 길." };
-AREAS.cel_arsenal_terrain = { name: "빛의 무기고", unlock_condition: { flag: "cel_hall_cleared" }, lock_hint: "심판의 전당을 먼저 돌파하세요.", encounter_chance: 0.40, encounter_enemies: ["judgment_angel", "divine_golem"], desc: "신성한 무기의 기운이 서린 지대." };
-AREAS.cel_spire_terrain = { name: "수정 첨탑", unlock_condition: { flag: "cel_arsenal_cleared" }, lock_hint: "빛의 무기고를 먼저 정복하세요.", encounter_chance: 0.45, encounter_enemies: ["seraph_guardian", "divine_golem"], desc: "빛나는 수정이 솟아있는 지대." };
-AREAS.cel_throne_terrain = { name: "여명의 왕좌 지대", unlock_condition: { flag: "cel_spire_cleared" }, lock_hint: "수정 첨탑을 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["seraph_guardian", "judgment_angel"], desc: "눈부신 빛이 쏟아지는 왕좌 주변." };
+AREAS.cel_garden_terrain = { name: "천상의 정원", unlock_condition: null, lock_hint: null, encounter_chance: 0.30, encounter_enemies: ["cloud_sentinel", "light_spirit"], desc: "신성한 꽃이 피어있는 구름 위의 정원.", recommendedLevel: 10, minEnemies: 2, maxEnemies: 3 };
+AREAS.cel_hall_terrain = { name: "심판의 전당", unlock_condition: { flag: "cel_garden_cleared" }, lock_hint: "천상의 정원을 먼저 정리하세요.", encounter_chance: 0.35, encounter_enemies: ["holy_knight", "judgment_angel"], desc: "심판의 기운이 감도는 길.", recommendedLevel: 11, minEnemies: 2, maxEnemies: 3 };
+AREAS.cel_arsenal_terrain = { name: "빛의 무기고", unlock_condition: { flag: "cel_hall_cleared" }, lock_hint: "심판의 전당을 먼저 돌파하세요.", encounter_chance: 0.40, encounter_enemies: ["judgment_angel", "divine_golem"], desc: "신성한 무기의 기운이 서린 지대.", recommendedLevel: 11, minEnemies: 2, maxEnemies: 4 };
+AREAS.cel_spire_terrain = { name: "수정 첨탑", unlock_condition: { flag: "cel_arsenal_cleared" }, lock_hint: "빛의 무기고를 먼저 정복하세요.", encounter_chance: 0.45, encounter_enemies: ["seraph_guardian", "divine_golem"], desc: "빛나는 수정이 솟아있는 지대.", recommendedLevel: 12, minEnemies: 3, maxEnemies: 4 };
+AREAS.cel_throne_terrain = { name: "여명의 왕좌 지대", unlock_condition: { flag: "cel_spire_cleared" }, lock_hint: "수정 첨탑을 먼저 정복하세요.", encounter_chance: 0.50, encounter_enemies: ["seraph_guardian", "judgment_angel"], desc: "눈부신 빛이 쏟아지는 왕좌 주변.", recommendedLevel: 13, minEnemies: 3, maxEnemies: 4 };
 
 // ── 남부 지역 ──
 AREAS.colosseum = {
@@ -250,6 +251,7 @@ AREAS.colosseum = {
   encounter_chance: 0,
   encounter_enemies: [],
   desc: "거대한 원형 투기장. 관중석의 환호가 메아리친다.",
+  recommendedLevel: 3,
 };
 AREAS.forgotten_temple = {
   name: "잊혀진 신전",
@@ -258,6 +260,7 @@ AREAS.forgotten_temple = {
   encounter_chance: 0.25,
   encounter_enemies: ["corrupted_spirit", "labyrinth_guardian"],
   desc: "이끼 낀 고대 신전. 타락한 기운이 감돈다.",
+  recommendedLevel: 3, minEnemies: 1, maxEnemies: 2,
 };
 
 AREAS.ice = {
@@ -267,6 +270,7 @@ AREAS.ice = {
   encounter_chance: 0.35,
   encounter_enemies: ["ice_golem", "undead_knight"],
   desc: "얼어붙은 빙하 지대. 발밑이 미끄럽다.",
+  recommendedLevel: 6, minEnemies: 2, maxEnemies: 3,
 };
 
 const AREA_BG_IMAGE = {

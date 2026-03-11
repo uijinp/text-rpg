@@ -331,7 +331,12 @@ function updateMiniMap(player) {
 
   widget.classList.remove('hidden');
   grid.textContent = buildMiniMapLines(player, 5).join('\n');
-  caption.textContent = `${getAreaNameByPos(player.mapRow, player.mapCol)} (${player.mapRow}, ${player.mapCol})`;
+  const areaName = getAreaNameByPos(player.mapRow, player.mapCol);
+  const mmZone = getZoneAt(player.mapRow, player.mapCol);
+  const mmZoneData = mmZone ? AREAS[mmZone] : null;
+  const mmRecLvl = mmZoneData?.recommendedLevel;
+  const mmLvlTag = (mmRecLvl > 0) ? ` Lv.${mmRecLvl}` : '';
+  caption.textContent = `${areaName}${mmLvlTag} (${player.mapRow}, ${player.mapCol})`;
 }
 
 async function tryStepMove(player, dr, dc, label) {
@@ -367,10 +372,13 @@ async function tryStepMove(player, dr, dc, label) {
   if (locs[ch]) {
     player.currentLocation = locs[ch].zone;
     player.visitedLocations.add(player.currentLocation);
+    const arrArea = AREAS[locs[ch].zone];
+    const arrLvl = arrArea?.recommendedLevel;
+    const arrTag = (arrLvl > 0) ? ` [권장 Lv.${arrLvl}]` : '';
     UI.addSystemMsg(pick([
-      `  ★ ${locs[ch].name}에 도착했습니다.`,
-      `  ★ ${locs[ch].name}의 경계에 발을 들였습니다.`,
-      `  ★ 목적지 도착: ${locs[ch].name}`,
+      `  ★ ${locs[ch].name}${arrTag}에 도착했습니다.`,
+      `  ★ ${locs[ch].name}${arrTag}의 경계에 발을 들였습니다.`,
+      `  ★ 목적지 도착: ${locs[ch].name}${arrTag}`,
     ]));
   } else if (nextZone) {
     player.currentLocation = nextZone;
@@ -395,9 +403,25 @@ async function tryStepMove(player, dr, dc, label) {
   const enemies = zoneMeta.encounter_enemies || [];
   if (enemies.length === 0) return { ok: true };
 
-  /* 1~4마리 랜덤 생성 (가중치: 1마리 40%, 2마리 30%, 3마리 20%, 4마리 10%) */
-  const roll = Math.random();
-  const count = roll < 0.4 ? 1 : roll < 0.7 ? 2 : roll < 0.9 ? 3 : 4;
+  /* 지역별 min~max 마리 랜덤 생성 (적은 수에 가중치) */
+  const minE = zoneMeta.minEnemies ?? 1;
+  const maxE = zoneMeta.maxEnemies ?? 4;
+  let count;
+  if (minE === maxE) {
+    count = minE;
+  } else {
+    const range = maxE - minE;
+    const weights = [];
+    for (let i = 0; i <= range; i++) weights.push(range + 1 - i);
+    const total = weights.reduce((a, b) => a + b, 0);
+    const roll = Math.random();
+    let cum = 0;
+    count = minE;
+    for (let i = 0; i <= range; i++) {
+      cum += weights[i] / total;
+      if (roll < cum) { count = minE + i; break; }
+    }
+  }
   const enemyKeys = [];
   for (let i = 0; i < count; i++) {
     enemyKeys.push(enemies[Math.floor(Math.random() * enemies.length)]);
@@ -691,11 +715,16 @@ async function startGameLoop() {
     UI.updateHeader();
     updateMiniMap(player);
 
+    const positionalName = getAreaNameByPos(player.mapRow, player.mapCol);
+    const posZone = getZoneAt(player.mapRow, player.mapCol);
+    const posZoneData = posZone ? AREAS[posZone] : null;
+    const recLvl = posZoneData?.recommendedLevel;
+    const lvlTag = (recLvl > 0) ? ` [권장 Lv.${recLvl}]` : '';
     const currentArea = AREAS[player.currentLocation];
-    const areaName = currentArea ? currentArea.name : player.currentLocation;
 
-    UI.addDivider(`현재 위치: ${areaName}`);
-    if (currentArea) UI.addLog(`  ${currentArea.desc}`);
+    UI.addDivider(`현재 위치: ${positionalName}${lvlTag}`);
+    if (posZoneData) UI.addLog(`  ${posZoneData.desc}`);
+    else if (currentArea) UI.addLog(`  ${currentArea.desc}`);
     UI.addLog('');
 
     // D-pad 컨테이너 보이기
