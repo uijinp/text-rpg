@@ -1,4 +1,4 @@
-/* combat.js - 전투 시스템 */
+/* combat.js - 전투 시스템 (다중 적 지원) */
 
 const CombatSystem = {
   ENEMY_BEHAVIOR: {
@@ -49,6 +49,7 @@ const CombatSystem = {
     return {
       key: enemyKey,
       name: template.name,
+      label: template.name,
       hp: template.hp,
       maxHp: template.hp,
       atk: template.atk,
@@ -60,6 +61,19 @@ const CombatSystem = {
       burnTurns: 0,
       guardTurns: 0,
     };
+  },
+
+  _assignLabels(enemies) {
+    if (enemies.length <= 1) return;
+    const count = {};
+    enemies.forEach(e => { count[e.name] = (count[e.name] || 0) + 1; });
+    const idx = {};
+    enemies.forEach(e => {
+      if (count[e.name] > 1) {
+        idx[e.name] = (idx[e.name] || 0) + 1;
+        e.label = `${e.name} ${String.fromCharCode(64 + idx[e.name])}`;
+      }
+    });
   },
 
   _pickEncounterLine(enemy) {
@@ -112,62 +126,129 @@ const CombatSystem = {
     return false;
   },
 
+  /* ── 단일 적의 공격 로직 ── */
+  _resolveEnemyAttack(player, e) {
+    let dmg = 0;
+    let text = `${e.label}의 공격!`;
+    const beh = this.ENEMY_BEHAVIOR[e.key] || {};
+    const style = beh.style || 'normal';
+
+    if (style === 'beast' && Math.random() < (beh.multiHitChance || 0.2)) {
+      dmg = this._calcEnemyDamage(player, Math.floor(e.atk * 0.7))
+          + this._calcEnemyDamage(player, Math.floor(e.atk * 0.7));
+      text = `${e.label}의 연속 물어뜯기!`;
+    } else if ((style === 'poisoner' || style === 'trickster') && Math.random() < (beh.poisonChance || 0.22)) {
+      dmg = this._calcEnemyDamage(player, Math.floor(e.atk * 0.85));
+      const p = this._applyPoisonToPlayer(player, 1.0);
+      text = p ? `${e.label}의 독습!` : `${e.label}의 교란 공격!`;
+    } else if ((style === 'breath' || style === 'boss_breath' || style === 'boss_mix') && Math.random() < (beh.breathChance || 0.25)) {
+      dmg = this._calcEnemyDamage(player, Math.floor(e.atk * 1.35), { pierce: true });
+      const b = this._applyBurnToPlayer(player, beh.burnChance || 0.2);
+      text = b ? `${e.label}의 브레스! 불길이 몸을 감싼다!` : `${e.label}의 브레스!`;
+    } else if ((style === 'tank' || style === 'boss_mix') && Math.random() < (beh.guardChance || 0.25)) {
+      e.guardTurns = 1;
+      text = `${e.label}이(가) 방어 태세를 취했다!`;
+      return { dmg: 0, text, guard: true };
+    } else if (style === 'drain' && Math.random() < 0.3) {
+      dmg = this._calcEnemyDamage(player, Math.floor(e.atk * 0.95), { pierce: true });
+      const heal = Math.max(5, Math.floor(dmg * 0.5));
+      e.hp = Math.min(e.maxHp, e.hp + heal);
+      text = `${e.label}의 흡혈 일격!`;
+      return { dmg, text, drainHeal: heal };
+    } else {
+      dmg = this._calcEnemyDamage(player, e.atk);
+    }
+    return { dmg, text };
+  },
+
   /**
-   * 전투 진행 (async - 사용자 입력 대기)
+   * 전투 진행 (다중 적 지원)
+   * @param {object} player
+   * @param {string|string[]} enemyKeyOrKeys - 단일 키 또는 키 배열
+   * @param {object} options - { name, hp_multiply, hp_add } (보스전 옵션, 첫 적에만 적용)
    * @returns {Promise<"win"|"lose"|"fled">}
    */
-  async startBattle(player, enemyKey, options = {}) {
-    const enemy = this.spawnEnemy(enemyKey);
-    if (!enemy) {
+  async startBattle(player, enemyKeyOrKeys, options = {}) {
+    const keys = Array.isArray(enemyKeyOrKeys) ? enemyKeyOrKeys : [enemyKeyOrKeys];
+    const enemies = [];
+    for (const k of keys) {
+      const e = this.spawnEnemy(k);
+      if (e) enemies.push(e);
+    }
+    if (enemies.length === 0) {
       UI.addSystemMsg('  알 수 없는 적입니다.');
       return 'win';
     }
 
-    if (options.name) enemy.name = options.name;
-    if (options.hp_multiply) {
-      enemy.hp = Math.floor(enemy.hp * options.hp_multiply);
-      enemy.maxHp = enemy.hp;
-    }
-    if (options.hp_add) {
-      enemy.hp += options.hp_add;
-      enemy.maxHp = enemy.hp;
-    }
+    this._assignLabels(enemies);
+
+    /* 보스전 옵션 (첫 적에만) */
+    if (options.name) { enemies[0].name = options.name; enemies[0].label = options.name; }
+    if (options.hp_multiply) { enemies[0].hp = Math.floor(enemies[0].hp * options.hp_multiply); enemies[0].maxHp = enemies[0].hp; }
+    if (options.hp_add) { enemies[0].hp += options.hp_add; enemies[0].maxHp = enemies[0].hp; }
 
     UI.showBattleScreen();
     UI.clearBattleLog();
-    UI.showBattleLog(`  ${this._pickEncounterLine(enemy)}`);
+
+    /* 등장 메시지 */
+    if (enemies.length === 1) {
+      UI.showBattleLog(`  ${this._pickEncounterLine(enemies[0])}`);
+    } else {
+      UI.showBattleLog(`  ${enemies.map(e => e.label).join(', ')}이(가) 나타났다!`);
+    }
 
     const skills = this.getSkills(player.job);
     let turn = 1;
-    UI.updateBattleUI(player, enemy, turn);
+    let targetIdx = 0;
 
-    while (player.isAlive() && enemy.hp > 0) {
-      UI.updateBattleUI(player, enemy, turn);
+    const alive = () => enemies.filter(e => e.hp > 0);
+    const allDead = () => enemies.every(e => e.hp <= 0);
+    const fixTarget = () => {
+      if (enemies[targetIdx]?.hp <= 0) {
+        const idx = enemies.findIndex(e => e.hp > 0);
+        targetIdx = idx >= 0 ? idx : 0;
+      }
+    };
+
+    UI.updateBattleUI(player, enemies, turn, targetIdx);
+
+    while (player.isAlive() && !allDead()) {
+      fixTarget();
+      UI.updateBattleUI(player, enemies, turn, targetIdx);
       const actionIdx = await UI.showBattleChoices(skills);
 
       let defending = false;
       let evading = false;
       let playerActed = false;
 
+      /* 공격 계열 행동이면 대상 선택 */
+      const isOffensiveSkill = actionIdx >= 1 && actionIdx <= skills.length
+        && !skills[actionIdx - 1]?.defensive && !skills[actionIdx - 1]?.evasion;
+      if ((actionIdx === 0 || isOffensiveSkill) && alive().length > 1) {
+        targetIdx = await UI.showTargetSelect(enemies);
+      }
+      fixTarget();
+      const target = enemies[targetIdx];
+
       if (actionIdx === 0) {
-        /* 기본 공격 */
+        /* ── 기본 공격 ── */
         const atkResult = player.getAttack();
-        if (this._enemyEvaded(enemy)) {
-          UI.showBattleLog(`  ${enemy.name}이(가) 재빨리 회피했다!`);
-          playerActed = true;
-          continue;
-        }
-        const dmg = this._calcPlayerDamage(enemy, atkResult.damage);
-        enemy.hp = Math.max(0, enemy.hp - dmg);
-        if (atkResult.critical) {
-          UI.showBattleLog(`  ★ 치명타! ${player.name}의 공격! ${dmg} 데미지!`);
+        if (this._enemyEvaded(target)) {
+          UI.showBattleLog(`  ${target.label}이(가) 재빨리 회피했다!`);
         } else {
-          UI.showBattleLog(`  ${player.name}의 공격! ${dmg} 데미지!`);
+          const dmg = this._calcPlayerDamage(target, atkResult.damage);
+          target.hp = Math.max(0, target.hp - dmg);
+          if (atkResult.critical) {
+            UI.showBattleLog(`  ★ 치명타! ${target.label}에게 ${dmg} 데미지!`);
+          } else {
+            UI.showBattleLog(`  ${player.name}의 공격! ${target.label}에게 ${dmg} 데미지!`);
+          }
+          if (target.hp <= 0) UI.showBattleLog(`  ☠ ${target.label} 처치!`);
         }
         playerActed = true;
 
       } else if (actionIdx <= skills.length) {
-        /* 스킬 사용 */
+        /* ── 스킬 ── */
         const skill = skills[actionIdx - 1];
         if (skill.defensive) {
           defending = true;
@@ -176,32 +257,30 @@ const CombatSystem = {
           evading = true;
           UI.showBattleLog(`  ${player.name}이(가) ${skill.name}!`);
         } else {
-          let base = player.getAttack().damage;
-          if (this._enemyEvaded(enemy)) {
-            UI.showBattleLog(`  ${enemy.name}이(가) ${player.name}의 스킬을 피했다!`);
-            playerActed = true;
-            continue;
-          }
-          const dmg = this._calcPlayerDamage(enemy, Math.floor(base * skill.multiplier));
-          enemy.hp = Math.max(0, enemy.hp - dmg);
-          UI.showBattleLog(`  ${player.name}의 ${skill.name}! ${dmg} 데미지!`);
-          if (skill.poison && enemy.hp > 0) {
-            enemy.poisoned = true;
-            enemy.poisonTurns = 3;
-            UI.showBattleLog(`  ${enemy.name}이(가) 독에 걸렸다!`);
+          const base = player.getAttack().damage;
+          if (this._enemyEvaded(target)) {
+            UI.showBattleLog(`  ${target.label}이(가) ${player.name}의 스킬을 피했다!`);
+          } else {
+            const dmg = this._calcPlayerDamage(target, Math.floor(base * skill.multiplier));
+            target.hp = Math.max(0, target.hp - dmg);
+            UI.showBattleLog(`  ${player.name}의 ${skill.name}! ${target.label}에게 ${dmg} 데미지!`);
+            if (skill.poison && target.hp > 0) {
+              target.poisoned = true;
+              target.poisonTurns = 3;
+              UI.showBattleLog(`  ${target.label}이(가) 독에 걸렸다!`);
+            }
+            if (target.hp <= 0) UI.showBattleLog(`  ☠ ${target.label} 처치!`);
           }
         }
         playerActed = true;
 
       } else if (actionIdx === skills.length + 1) {
-        /* 아이템 사용 */
+        /* ── 아이템 ── */
         const itemName = await UI.showBattleItemMenu(player);
         if (!itemName) continue;
-
         const idx = player.inventory.indexOf(itemName);
         if (idx === -1) continue;
         player.inventory.splice(idx, 1);
-
         const info = ITEMS[itemName];
         if (info.effect === 'heal') {
           const healed = player.heal(info.value);
@@ -213,8 +292,9 @@ const CombatSystem = {
         playerActed = true;
 
       } else {
-        /* 도망 */
+        /* ── 도망 ── */
         let fleeChance = 0.35;
+        if (enemies.length >= 3) fleeChance -= 0.1;
         if (player.inventory.includes('행운의 부적')) fleeChance += 0.2;
         if (Math.random() < fleeChance) {
           UI.showBattleLog('  도망에 성공했다!');
@@ -228,95 +308,78 @@ const CombatSystem = {
         }
       }
 
-      /* 독 데미지 (적) */
-      if (enemy.poisoned && enemy.hp > 0) {
-        const poisonDmg = Math.floor(enemy.maxHp * 0.05);
-        enemy.hp = Math.max(0, enemy.hp - poisonDmg);
-        enemy.poisonTurns--;
-        UI.showBattleLog(`  ${enemy.name}이(가) 독으로 ${poisonDmg} 데미지!`);
-        if (enemy.poisonTurns <= 0) enemy.poisoned = false;
+      /* ── 독/화상 (모든 적) ── */
+      for (const e of enemies) {
+        if (e.hp <= 0) continue;
+        if (e.poisoned) {
+          const pd = Math.floor(e.maxHp * 0.05);
+          e.hp = Math.max(0, e.hp - pd);
+          e.poisonTurns--;
+          UI.showBattleLog(`  ${e.label}이(가) 독으로 ${pd} 데미지!`);
+          if (e.poisonTurns <= 0) e.poisoned = false;
+          if (e.hp <= 0) UI.showBattleLog(`  ☠ ${e.label} 처치!`);
+        }
+        if (e.burnTurns > 0 && e.hp > 0) {
+          const bd = Math.max(3, Math.floor(e.maxHp * 0.04));
+          e.hp = Math.max(0, e.hp - bd);
+          e.burnTurns -= 1;
+          UI.showBattleLog(`  ${e.label}이(가) 화상으로 ${bd} 데미지!`);
+          if (e.hp <= 0) UI.showBattleLog(`  ☠ ${e.label} 처치!`);
+        }
       }
 
-      if (enemy.burnTurns > 0 && enemy.hp > 0) {
-        const burnDmg = Math.max(3, Math.floor(enemy.maxHp * 0.04));
-        enemy.hp = Math.max(0, enemy.hp - burnDmg);
-        enemy.burnTurns -= 1;
-        UI.showBattleLog(`  ${enemy.name}이(가) 화상으로 ${burnDmg} 데미지!`);
-      }
+      UI.updateBattleUI(player, enemies, turn, targetIdx);
+      if (allDead()) break;
 
-      UI.updateBattleUI(player, enemy, turn);
-
-      if (enemy.hp <= 0) break;
-
-      /* 적 턴 */
+      /* ── 적 턴: 살아있는 모든 적이 공격 ── */
       if (playerActed) {
-        await this._battleDelay(400);
-        let enemyDmg = 0;
-        let enemyActionText = `${enemy.name}의 공격!`;
-        const behavior = this.ENEMY_BEHAVIOR[enemy.key] || {};
-        const style = behavior.style || 'normal';
+        for (const e of alive()) {
+          await this._battleDelay(350);
+          const atk = this._resolveEnemyAttack(player, e);
 
-        if (style === 'beast' && Math.random() < (behavior.multiHitChance || 0.2)) {
-          const hit1 = this._calcEnemyDamage(player, Math.floor(enemy.atk * 0.7));
-          const hit2 = this._calcEnemyDamage(player, Math.floor(enemy.atk * 0.7));
-          enemyDmg = hit1 + hit2;
-          enemyActionText = `${enemy.name}의 연속 물어뜯기!`;
-        } else if ((style === 'poisoner' || style === 'trickster') && Math.random() < (behavior.poisonChance || 0.22)) {
-          enemyDmg = this._calcEnemyDamage(player, Math.floor(enemy.atk * 0.85));
-          const poisoned = this._applyPoisonToPlayer(player, 1.0);
-          enemyActionText = poisoned ? `${enemy.name}의 독습!` : `${enemy.name}의 교란 공격!`;
-        } else if ((style === 'breath' || style === 'boss_breath' || style === 'boss_mix') && Math.random() < (behavior.breathChance || 0.25)) {
-          enemyDmg = this._calcEnemyDamage(player, Math.floor(enemy.atk * 1.35), { pierce: true });
-          const burned = this._applyBurnToPlayer(player, behavior.burnChance || 0.2);
-          enemyActionText = burned ? `${enemy.name}의 브레스! 불길이 몸을 감싼다!` : `${enemy.name}의 브레스!`;
-        } else if ((style === 'tank' || style === 'boss_mix') && Math.random() < (behavior.guardChance || 0.25)) {
-          enemy.guardTurns = 1;
-          enemyActionText = `${enemy.name}이(가) 방어 태세를 취했다!`;
-        } else if (style === 'drain' && Math.random() < 0.3) {
-          enemyDmg = this._calcEnemyDamage(player, Math.floor(enemy.atk * 0.95), { pierce: true });
-          const heal = Math.max(5, Math.floor(enemyDmg * 0.5));
-          enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-          enemyActionText = `${enemy.name}의 흡혈 일격!`;
-          UI.showBattleLog(`  ${enemy.name}이(가) ${heal} HP를 흡수했다!`);
-        } else {
-          enemyDmg = this._calcEnemyDamage(player, enemy.atk);
+          if (atk.guard) {
+            UI.showBattleLog(`  ${atk.text}`);
+          } else if (evading) {
+            UI.showBattleLog(`  ${e.label}의 공격을 회피했다!`);
+          } else if (defending) {
+            const reduction = player.job === '마법사' ? 0.3 : 0.5;
+            const reduced = Math.floor(atk.dmg * reduction);
+            player.hp = Math.max(0, player.hp - reduced);
+            UI.showBattleLog(`  ${atk.text} 방어로 ${reduced} 데미지!`);
+          } else {
+            player.hp = Math.max(0, player.hp - atk.dmg);
+            UI.showBattleLog(`  ${atk.text} ${atk.dmg} 데미지!`);
+          }
+          if (atk.drainHeal) {
+            UI.showBattleLog(`  ${e.label}이(가) ${atk.drainHeal} HP를 흡수했다!`);
+          }
+
+          UI.updateBattleUI(player, enemies, turn, targetIdx);
+          if (!player.isAlive()) break;
         }
 
-        if (evading) {
-          UI.showBattleLog(`  ${enemy.name}의 공격을 회피했다!`);
-          enemyDmg = 0;
-        } else if (defending) {
-          const reduction = player.job === '마법사' ? 0.3 : 0.5;
-          enemyDmg = Math.floor(enemyDmg * reduction);
-          player.hp = Math.max(0, player.hp - enemyDmg);
-          UI.showBattleLog(`  ${enemyActionText} 방어로 ${enemyDmg} 데미지!`);
-        } else {
-          player.hp = Math.max(0, player.hp - enemyDmg);
-          UI.showBattleLog(`  ${enemyActionText} ${enemyDmg} 데미지!`);
-        }
-
-        /* 독 데미지 (플레이어) */
-        if (player.poisoned) {
+        /* 플레이어 독/화상 */
+        if (player.isAlive() && player.poisoned) {
           const pDmg = Math.floor(player.maxHp * 0.03);
           player.hp = Math.max(0, player.hp - pDmg);
           UI.showBattleLog(`  독으로 ${pDmg} 데미지!`);
         }
-
-        if ((player.burnTurns || 0) > 0) {
+        if (player.isAlive() && (player.burnTurns || 0) > 0) {
           const bDmg = Math.max(4, Math.floor(player.maxHp * 0.04));
           player.hp = Math.max(0, player.hp - bDmg);
           player.burnTurns -= 1;
           UI.showBattleLog(`  화상으로 ${bDmg} 데미지!`);
         }
 
-        if (enemy.guardTurns > 0) {
-          enemy.guardTurns -= 1;
-          if (enemy.guardTurns === 0) {
-            UI.showBattleLog(`  ${enemy.name}의 방어 태세가 풀렸다.`);
+        /* 적 방어 해제 */
+        for (const e of enemies) {
+          if (e.guardTurns > 0) {
+            e.guardTurns -= 1;
+            if (e.guardTurns === 0) UI.showBattleLog(`  ${e.label}의 방어 태세가 풀렸다.`);
           }
         }
 
-        UI.updateBattleUI(player, enemy, turn);
+        UI.updateBattleUI(player, enemies, turn, targetIdx);
       }
 
       turn++;
@@ -324,36 +387,49 @@ const CombatSystem = {
 
     await this._battleDelay(500);
 
-    if (enemy.hp <= 0) {
-      return await this._handleVictory(player, enemy);
+    if (allDead()) {
+      return await this._handleVictory(player, enemies);
     } else {
       return 'lose';
     }
   },
 
-  async _handleVictory(player, enemy) {
+  async _handleVictory(player, enemies) {
     UI.showBattleLog('');
-    UI.showBattleLog(`  ★ ${enemy.name}을(를) 물리쳤다!`);
+    if (enemies.length === 1) {
+      UI.showBattleLog(`  ★ ${enemies[0].name}을(를) 물리쳤다!`);
+    } else {
+      UI.showBattleLog(`  ★ 모든 적을 물리쳤다!`);
+    }
 
-    const goldGain = enemy.gold + Math.floor(Math.random() * Math.max(1, Math.floor(enemy.gold * 0.3)));
-    player.gold += goldGain;
-    UI.showBattleLog(`  ${goldGain}G 획득!`);
+    let totalGold = 0;
+    let totalExp = 0;
+    const allDrops = [];
 
-    const leveled = player.gainExp(enemy.exp);
-    UI.showBattleLog(`  경험치 +${enemy.exp}`);
+    for (const e of enemies) {
+      totalGold += e.gold + Math.floor(Math.random() * Math.max(1, Math.floor(e.gold * 0.3)));
+      totalExp += e.exp;
+      const drops = DROP_TABLE[e.key] || [];
+      drops.forEach(d => {
+        if (Math.random() < d.chance) allDrops.push(d.item);
+      });
+    }
+
+    player.gold += totalGold;
+    UI.showBattleLog(`  ${totalGold}G 획득!`);
+
+    const leveled = player.gainExp(totalExp);
+    UI.showBattleLog(`  경험치 +${totalExp}`);
     if (leveled) {
       UI.showBattleLog(`  ★ 레벨 업! Lv.${player.level}! HP 완전 회복!`);
     }
 
-    const drops = DROP_TABLE[enemy.key] || [];
-    drops.forEach(drop => {
-      if (Math.random() < drop.chance) {
-        player.inventory.push(drop.item);
-        UI.showBattleLog(`  ▶ ${drop.item} 드롭!`);
-      }
+    allDrops.forEach(item => {
+      player.inventory.push(item);
+      UI.showBattleLog(`  ▶ ${item} 드롭!`);
     });
 
-    UI.updateBattleUI(player, enemy, 0);
+    UI.updateBattleUI(player, enemies, 0, 0);
     await UI.waitForTap();
     UI.showScreen('screen-game');
     UI.updateHeader();

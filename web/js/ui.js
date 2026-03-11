@@ -517,20 +517,71 @@ const UI = {
     this.showScreen('screen-battle');
   },
 
-  updateBattleUI(player, enemy, turn) {
-    const set = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
-    const setW = (id, pct) => { const e = document.getElementById(id); if (e) e.style.width = `${pct}%`; };
+  updateBattleUI(player, enemies, turn, targetIdx = 0) {
+    const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = `${pct}%`; };
 
-    set('battle-enemy-name', enemy.name);
-    set('battle-enemy-hp-text', `${Math.max(0, enemy.hp)}/${enemy.maxHp}`);
-    setW('battle-enemy-hp-bar', enemy.maxHp > 0 ? (Math.max(0, enemy.hp) / enemy.maxHp) * 100 : 0);
+    /* 적 목록 렌더링 */
+    const container = document.getElementById('battle-enemies-container');
+    if (container) {
+      container.innerHTML = '';
+      const arr = Array.isArray(enemies) ? enemies : [enemies];
+      arr.forEach((e, i) => {
+        const entry = document.createElement('div');
+        entry.className = 'battle-enemy-entry';
+        if (e.hp <= 0) entry.classList.add('dead');
+        if (i === targetIdx && e.hp > 0) entry.classList.add('targeted');
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'battle-enemy-name';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = e.label || e.name;
+        const hpSpan = document.createElement('span');
+        hpSpan.className = 'hp-text';
+        hpSpan.textContent = e.hp > 0 ? `${e.hp}/${e.maxHp}` : '처치';
+        nameRow.appendChild(nameSpan);
+        nameRow.appendChild(hpSpan);
+
+        const hpCont = document.createElement('div');
+        hpCont.className = 'hp-bar-container';
+        const hpBar = document.createElement('div');
+        hpBar.className = 'hp-bar hp-bar-enemy';
+        hpBar.style.width = `${e.maxHp > 0 ? (Math.max(0, e.hp) / e.maxHp) * 100 : 0}%`;
+        hpCont.appendChild(hpBar);
+
+        entry.appendChild(nameRow);
+        entry.appendChild(hpCont);
+        container.appendChild(entry);
+      });
+    }
 
     set('battle-player-name', player.name);
     set('battle-player-level', `Lv.${player.level}`);
     set('battle-player-hp-text', `${player.hp}/${player.maxHp}`);
     setW('battle-player-hp-bar', player.maxHp > 0 ? (player.hp / player.maxHp) * 100 : 0);
-
     set('battle-turn', `턴 ${turn}`);
+  },
+
+  async showTargetSelect(enemies) {
+    return new Promise(resolve => {
+      const container = document.getElementById('battle-actions');
+      if (!container) { resolve(0); return; }
+      container.innerHTML = '';
+
+      const label = document.createElement('p');
+      label.className = 'target-label';
+      label.textContent = '🎯 공격 대상 선택';
+      container.appendChild(label);
+
+      enemies.forEach((e, i) => {
+        if (e.hp <= 0) return;
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-battle';
+        btn.textContent = `${e.label} (HP ${e.hp}/${e.maxHp})`;
+        btn.addEventListener('click', () => { container.innerHTML = ''; resolve(i); });
+        container.appendChild(btn);
+      });
+    });
   },
 
   showBattleLog(text, cssClass = '') {

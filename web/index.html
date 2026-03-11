@@ -117,17 +117,9 @@
   <!-- ══════════════ 전투 화면 ══════════════ -->
   <div id="screen-battle" class="screen">
     <div class="battle-area">
-      <!-- 적 정보 -->
-      <div class="battle-enemy">
-        <div class="battle-enemy-name">
-          <span id="battle-enemy-name">고블린</span>
-          <span id="battle-turn" class="battle-turn">턴 1</span>
-        </div>
-        <div class="hp-bar-container">
-          <div id="battle-enemy-hp-bar" class="hp-bar hp-bar-enemy" style="width: 100%"></div>
-        </div>
-        <span id="battle-enemy-hp-text" class="hp-text">30/30</span>
-      </div>
+      <!-- 적 정보 (동적 생성) -->
+      <div id="battle-enemies-container" class="battle-enemies-container"></div>
+      <span id="battle-turn" class="battle-turn">턴 1</span>
 
       <div class="battle-vs">⚔</div>
 

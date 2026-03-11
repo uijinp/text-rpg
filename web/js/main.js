@@ -394,15 +394,27 @@ async function tryStepMove(player, dr, dc, label) {
 
   const enemies = zoneMeta.encounter_enemies || [];
   if (enemies.length === 0) return { ok: true };
-  const enemyKey = enemies[Math.floor(Math.random() * enemies.length)];
-  const enemyName = ENEMY_TABLE[enemyKey]?.name || '적';
-  UI.addLog(pick([
-    `  이동 중 ${enemyName}과 조우!`,
-    `  어둠 속에서 ${enemyName}이(가) 모습을 드러냈다!`,
-    `  길목을 막아선 것은 ${enemyName}이었다!`,
-  ]));
+
+  /* 1~4마리 랜덤 생성 (가중치: 1마리 40%, 2마리 30%, 3마리 20%, 4마리 10%) */
+  const roll = Math.random();
+  const count = roll < 0.4 ? 1 : roll < 0.7 ? 2 : roll < 0.9 ? 3 : 4;
+  const enemyKeys = [];
+  for (let i = 0; i < count; i++) {
+    enemyKeys.push(enemies[Math.floor(Math.random() * enemies.length)]);
+  }
+
+  if (count === 1) {
+    const name = ENEMY_TABLE[enemyKeys[0]]?.name || '적';
+    UI.addLog(pick([
+      `  이동 중 ${name}과 조우!`,
+      `  어둠 속에서 ${name}이(가) 모습을 드러냈다!`,
+      `  길목을 막아선 것은 ${name}이었다!`,
+    ]));
+  } else {
+    UI.addLog(`  ${count}마리의 적이 나타났다!`);
+  }
   await UI.waitForTap();
-  const result = await CombatSystem.startBattle(player, enemyKey);
+  const result = await CombatSystem.startBattle(player, enemyKeys);
   if (result === 'lose') return { ok: false, gameover: true };
   return { ok: true };
 }

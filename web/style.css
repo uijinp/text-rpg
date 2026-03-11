@@ -624,16 +624,33 @@ body {
   padding: 16px;
 }
 
-.battle-enemy,
+.battle-enemies-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.battle-enemy-entry,
 .battle-player {
-  padding: 12px;
+  padding: 10px 12px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 
-.battle-enemy {
+.battle-enemy-entry {
   border-color: rgba(231, 76, 60, 0.2);
+  transition: border-color 0.2s, opacity 0.3s;
+}
+
+.battle-enemy-entry.targeted {
+  border-color: rgba(231, 76, 60, 0.6);
+  background: rgba(231, 76, 60, 0.05);
+}
+
+.battle-enemy-entry.dead {
+  opacity: 0.35;
+  border-color: rgba(100, 100, 100, 0.2);
 }
 
 .battle-player {
@@ -645,14 +662,25 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .battle-turn {
-  font-size: 0.75rem;
+  display: block;
+  text-align: right;
+  font-size: 0.72rem;
   color: var(--text-dim);
   font-weight: 400;
+  margin-bottom: 4px;
+}
+
+.target-label {
+  color: var(--gold);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  text-align: center;
 }
 
 .battle-vs {
