@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1.2">
+  <link rel="stylesheet" href="style.css?v=2.1">
 </head>
 
 <body>
@@ -67,50 +67,40 @@
     </div>
   </div>
 
-  <!-- ══════════════ 메인 게임 화면 ══════════════ -->
+  <!-- ══════════════ 메인 게임 화면 (영웅전설 스타일) ══════════════ -->
   <div id="screen-game" class="screen">
-    <!-- 상단 헤더: 상태 표시 -->
-    <div id="game-header">
-      <div class="header-row">
-        <div class="header-info">
-          <span id="header-name" class="header-name">용사</span>
-          <span id="header-level" class="header-level">Lv.1</span>
-          <span id="header-job" class="header-job">전사</span>
-        </div>
-        <div class="header-right">
-          <span id="header-gold" class="header-gold">💰 50G</span>
-          <button id="btn-minimap-toggle" class="btn-icon" title="미니맵 토글">🧭</button>
-        </div>
-      </div>
-      <div class="header-hp-row">
-        <div class="hp-bar-container">
-          <div id="header-hp-bar" class="hp-bar hp-bar-player" style="width: 100%"></div>
-        </div>
-        <span id="header-hp-text" class="hp-text">120/120</span>
-      </div>
-      <div id="header-location" class="header-location">📍 왕국 성당 앞</div>
+    <!-- ★ 메인 타일맵 뷰포트 (전체 화면) -->
+    <div id="tilemap-viewport" class="tilemap-viewport">
+      <div id="tilemap-grid" class="tilemap-grid"></div>
     </div>
 
-    <!-- 스토리 로그 -->
-    <div id="game-log" class="game-log"></div>
+    <!-- 컴팩트 상태바 (반투명 오버레이) -->
+    <div id="game-header" class="game-header-overlay">
+      <span id="header-name" class="hdr-name">용사</span>
+      <span id="header-level" class="hdr-lv">Lv.1</span>
+      <div class="hdr-hp">
+        <div class="hdr-hp-bar-bg">
+          <div id="header-hp-bar" class="hdr-hp-bar" style="width: 100%"></div>
+        </div>
+        <span id="header-hp-text" class="hdr-hp-text">120/120</span>
+      </div>
+      <span id="header-gold" class="hdr-gold">💰 50G</span>
+      <span id="header-location" class="hdr-loc">📍 왕국 성당 앞</span>
+    </div>
 
-    <!-- 하단 선택지 -->
-    <div id="game-choices" class="game-choices"></div>
+    <!-- 대화창 (하단 오버레이) -->
+    <div id="dialog-box" class="dialog-box hidden">
+      <div id="dialog-text" class="dialog-text"></div>
+      <div id="dialog-choices" class="dialog-choices"></div>
+    </div>
 
     <!-- 방향키 (D-pad) -->
-    <div id="dpad-container" class="dpad-container hidden">
+    <div id="dpad-container" class="dpad-container">
       <button id="dpad-up" class="dpad-btn dpad-up">▲</button>
       <button id="dpad-left" class="dpad-btn dpad-left">◀</button>
       <button id="dpad-map" class="dpad-btn dpad-center">🗺</button>
       <button id="dpad-right" class="dpad-btn dpad-right">▶</button>
       <button id="dpad-down" class="dpad-btn dpad-down">▼</button>
-    </div>
-
-    <!-- 미니맵 -->
-    <div id="minimap-widget" class="minimap-widget hidden">
-      <div class="minimap-title">미니맵</div>
-      <pre id="minimap-grid" class="minimap-grid"></pre>
-      <div id="minimap-caption" class="minimap-caption"></div>
     </div>
   </div>
 
@@ -265,6 +255,7 @@
   <!-- JS 로드 -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/visual_map.js"></script>
   <script src="js/skill_tree.js"></script>
   <script src="js/achievements.js"></script>
   <script src="js/storylets.js"></script>

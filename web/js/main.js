@@ -1,4 +1,4 @@
-/* main.js - 메인 진입점 */
+/* main.js - 메인 진입점 (영웅전설 스타일) */
 
 document.addEventListener('DOMContentLoaded', () => {
   UI.showScreen('screen-title');
@@ -6,14 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-new-game').addEventListener('click', startNewGame);
   document.getElementById('btn-load-game').addEventListener('click', loadGame);
 
-  setupQuickMenu();
   setupBackButtons();
   setupDPad();
   setupDPadMap();
-  setupMiniMapToggle();
 
-  /* F23: 타자기 효과 스킵 핸들러 */
-  document.getElementById('game-log')?.addEventListener('click', () => {
+  /* 대화창 터치 → 타자기 스킵 */
+  document.getElementById('dialog-text')?.addEventListener('click', () => {
     UI.skipTypewriter();
   });
 });
@@ -23,25 +21,9 @@ function pick(lines) {
   return lines[Math.floor(Math.random() * lines.length)];
 }
 
-let miniMapEnabled = localStorage.getItem('mini_map_enabled') !== '0';
-
-function setupMiniMapToggle() {
-  const btn = document.getElementById('btn-minimap-toggle');
-  if (!btn) return;
-
-  const applyVisual = () => {
-    btn.style.borderColor = miniMapEnabled ? 'rgba(212, 160, 23, 0.55)' : '';
-    btn.style.color = miniMapEnabled ? '#f0c040' : '';
-  };
-  applyVisual();
-
-  btn.addEventListener('click', () => {
-    miniMapEnabled = !miniMapEnabled;
-    localStorage.setItem('mini_map_enabled', miniMapEnabled ? '1' : '0');
-    applyVisual();
-    updateMiniMap(GameState.player);
-  });
-}
+/* 게임 상태 */
+let _gameState = 'field'; // 'field' | 'dialog' | 'battle'
+let _dpadLocked = false;
 
 /* ───── 방향키 (D-pad) 설정 ───── */
 function setupDPad() {
@@ -56,28 +38,26 @@ function setupDPad() {
     const btn = document.getElementById(id);
     if (!btn) continue;
     btn.addEventListener('click', async () => {
-      // 메뉴 대기 중 등 조작 불가능한 상태면 무시
+      if (_dpadLocked) return;
       if (!GameState.player || !GameState.player.isAlive()) return;
-      // UI.showChoices 상태이거나 다른 팝업창이 떠있을 때는 방어 처리(선택적)
-      if (document.getElementById('quick-menu') && !document.getElementById('quick-menu').classList.contains('hidden')) return;
 
+      // 대화창 열려있으면 이동 차단
+      if (_gameState !== 'field') {
+        // 대화 중 D-pad → 대화 닫고 필드로 복귀 (showChoices 대기 중이면 해소)
+        if (UI._choiceResolve) {
+          const resolve = UI._choiceResolve;
+          UI.hideChoices();
+          resolve('dpad_move');
+        }
+        return;
+      }
+
+      _dpadLocked = true;
       const stepResult = await tryStepMove(GameState.player, d.dr, d.dc, d.name);
+      _dpadLocked = false;
 
-      // 전투 조우 등 게임 루프 중단/재개가 필요한 상황이므로 
-      // 화면 갱신 리로드를 유도해야 함. (단, 현재 startGameLoop 무한 루프 대기 상태와 중첩될 수 있으므로 분기 필요)
       if (stepResult.gameover) {
         await showGameOver(GameState.player);
-      } else {
-        // 이동 성공 시 현재 선택지를 닫고 새 루프를 트리거하거나 UI를 다시 그립니다.
-        // 현재 showChoices 대기 상태를 강제로 취소(resolve 0 등)할 필요가 있습니다.
-        if (UI._choiceResolve) {
-          // hack: 강제로 '이동을 통해 화면 갱신' 용도의 특수 반환값 전달
-          // hideChoices()가 _choiceResolve를 null로 만들기 때문에
-          // resolver를 먼저 보관한 뒤 호출해야 루프가 정상 재개된다.
-          const resolveChoice = UI._choiceResolve;
-          UI.hideChoices();
-          resolveChoice('dpad_move');
-        }
       }
     });
   }
@@ -91,12 +71,12 @@ function setupDPadMap() {
     e.stopPropagation();
     if (!GameState.player) return;
     const mapResult = await UI.showMap(GameState.player);
-    /* F25: 빠른 이동이 실행됐으면 화면 전환 + 게임 루프 재시작 */
     if (mapResult && mapResult.quickTravel) {
       UI.showScreen('screen-game');
       UI.updateHeader();
-      updateMiniMap(GameState.player);
-      UI.addSystemMsg(`  ★ ${mapResult.name}(으)로 빠르게 이동했습니다!`);
+      renderTileMap(GameState.player);
+      UI.showToast(`★ ${mapResult.name}(으)로 빠르게 이동했습니다!`);
+      // 대화창 대기 중이면 해소
       if (UI._choiceResolve) {
         const resolve = UI._choiceResolve;
         UI.hideChoices();
@@ -106,66 +86,12 @@ function setupDPadMap() {
   });
 }
 
-/* ───── 퀵 메뉴 설정 ───── */
-
-function setupQuickMenu() {
-  const menuBtn = document.getElementById('btn-menu');
-  const overlay = document.getElementById('quick-menu');
-  if (!menuBtn || !overlay) return;
-
-  menuBtn.addEventListener('click', () => overlay.classList.remove('hidden'));
-
-  overlay.querySelectorAll('[data-action]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const action = btn.dataset.action;
-      overlay.classList.add('hidden');
-
-      if (action === 'close') return;
-      if (!GameState.player) return;
-
-      if (action === 'map') {
-        const mr = await UI.showMap(GameState.player);
-        if (mr && mr.quickTravel) {
-          UI.showScreen('screen-game');
-          UI.updateHeader();
-          updateMiniMap(GameState.player);
-          UI.addSystemMsg(`  ★ ${mr.name}(으)로 빠르게 이동했습니다!`);
-          return; /* 퀵메뉴 종료 → 게임 루프 재시작 */
-        }
-      } else if (action === 'quest') {
-        UI.showQuestLog(buildQuestData(GameState.player));
-        await UI.waitForTap();
-      } else if (action === 'status') {
-        UI.showStatus(GameState.player);
-        await UI.waitForTap();
-      } else if (action === 'inventory') {
-        await UI.showInventory(GameState.player);
-      } else if (action === 'save') {
-        UI.clearLog();
-        UI.addDivider('게임 저장');
-        const labels = [];
-        for (let i = 0; i < 5; i++) labels.push(`슬롯 ${i + 1}`);
-        labels.push('취소');
-        const slot = await UI.showChoices(labels);
-        if (slot < 5) {
-          GameState.saveToLocal(slot);
-          UI.addSystemMsg(`  슬롯 ${slot + 1}에 저장되었습니다!`);
-          await UI.waitForTap();
-        }
-      } else if (action === 'title') {
-        UI.showScreen('screen-title');
-      }
-    });
-  });
-}
-
 function buildQuestData(player) {
   const flags = player.storyFlags || {};
   const main = [];
   const side = [];
   const hints = [];
 
-  // 메인 진행 퀘스트
   if (!flags.forest_cleared) {
     main.push('어두운 숲을 정리해 다음 지역으로 향하는 길을 확보한다.');
   } else if (!(flags.cave_cleared || flags.river_cleared || flags.ruins_cleared)) {
@@ -182,7 +108,6 @@ function buildQuestData(player) {
     main.push('최종 결전을 준비한다.');
   }
 
-  // 서브/생활 퀘스트
   if (flags.blacksmith_quest && !flags.rescued_kai) {
     side.push("대장장이 브론의 아들 '카이'를 찾아 구출한다.");
   }
@@ -193,7 +118,6 @@ function buildQuestData(player) {
     side.push('사하르 마을을 탐색해 사막 라인을 개척한다.');
   }
 
-  // 잠긴 지역 힌트 (최대 5개)
   const lockedHints = [];
   for (const [zone, info] of Object.entries(AREAS)) {
     if (!info || !info.unlock_condition) continue;
@@ -206,13 +130,15 @@ function buildQuestData(player) {
   return { main, side, hints };
 }
 
-
 /* ───── 돌아가기 버튼 ───── */
 
 function setupBackButtons() {
   ['btn-shop-back', 'btn-inv-back', 'btn-status-back', 'btn-map-back'].forEach(id => {
     const btn = document.getElementById(id);
-    if (btn) btn.addEventListener('click', () => UI.showScreen('screen-game'));
+    if (btn) btn.addEventListener('click', () => {
+      UI.showScreen('screen-game');
+      renderTileMap(GameState.player);
+    });
   });
 }
 
@@ -293,55 +219,27 @@ function getMovementFlavorText(row, col, prevZone, nextZone) {
   if (ch === '=' || ch === '_') {
     const mid = getCurrentMapId();
     if (mid === 'underworld') return pick([
-      '어두운 지하 통로를 따라 조심스럽게 나아갔다.',
-      '축축한 통로 벽에서 물방울이 떨어진다.',
-      '발밑에서 돌멩이가 굴러가는 소리가 울렸다.',
-      '희미한 빛을 따라 지하 통로를 걸었다.',
+      '어두운 지하 통로를 따라 나아갔다.',
+      '축축한 통로에서 물방울이 떨어진다.',
     ]);
     if (mid === 'celestial') return pick([
-      '황금빛 구름 위의 길을 따라 걸어갔다.',
-      '바람에 실린 별의 파편이 눈앞을 스쳐 지나갔다.',
-      '구름 사이로 아득한 대지가 내려다보인다.',
-      '천상의 바람이 옷자락을 부드럽게 흔들었다.',
+      '황금빛 구름 위의 길을 걸어갔다.',
+      '천상의 바람이 옷자락을 흔들었다.',
     ]);
     return pick([
-      '정비된 대로를 따라 차분히 걸음을 옮겼다.',
-      '포장된 길 위에 발자국 소리가 규칙적으로 울렸다.',
-      '잘 닦인 도로 양쪽으로 이정표가 세워져 있다.',
-      '대로변에 마차 바퀴 자국이 선명하게 남아 있다.',
+      '정비된 대로를 따라 걸음을 옮겼다.',
+      '잘 닦인 도로 위를 걸어갔다.',
     ]);
   }
 
   if (ch === '.') {
-    if (prevZone && AREAS[prevZone]) {
-      const zoneName = AREAS[prevZone].name;
-      return pick([
-        `${zoneName}에서 이어지는 길을 천천히 걸어갔다.`,
-        `${zoneName}의 풍경이 점차 멀어져 간다.`,
-        `${zoneName} 근처의 익숙한 길을 따라 걸었다.`,
-        `${zoneName}의 기운이 아직 느껴지는 오솔길이다.`,
-      ]);
-    }
     const mid = getCurrentMapId();
-    if (mid === 'underworld') return pick([
-      '어둠 속에서 한 발짝 앞으로 나아갔다.',
-      '발밑의 돌바닥이 차갑게 느껴진다.',
-      '어디선가 낮은 신음 같은 바람 소리가 들렸다.',
-      '손에 닿는 벽면이 끈적거린다.',
-    ]);
-    if (mid === 'celestial') return pick([
-      '눈부신 구름 위에서 한 걸음 앞으로 나아갔다.',
-      '발밑 구름이 솜처럼 부드럽게 발을 감쌌다.',
-      '하늘에서 내려오는 따스한 빛이 길을 밝혀 준다.',
-      '바람결에 은은한 종소리가 울려 퍼졌다.',
-    ]);
+    if (mid === 'underworld') return pick(['어둠 속으로 나아갔다.', '돌바닥이 차갑다.']);
+    if (mid === 'celestial') return pick(['구름 위를 걸어갔다.', '따스한 빛이 길을 밝혀 준다.']);
     return pick([
-      '한적한 길 위로 발걸음을 옮겼다.',
+      '한적한 길을 걸어갔다.',
       '바람이 풀숲을 스치며 살랑거렸다.',
-      '길가에 작은 꽃들이 피어 있다.',
-      '새소리가 멀리서 들려오는 평화로운 길이다.',
-      '발밑에 낙엽이 바스락거렸다.',
-      '지나온 길을 돌아보니 아득히 멀어져 있다.',
+      '새소리가 들려오는 평화로운 길이다.',
     ]);
   }
 
@@ -350,91 +248,132 @@ function getMovementFlavorText(row, col, prevZone, nextZone) {
   }
 
   return pick([
-    '조심스럽게 한 걸음 앞으로 나아갔다.',
-    '낯선 지형을 살피며 발걸음을 내디뎠다.',
-    '주변을 경계하며 천천히 이동했다.',
-    '알 수 없는 기운이 감도는 곳을 지나간다.',
+    '조심스럽게 한 걸음 나아갔다.',
+    '낯선 지형을 살피며 이동했다.',
   ]);
 }
 
-function buildMiniMapLines(player, radius = 5) {
-  const tileMap = getCurrentTileMap();
-  const locs = getCurrentLocations();
-  const lines = [];
-  const startR = Math.max(0, player.mapRow - radius);
-  const endR = Math.min(tileMap.length - 1, player.mapRow + radius);
-  const startC = Math.max(0, player.mapCol - radius);
-  const endC = Math.min(tileMap[0].length - 1, player.mapCol + radius);
 
-  for (let r = startR; r <= endR; r++) {
-    let line = '';
-    for (let c = startC; c <= endC; c++) {
+/* ═══════════════════════════════════════════════
+   ★ 전체 화면 타일맵 렌더러 ★
+   ═══════════════════════════════════════════════ */
+
+const TILE_SIZE = 32;
+
+function renderTileMap(player) {
+  const viewport = document.getElementById('tilemap-viewport');
+  const grid = document.getElementById('tilemap-grid');
+  if (!viewport || !grid || !player) return;
+  if (!Number.isInteger(player.mapRow) || !Number.isInteger(player.mapCol)) return;
+
+  const mapId = player.mapId || 'mainland';
+  const tileMap = TILE_MAPS[mapId];
+  const locs = MAP_REGISTRY[mapId].locations;
+
+  // 뷰포트 크기 기반 타일 수 계산
+  const vpW = viewport.clientWidth || 480;
+  const vpH = viewport.clientHeight || 640;
+  const cols = Math.ceil(vpW / TILE_SIZE) + 1; // 여유 1열 추가
+  const rows = Math.ceil(vpH / TILE_SIZE) + 1;
+
+  // 카메라: 플레이어 중앙
+  const halfC = Math.floor(cols / 2);
+  const halfR = Math.floor(rows / 2);
+  const startCol = player.mapCol - halfC;
+  const startRow = player.mapRow - halfR;
+
+  grid.style.gridTemplateColumns = `repeat(${cols}, ${TILE_SIZE}px)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, ${TILE_SIZE}px)`;
+  // 그리드를 뷰포트 중앙에 배치
+  grid.style.width = `${cols * TILE_SIZE}px`;
+  grid.style.height = `${rows * TILE_SIZE}px`;
+
+  grid.innerHTML = '';
+
+  for (let dr = 0; dr < rows; dr++) {
+    for (let dc = 0; dc < cols; dc++) {
+      const r = startRow + dr;
+      const c = startCol + dc;
+      const span = document.createElement('span');
+      span.className = 'vtile';
+
       if (r === player.mapRow && c === player.mapCol) {
-        line += '@';
-        continue;
+        /* 플레이어 타일 */
+        const ch = tileMap[r]?.[c] || '.';
+        const v = VisualMap.getTileVisual(ch, mapId);
+        span.classList.add('vtile-player');
+        span.style.backgroundColor = v.css;
+        if (v.img) span.style.backgroundImage = `url(tile_image/${v.img}.webp)`;
+
+        /* 캐릭터 스프라이트 */
+        const sprite = VisualMap.getSprite(player.job, false);
+        const charImg = document.createElement('img');
+        charImg.className = 'char-sprite';
+        charImg.src = sprite.path;
+        charImg.alt = '';
+        charImg.onerror = () => {
+          charImg.remove();
+          const em = document.createElement('span');
+          em.className = 'char-emoji';
+          em.textContent = sprite.emoji;
+          span.appendChild(em);
+        };
+        span.appendChild(charImg);
+      } else if (r < 0 || r >= tileMap.length || c < 0 || c >= tileMap[0].length) {
+        /* 맵 밖 */
+        span.classList.add('vtile-void');
+      } else {
+        /* 일반 타일 */
+        const ch = tileMap[r][c];
+        const v = VisualMap.getTileVisual(ch, mapId);
+        span.style.backgroundColor = v.css;
+        if (v.img) span.style.backgroundImage = `url(tile_image/${v.img}.webp)`;
+        if (v.emoji) span.textContent = v.emoji;
+        /* 거점 마커 */
+        if (ch >= 'A' && ch <= 'Z' && locs[ch]) {
+          span.classList.add('vtile-marker');
+          span.title = locs[ch].name;
+        }
       }
-      const ch = tileMap[r][c];
-      if (locs[ch]) line += '★';
-      else if (ch === '#' || ch === '^' || ch === '~' || ch === '*') line += '■';
-      else if (ch === 'w') line += '≈';
-      else if (ch === '=' || ch === '_' || ch === '.') line += '·';
-      else line += '□';
+      grid.appendChild(span);
     }
-    lines.push(line);
   }
-  return lines;
 }
 
-function updateMiniMap(player) {
-  const widget = document.getElementById('minimap-widget');
-  const grid = document.getElementById('minimap-grid');
-  const caption = document.getElementById('minimap-caption');
-  if (!widget || !grid || !caption) return;
+/* 하위 호환 */
+function updateMiniMap(player) { renderTileMap(player); }
 
-  if (!miniMapEnabled || !player || !Number.isInteger(player.mapRow) || !Number.isInteger(player.mapCol)) {
-    widget.classList.add('hidden');
-    return;
-  }
 
-  widget.classList.remove('hidden');
-  grid.textContent = buildMiniMapLines(player, 5).join('\n');
-  const areaName = getAreaNameByPos(player.mapRow, player.mapCol);
-  const mmZone = getZoneAt(player.mapRow, player.mapCol);
-  const mmZoneData = mmZone ? AREAS[mmZone] : null;
-  const mmRecLvl = mmZoneData?.recommendedLevel;
-  const mmLvlTag = (mmRecLvl > 0) ? ` Lv.${mmRecLvl}` : '';
-  caption.textContent = `${areaName}${mmLvlTag} (${player.mapRow}, ${player.mapCol})`;
-}
+/* ═══════════════════════════════════════════════
+   이동 시스템
+   ═══════════════════════════════════════════════ */
 
 async function tryStepMove(player, dr, dc, label) {
   const prevRow = player.mapRow;
   const prevCol = player.mapCol;
-  const prevAreaName = getAreaNameByPos(prevRow, prevCol);
   const nr = player.mapRow + dr;
   const nc = player.mapCol + dc;
+
   if (!canMoveTo(nr, nc)) {
-    UI.addSystemMsg(pick([
-      `  ${label} 이동 실패: 더 이상 갈 수 없습니다. (현재: ${prevAreaName})`,
-      `  ${label} 이동 실패: ${label}쪽 길은 막혀 있습니다. (현재: ${prevAreaName})`,
-      `  ${label} 이동 실패: ${label} 방향으로는 진행할 수 없습니다. (현재: ${prevAreaName})`,
-    ]));
+    UI.showToast(`${label}쪽은 갈 수 없습니다`);
     return { ok: false };
   }
 
   const curZone = getZoneAt(player.mapRow, player.mapCol);
   const nextZone = getZoneAt(nr, nc);
   if (nextZone && nextZone !== curZone && EventEngine.isZoneLocked(player, nextZone)) {
-    UI.addSystemMsg(pick([
-      `  ${label} 이동 실패: [잠김] ${EventEngine.getLockHint(nextZone)}`,
-      `  ${label} 이동 실패: 길을 막는 기운이 느껴집니다. ${EventEngine.getLockHint(nextZone)}`,
-    ]));
+    UI.showToast(`[잠김] ${EventEngine.getLockHint(nextZone)}`);
     return { ok: false };
   }
+
+  // 대화창 숨기기 (필드 이동 시)
+  UI.hideDialog();
+  _gameState = 'field';
 
   player.mapRow = nr;
   player.mapCol = nc;
 
-  /* F8: 걸음 수 추적 */
+  /* 걸음 수 추적 */
   if (player.stats) player.stats.stepsWalked++;
 
   const ch = getTileChar(nr, nc);
@@ -442,55 +381,47 @@ async function tryStepMove(player, dr, dc, label) {
   if (locs[ch]) {
     player.currentLocation = locs[ch].zone;
     player.visitedLocations.add(player.currentLocation);
-    const arrArea = AREAS[locs[ch].zone];
-    const arrLvl = arrArea?.recommendedLevel;
-    const arrTag = (arrLvl > 0) ? ` [권장 Lv.${arrLvl}]` : '';
-    UI.addSystemMsg(pick([
-      `  ★ ${locs[ch].name}${arrTag}에 도착했습니다.`,
-      `  ★ ${locs[ch].name}${arrTag}의 경계에 발을 들였습니다.`,
-      `  ★ 목적지 도착: ${locs[ch].name}${arrTag}`,
-    ]));
   } else if (nextZone) {
     player.currentLocation = nextZone;
     player.visitedLocations.add(nextZone);
   }
 
-  const nextAreaName = getAreaNameByPos(player.mapRow, player.mapCol);
-  if (prevAreaName === nextAreaName) {
-    UI.addSystemMsg(pick([
-      `  ${label}으로 한 칸 이동했습니다. (${nextAreaName} 내부)`,
-      `  ${nextAreaName} 안쪽으로 ${label} 방향으로 이동했습니다.`,
-      `  ${label}쪽으로 조금 더 깊이 들어갔습니다. (${nextAreaName})`,
-      `  ${nextAreaName}을(를) ${label}쪽으로 탐색했습니다.`,
-    ]));
-  } else {
-    UI.addSystemMsg(pick([
-      `  ${label}으로 한 칸 이동했습니다. (${prevAreaName} → ${nextAreaName})`,
-      `  ${prevAreaName}에서 ${nextAreaName}(으)로 발을 내디뎠습니다.`,
-      `  ${label} 방향으로 이동하여 ${nextAreaName}에 접어들었습니다.`,
-    ]));
-  }
-  UI.addLog(`  위치: [${prevRow}, ${prevCol}] → [${nr}, ${nc}]`);
-
   UI.updateHeader();
-  updateMiniMap(player);
-  UI.addLog(`  ${getMovementFlavorText(nr, nc, curZone, nextZone)}`);
+  renderTileMap(player);
 
-  /* F8: 업적 체크 (이동 후) */
+  /* 이동 애니메이션 */
+  const _pt = document.querySelector('.vtile-player');
+  if (_pt) {
+    _pt.classList.add('vtile-player-moving');
+    setTimeout(() => _pt.classList.remove('vtile-player-moving'), 220);
+  }
+
+  /* 거점 도착 → 자동 대화창 표시 */
+  if (locs[ch]) {
+    const arrArea = AREAS[locs[ch].zone];
+    const arrLvl = arrArea?.recommendedLevel;
+    const arrTag = (arrLvl > 0) ? ` [Lv.${arrLvl}]` : '';
+    UI.showToast(`★ ${locs[ch].name}${arrTag}`);
+    // 자동으로 장소 메뉴 열기
+    await showLocationMenu(player);
+    return { ok: true };
+  }
+
+  /* 업적 체크 */
   if (typeof AchievementManager !== 'undefined') AchievementManager.check(player);
 
-  /* F10: 스토리릿 체크 (인카운터 전) */
+  /* 스토리릿 체크 */
   if (typeof StoryletManager !== 'undefined') {
     const storylet = StoryletManager.checkAndTrigger(player);
     if (storylet) {
+      _gameState = 'dialog';
       const slResult = await StoryletManager.trigger(storylet, player);
+      _gameState = 'field';
       if (slResult === 'gameover') return { ok: false, gameover: true };
-      if (slResult !== null && slResult !== undefined) {
-        await UI.waitForTap();
-      }
     }
   }
 
+  /* 인카운터 체크 */
   const zoneMeta = AREAS[nextZone];
   if (!zoneMeta || zoneMeta.encounter_chance <= 0) return { ok: true };
   if (Math.random() >= zoneMeta.encounter_chance) return { ok: true };
@@ -498,7 +429,7 @@ async function tryStepMove(player, dr, dc, label) {
   const enemies = zoneMeta.encounter_enemies || [];
   if (enemies.length === 0) return { ok: true };
 
-  /* 지역별 min~max 마리 랜덤 생성 (적은 수에 가중치) */
+  /* 적 수 결정 */
   const minE = zoneMeta.minEnemies ?? 1;
   const maxE = zoneMeta.maxEnemies ?? 4;
   let count;
@@ -522,20 +453,182 @@ async function tryStepMove(player, dr, dc, label) {
     enemyKeys.push(enemies[Math.floor(Math.random() * enemies.length)]);
   }
 
+  /* 전투 돌입 */
+  _gameState = 'battle';
   if (count === 1) {
     const name = ENEMY_TABLE[enemyKeys[0]]?.name || '적';
+    UI.showDialog();
     UI.addLog(pick([
-      `  이동 중 ${name}과 조우!`,
+      `  ${name}이(가) 나타났다!`,
       `  어둠 속에서 ${name}이(가) 모습을 드러냈다!`,
-      `  길목을 막아선 것은 ${name}이었다!`,
     ]));
   } else {
+    UI.showDialog();
     UI.addLog(`  ${count}마리의 적이 나타났다!`);
   }
   await UI.waitForTap();
+  UI.hideDialog();
   const result = await CombatSystem.startBattle(player, enemyKeys);
+  _gameState = 'field';
+  // 전투 후 타일맵 복원
+  UI.showScreen('screen-game');
+  UI.updateHeader();
+  renderTileMap(player);
   if (result === 'lose') return { ok: false, gameover: true };
   return { ok: true };
+}
+
+
+/* ───── 거점 도착 시 장소 메뉴 ───── */
+
+async function showLocationMenu(player) {
+  _gameState = 'dialog';
+  const posZone = getZoneAt(player.mapRow, player.mapCol);
+  const posZoneData = posZone ? AREAS[posZone] : null;
+  const positionalName = getAreaNameByPos(player.mapRow, player.mapCol);
+
+  UI.clearLog();
+  UI.addDivider(positionalName);
+  if (posZoneData) UI.addLog(`  ${posZoneData.desc}`);
+  UI.showDialog();
+
+  const menuLabels = ['지역 탐색', '인벤토리', '메뉴 더보기'];
+  const choice = await UI.showChoices(menuLabels);
+
+  if (choice === 'dpad_move') {
+    UI.hideDialog();
+    _gameState = 'field';
+    return;
+  }
+
+  if (choice === 0) {
+    const result = await EventEngine.runYamlEvent(player, player.currentLocation);
+    if (result === 'gameover') {
+      await showGameOver(player);
+      return;
+    }
+    if (result && typeof result === 'string' && result.startsWith('clear_')) {
+      await showEnding(player, result);
+      return;
+    }
+    UI.updateHeader();
+    renderTileMap(player);
+    if (result === null || result === undefined) {
+      await UI.waitForTap();
+    }
+  } else if (choice === 1) {
+    await UI.showInventory(player);
+    UI.showScreen('screen-game');
+    renderTileMap(player);
+  } else if (choice === 2) {
+    const menuResult = await showMoreMenu(player);
+    if (menuResult === 'title') {
+      return;
+    }
+    UI.showScreen('screen-game');
+    renderTileMap(player);
+  }
+
+  UI.hideDialog();
+  _gameState = 'field';
+}
+
+
+/* ───── 메뉴 더보기 ───── */
+
+async function showMoreMenu(player) {
+  while (true) {
+    UI.clearLog();
+    UI.addDivider('메뉴 더보기');
+    UI.showDialog();
+    const choice = await UI.showChoices(['정보 보기', '시스템', '돌아가기']);
+
+    if (choice === 'dpad_move') return 'back';
+
+    if (choice === 0) {
+      while (true) {
+        UI.clearLog();
+        UI.addDivider('정보 보기');
+        const infoChoice = await UI.showChoices(['퀘스트', '지도 보기', '상태 확인', '업적', '스킬 트리', '돌아가기']);
+
+        if (infoChoice === 'dpad_move') break;
+
+        if (infoChoice === 0) {
+          UI.showQuestLog(buildQuestData(player));
+          await UI.waitForTap();
+          continue;
+        }
+        if (infoChoice === 1) {
+          const mr = await UI.showMap(player);
+          if (mr && mr.quickTravel) {
+            UI.showScreen('screen-game');
+            UI.updateHeader();
+            renderTileMap(player);
+            UI.showToast(`★ ${mr.name}(으)로 빠르게 이동했습니다!`);
+            return;
+          }
+          continue;
+        }
+        if (infoChoice === 2) {
+          UI.showStatus(player);
+          await UI.waitForTap();
+          continue;
+        }
+        if (infoChoice === 3) {
+          UI.showAchievementPanel(player);
+          await UI.waitForTap();
+          continue;
+        }
+        if (infoChoice === 4) {
+          UI.showSkillTree(player);
+          await UI.waitForTap();
+          continue;
+        }
+        break;
+      }
+      continue;
+    }
+
+    if (choice === 1) {
+      while (true) {
+        UI.clearLog();
+        UI.addDivider('시스템');
+        const sysChoice = await UI.showChoices(['저장', '타이틀로', '돌아가기']);
+
+        if (sysChoice === 'dpad_move') break;
+
+        if (sysChoice === 0) {
+          UI.clearLog();
+          UI.addDivider('게임 저장');
+          const slotLabels = [];
+          for (let i = 0; i < 5; i++) slotLabels.push(`슬롯 ${i + 1}`);
+          slotLabels.push('취소');
+          const slot = await UI.showChoices(slotLabels);
+          if (slot !== 'dpad_move' && slot < 5) {
+            GameState.saveToLocal(slot);
+            UI.showToast(`슬롯 ${slot + 1}에 저장되었습니다!`);
+          }
+          continue;
+        }
+
+        if (sysChoice === 1) {
+          UI.clearLog();
+          UI.addLog('  정말 게임을 종료하시겠습니까?');
+          const confirmChoice = await UI.showChoices(['계속하기', '종료']);
+          if (confirmChoice === 1) {
+            UI.showScreen('screen-title');
+            return 'title';
+          }
+          continue;
+        }
+
+        break;
+      }
+      continue;
+    }
+
+    return 'back';
+  }
 }
 
 
@@ -619,19 +712,16 @@ async function initStoryFlags() {
     mercenary_joined: false,
     dark_tower_cleared: false,
     volcano_cleared: false,
-    // 지하 세계
     uw_boneyard_cleared: false,
     uw_crystal_cleared: false,
     uw_lava_lake_cleared: false,
     uw_fortress_cleared: false,
     uw_abyss_cleared: false,
-    // 천상 세계
     cel_garden_cleared: false,
     cel_hall_cleared: false,
     cel_arsenal_cleared: false,
     cel_spire_cleared: false,
     cel_throne_cleared: false,
-    // 남부 지역
     colosseum_cleared: false,
     temple_cleared: false,
   };
@@ -640,18 +730,20 @@ async function initStoryFlags() {
   }
 
   player.inventory.push('소형 포션', '소형 포션');
+
+  // 게임 화면 표시 + 타일맵 렌더링
   UI.showScreen('screen-game');
+  UI.updateHeader();
+  renderTileMap(player);
+
+  // 시작 대화창
   UI.clearLog();
   UI.addDivider('모험의 시작');
-  UI.addLog('');
-  UI.addLog(pick([
-    `  ${player.name}(${player.job})의 모험이 시작됩니다!`,
-    `  ${player.name}, 이제 운명의 여정이 시작됩니다.`,
-    `  낯선 바람과 함께 ${player.name}의 발걸음이 움직입니다.`,
-  ]));
+  UI.addLog(`  ${player.name}(${player.job})의 모험이 시작됩니다!`);
   UI.addSystemMsg('  ▶ 장로에게 소형 포션 x2를 받았습니다.');
-  UI.addLog('');
+  UI.showDialog();
   await UI.waitForTap();
+  UI.hideDialog();
 }
 
 
@@ -663,7 +755,9 @@ async function loadGame() {
     UI.showScreen('screen-game');
     UI.clearLog();
     UI.addLog('  저장된 게임이 없습니다.');
+    UI.showDialog();
     await UI.showChoices(['돌아가기']);
+    UI.hideDialog();
     UI.showScreen('screen-title');
     return;
   }
@@ -671,6 +765,7 @@ async function loadGame() {
   UI.showScreen('screen-game');
   UI.clearLog();
   UI.addDivider('게임 불러오기');
+  UI.showDialog();
 
   const labels = saves.map(s => {
     const date = new Date(s.timestamp).toLocaleString('ko-KR');
@@ -680,129 +775,32 @@ async function loadGame() {
 
   const choice = await UI.showChoices(labels);
   if (choice >= saves.length) {
+    UI.hideDialog();
     UI.showScreen('screen-title');
     return;
   }
 
   const slot = saves[choice].slot;
   if (GameState.loadFromLocal(slot)) {
-    UI.addSystemMsg(pick([
-      '  게임을 불러왔습니다!',
-      '  저장된 여정을 이어갑니다.',
-      '  기억이 되살아났습니다. 모험을 계속합니다.',
-    ]));
+    UI.addSystemMsg('  게임을 불러왔습니다!');
     await UI.waitForTap();
+    UI.hideDialog();
     await startGameLoop();
   } else {
     UI.addLog('  불러오기에 실패했습니다.');
     await UI.showChoices(['돌아가기']);
+    UI.hideDialog();
     UI.showScreen('screen-title');
   }
 }
 
-async function showMoreMenu(player) {
-  while (true) {
-    UI.clearLog();
-    UI.addDivider('메뉴 더보기');
-    const choice = await UI.showChoices(['정보 보기', '시스템', '돌아가기']);
 
-    if (choice === 0) {
-      while (true) {
-        UI.clearLog();
-        UI.addDivider('정보 보기');
-        const infoChoice = await UI.showChoices(['퀘스트', '지도 보기', '상태 확인', '업적', '스킬 트리', '돌아가기']);
-
-        if (infoChoice === 0) {
-          UI.showQuestLog(buildQuestData(player));
-          await UI.waitForTap();
-          continue;
-        }
-        if (infoChoice === 1) {
-          const mr = await UI.showMap(player);
-          if (mr && mr.quickTravel) {
-            UI.showScreen('screen-game');
-            UI.updateHeader();
-            updateMiniMap(player);
-            UI.addSystemMsg(`  ★ ${mr.name}(으)로 빠르게 이동했습니다!`);
-            return; /* 메뉴 종료 → 게임 루프 재시작 */
-          }
-          continue;
-        }
-        if (infoChoice === 2) {
-          UI.showStatus(player);
-          await UI.waitForTap();
-          continue;
-        }
-        if (infoChoice === 3) {
-          /* F8: 업적 패널 */
-          UI.showAchievementPanel(player);
-          await UI.waitForTap();
-          continue;
-        }
-        if (infoChoice === 4) {
-          /* F9: 스킬 트리 */
-          UI.showSkillTree(player);
-          await UI.waitForTap();
-          continue;
-        }
-        break;
-      }
-      continue;
-    }
-
-    if (choice === 1) {
-      while (true) {
-        UI.clearLog();
-        UI.addDivider('시스템');
-        const sysChoice = await UI.showChoices(['저장', '타이틀로', '돌아가기']);
-
-        if (sysChoice === 0) {
-          UI.clearLog();
-          UI.addDivider('게임 저장');
-          const slotLabels = [];
-          for (let i = 0; i < 5; i++) slotLabels.push(`슬롯 ${i + 1}`);
-          slotLabels.push('취소');
-          const slot = await UI.showChoices(slotLabels);
-          if (slot < 5) {
-            GameState.saveToLocal(slot);
-            UI.addSystemMsg(pick([
-              `  슬롯 ${slot + 1}에 저장되었습니다!`,
-              `  여정의 기록이 슬롯 ${slot + 1}에 각인되었습니다.`,
-              `  저장 완료. 언제든 이 순간으로 돌아올 수 있습니다. (슬롯 ${slot + 1})`,
-            ]));
-            await UI.waitForTap();
-          }
-          continue;
-        }
-
-        if (sysChoice === 1) {
-          UI.clearLog();
-          UI.addLog('  정말 게임을 종료하시겠습니까?');
-          const confirmChoice = await UI.showChoices(['계속하기', '종료']);
-          if (confirmChoice === 1) {
-            UI.showScreen('screen-title');
-            return 'title';
-          }
-          continue;
-        }
-
-        break;
-      }
-      continue;
-    }
-
-    return 'back';
-  }
-}
-
-
-/* ───── 메인 게임 루프 ───── */
+/* ───── 메인 게임 루프 (영웅전설 스타일) ───── */
 
 async function startGameLoop() {
   const player = GameState.player;
   UI.showScreen('screen-game');
   UI.updateHeader();
-  updateMiniMap(player);
 
   if (!player.currentLocation) {
     player.currentLocation = 'town';
@@ -823,74 +821,20 @@ async function startGameLoop() {
     }
   }
 
-  while (player.isAlive()) {
-    UI.showScreen('screen-game');
-    UI.clearLog();
-    UI.updateHeader();
-    updateMiniMap(player);
+  renderTileMap(player);
+  _gameState = 'field';
 
-    const positionalName = getAreaNameByPos(player.mapRow, player.mapCol);
-    const posZone = getZoneAt(player.mapRow, player.mapCol);
-    const posZoneData = posZone ? AREAS[posZone] : null;
-    const recLvl = posZoneData?.recommendedLevel;
-    const lvlTag = (recLvl > 0) ? ` [권장 Lv.${recLvl}]` : '';
-    const currentArea = AREAS[player.currentLocation];
-
-    UI.addDivider(`현재 위치: ${positionalName}${lvlTag}`);
-    if (posZoneData) UI.addLog(`  ${posZoneData.desc}`);
-    else if (currentArea) UI.addLog(`  ${currentArea.desc}`);
-    UI.addLog('');
-
-    // D-pad 컨테이너 보이기
-    const dpad = document.getElementById('dpad-container');
-    if (dpad) dpad.classList.remove('hidden');
-
-    const menuLabels = ['지역 탐색', '인벤토리', '메뉴 더보기'];
-    const choice = await UI.showChoices(menuLabels);
-
-    // D-pad로 강제 이동 시그널이 온 경우 (루프 재시작)
-    if (choice === 'dpad_move') {
-      if (dpad) dpad.classList.add('hidden');
-      if (!player.isAlive()) return;
-      continue;
-    }
-
-    // 메뉴가 선택되었으므로 D-pad 감추기
-    if (dpad) dpad.classList.add('hidden');
-
-    if (choice === 0) {
-      const result = await EventEngine.runYamlEvent(player, player.currentLocation);
-      if (result === 'gameover') {
-        await showGameOver(player);
-        return;
-      }
-      if (result && typeof result === 'string' && result.startsWith('clear_')) {
-        await showEnding(player, result);
-        return;
-      }
-      UI.updateHeader();
-      if (result === null || result === undefined) {
-        await UI.waitForTap();
-      }
-
-    } else if (choice === 1) {
-      await UI.showInventory(player);
-
-    } else if (choice === 2) {
-      const menuResult = await showMoreMenu(player);
-      if (menuResult === 'title') {
-        return;
-      }
-    }
+  // 거점 위에 있으면 자동 메뉴 표시
+  const ch = getTileChar(player.mapRow, player.mapCol);
+  const locs = getCurrentLocations();
+  if (locs[ch]) {
+    await showLocationMenu(player);
   }
 
-  if (!player.isAlive()) {
-    await showGameOver(player);
-  }
+  // 영웅전설 스타일: 이벤트 기반 (D-pad가 직접 이동 처리)
+  // 메인 루프는 없고, D-pad 클릭 이벤트가 모든 것을 처리
+  // 플레이어가 거점에 도착하면 showLocationMenu()가 호출됨
 }
-
-
-/* ───── 삭제된 목록형 이동 ───── */
 
 
 /* ───── 게임 오버 ───── */
@@ -903,12 +847,12 @@ async function showGameOver(player) {
   UI.addLog(pick([
     '  당신은 쓰러졌습니다...',
     '  눈앞이 점점 어두워집니다...',
-    '  마지막 일격이 몸을 꿰뚫었습니다...',
   ]));
   UI.addLog(`  최종 레벨: Lv.${player.level}`);
   UI.addLog(`  마지막 위치: ${AREAS[player.currentLocation]?.name || player.currentLocation}`);
-  UI.addLog('');
+  UI.showDialog();
   await UI.showChoices(['타이틀로 돌아가기']);
+  UI.hideDialog();
   UI.showScreen('screen-title');
 }
 
@@ -935,13 +879,9 @@ async function showEnding(player, endingType) {
   UI.addLog(`  ${player.name} (${player.job}) Lv.${player.level}`);
   UI.addLog(`  어둠 점수: ${player.darkPoints}`);
   UI.addLog('');
-  UI.addLog(pick([
-    '  축하합니다! 게임을 클리어했습니다!',
-    '  긴 여정 끝에 마침내 결말에 도달했습니다!',
-    '  전설은 이제 당신의 이름을 기억할 것입니다.',
-  ]));
-  UI.addLog('');
-
+  UI.addLog('  축하합니다! 게임을 클리어했습니다!');
+  UI.showDialog();
   await UI.showChoices(['타이틀로 돌아가기']);
+  UI.hideDialog();
   UI.showScreen('screen-title');
 }

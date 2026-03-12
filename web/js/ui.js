@@ -25,8 +25,28 @@ const UI = {
     this.showScreen(this._previousScreen || 'screen-game');
   },
 
+  /* 대화창 표시/숨김 */
+  showDialog() {
+    const box = document.getElementById('dialog-box');
+    if (box) box.classList.remove('hidden');
+  },
+
+  hideDialog() {
+    const box = document.getElementById('dialog-box');
+    if (box) box.classList.add('hidden');
+  },
+
+  isDialogOpen() {
+    const box = document.getElementById('dialog-box');
+    return box && !box.classList.contains('hidden');
+  },
+
+  _getLogEl() {
+    return document.getElementById('dialog-text');
+  },
+
   addLog(text, cssClass = '') {
-    const log = document.getElementById('game-log');
+    const log = this._getLogEl();
     if (!log) return;
     const p = document.createElement('p');
     p.className = `text-appear ${cssClass}`.trim();
@@ -36,12 +56,14 @@ const UI = {
   },
 
   clearLog() {
-    const log = document.getElementById('game-log');
+    const log = this._getLogEl();
     if (log) log.innerHTML = '';
+    const choices = document.getElementById('dialog-choices');
+    if (choices) choices.innerHTML = '';
   },
 
   addDivider(title = '') {
-    const log = document.getElementById('game-log');
+    const log = this._getLogEl();
     if (!log) return;
     if (title) {
       const h = document.createElement('p');
@@ -106,7 +128,7 @@ const UI = {
 
   addLogTypewriter(text, speed = 25) {
     return new Promise(resolve => {
-      const log = document.getElementById('game-log');
+      const log = this._getLogEl();
       if (!log || !text || text.trim() === '') { resolve(); return; }
 
       /* 이전 타자기 강제 완료 */
@@ -185,7 +207,7 @@ const UI = {
           this._typewriterP.appendChild(document.createTextNode(seg.text));
         }
       }
-      const log = document.getElementById('game-log');
+      const log = this._getLogEl();
       if (log) log.scrollTop = log.scrollHeight;
     }
     if (this._typewriterResolve) {
@@ -200,9 +222,11 @@ const UI = {
   showChoices(options) {
     return new Promise(resolve => {
       this._choiceResolve = resolve;
-      const container = document.getElementById('game-choices');
+      const container = document.getElementById('dialog-choices');
       if (!container) { resolve(0); return; }
       container.innerHTML = '';
+
+      this.showDialog();
 
       options.forEach((label, idx) => {
         const btn = document.createElement('button');
@@ -215,13 +239,13 @@ const UI = {
         container.appendChild(btn);
       });
 
-      const log = document.getElementById('game-log');
+      const log = this._getLogEl();
       if (log) log.scrollTop = log.scrollHeight;
     });
   },
 
   hideChoices() {
-    const container = document.getElementById('game-choices');
+    const container = document.getElementById('dialog-choices');
     if (container) container.innerHTML = '';
     this._choiceResolve = null;
   },
@@ -279,7 +303,6 @@ const UI = {
       hpBar.style.width = `${p.maxHp > 0 ? (p.hp / p.maxHp) * 100 : 0}%`;
     }
 
-    this.setAreaBackground(p.currentLocation);
   },
 
   resolveAreaBackgroundPath(areaKey) {
@@ -298,6 +321,39 @@ const UI = {
     }
     const overlay = `linear-gradient(180deg, rgba(4, 4, 8, 0.64), rgba(4, 4, 8, 0.78)), url("${path}")`;
     root.style.setProperty('--game-bg-overlay', overlay);
+  },
+
+  /* ───── 장면 배경 + 캐릭터 스프라이트 ───── */
+
+  updateSceneBg(player) {
+    const sceneBg = document.getElementById('scene-bg');
+    const sceneChar = document.getElementById('scene-char');
+    const sceneEmoji = document.getElementById('scene-char-emoji');
+    if (!sceneBg || !player) return;
+
+    /* 배경: 현재 지역의 bg_image 사용 */
+    const bgPath = this.resolveAreaBackgroundPath(player.currentLocation);
+    if (bgPath) {
+      sceneBg.style.backgroundImage = `url("${bgPath}")`;
+    } else {
+      sceneBg.style.backgroundImage = 'none';
+      sceneBg.style.background = 'linear-gradient(180deg, #0a0a15 0%, #151520 100%)';
+    }
+
+    /* 캐릭터 스프라이트 */
+    if (typeof VisualMap !== 'undefined' && sceneChar && sceneEmoji) {
+      const sprite = VisualMap.getSprite(player.job, false);
+      sceneChar.src = sprite.path;
+      sceneChar.onerror = () => {
+        sceneChar.style.display = 'none';
+        sceneEmoji.style.display = '';
+        sceneEmoji.textContent = sprite.emoji;
+      };
+      sceneChar.onload = () => {
+        sceneChar.style.display = '';
+        sceneEmoji.style.display = 'none';
+      };
+    }
   },
 
   /* ───── 지도 UI ───── */
@@ -529,6 +585,7 @@ const UI = {
     this.showScreen('screen-game');
     while (true) {
       this.clearLog();
+      this.showDialog();
       this.addDivider(shopName);
       const greet = shopName.includes('암흑')
         ? this.pick([
@@ -586,6 +643,7 @@ const UI = {
   async showInventory(player) {
     this.showScreen('screen-game');
     this.clearLog();
+    this.showDialog();
     this.addDivider('인벤토리');
 
     const weapon = player.equippedWeapon ? player.equippedWeapon.name : '없음';
@@ -689,6 +747,7 @@ const UI = {
 
   async showEquip(player) {
     this.clearLog();
+    this.showDialog();
     this.addDivider('장비 장착');
 
     const equippable = player.inventory.filter(name => {
@@ -719,6 +778,7 @@ const UI = {
 
   showStatus(player) {
     this.clearLog();
+    this.showDialog();
     this.addDivider('캐릭터 상태');
     this.addLog(`  이름: ${player.name}`);
     this.addLog(`  직업: ${player.job}`);
@@ -737,6 +797,7 @@ const UI = {
 
   showQuestLog(questData) {
     this.clearLog();
+    this.showDialog();
     this.addDivider('퀘스트 로그');
 
     const main = questData.main || [];
@@ -912,8 +973,9 @@ const UI = {
   /* ── F8: 업적 패널 ── */
   showAchievementPanel(player) {
     this.clearLog();
+    this.showDialog();
     this.addDivider('업적');
-    const log = document.getElementById('game-log');
+    const log = this._getLogEl();
     if (!log) return;
 
     const panel = document.createElement('div');
@@ -993,8 +1055,9 @@ const UI = {
   /* ── F9: 스킬 트리 패널 ── */
   showSkillTree(player) {
     this.clearLog();
+    this.showDialog();
     this.addDivider('스킬 트리');
-    const log = document.getElementById('game-log');
+    const log = this._getLogEl();
     if (!log) return;
 
     const tree = SKILL_TREES[player.job];
