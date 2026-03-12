@@ -480,14 +480,12 @@ const UI = {
             player.mapCol = c;
             player.currentLocation = zoneId;
             player.visitedLocations.add(zoneId);
-            if (typeof UI !== 'undefined') {
-              UI.updateHeader();
-              UI.showScreen('screen-game');
-              UI.addSystemMsg(`  ★ ${name}(으)로 빠르게 이동했습니다!`);
+            /* 빠른 이동 결과를 _mapResolve에 전달 */
+            if (UI._mapResolve) {
+              const res = UI._mapResolve;
+              UI._mapResolve = null;
+              res({ quickTravel: true, name });
             }
-            /* 맵 닫기: back 버튼의 핸들러를 트리거 */
-            const backBtn = document.getElementById('btn-map-back');
-            if (backBtn) backBtn.click();
           });
           tooltip.appendChild(btn);
         }
@@ -509,17 +507,20 @@ const UI = {
       }
     }, 50);
 
-    // 돌아가기 버튼을 누를 때까지 대기
-    await new Promise(resolve => {
+    // 돌아가기 버튼 또는 빠른 이동까지 대기
+    const result = await new Promise(resolve => {
+      this._mapResolve = resolve;
       const backBtn = document.getElementById('btn-map-back');
-      if (!backBtn) { resolve(); return; }
+      if (!backBtn) { resolve(null); return; }
       const handler = () => {
         backBtn.removeEventListener('click', handler);
         hideTooltip(); /* F25: 맵 닫을 때 툴팁 숨김 */
-        resolve();
+        if (this._mapResolve) { this._mapResolve = null; resolve(null); }
       };
       backBtn.addEventListener('click', handler);
     });
+    this._mapResolve = null;
+    return result; /* null=돌아가기, {quickTravel,name}=빠른이동 */
   },
 
   /* ───── 상점 UI ───── */

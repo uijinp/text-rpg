@@ -90,7 +90,19 @@ function setupDPadMap() {
   btn.addEventListener('click', async (e) => {
     e.stopPropagation();
     if (!GameState.player) return;
-    await UI.showMap(GameState.player);
+    const mapResult = await UI.showMap(GameState.player);
+    /* F25: 빠른 이동이 실행됐으면 화면 전환 + 게임 루프 재시작 */
+    if (mapResult && mapResult.quickTravel) {
+      UI.showScreen('screen-game');
+      UI.updateHeader();
+      updateMiniMap(GameState.player);
+      UI.addSystemMsg(`  ★ ${mapResult.name}(으)로 빠르게 이동했습니다!`);
+      if (UI._choiceResolve) {
+        const resolve = UI._choiceResolve;
+        UI.hideChoices();
+        resolve('dpad_move');
+      }
+    }
   });
 }
 
@@ -112,7 +124,14 @@ function setupQuickMenu() {
       if (!GameState.player) return;
 
       if (action === 'map') {
-        await UI.showMap(GameState.player);
+        const mr = await UI.showMap(GameState.player);
+        if (mr && mr.quickTravel) {
+          UI.showScreen('screen-game');
+          UI.updateHeader();
+          updateMiniMap(GameState.player);
+          UI.addSystemMsg(`  ★ ${mr.name}(으)로 빠르게 이동했습니다!`);
+          return; /* 퀵메뉴 종료 → 게임 루프 재시작 */
+        }
       } else if (action === 'quest') {
         UI.showQuestLog(buildQuestData(GameState.player));
         await UI.waitForTap();
@@ -647,7 +666,14 @@ async function showMoreMenu(player) {
           continue;
         }
         if (infoChoice === 1) {
-          await UI.showMap(player);
+          const mr = await UI.showMap(player);
+          if (mr && mr.quickTravel) {
+            UI.showScreen('screen-game');
+            UI.updateHeader();
+            updateMiniMap(player);
+            UI.addSystemMsg(`  ★ ${mr.name}(으)로 빠르게 이동했습니다!`);
+            return; /* 메뉴 종료 → 게임 루프 재시작 */
+          }
           continue;
         }
         if (infoChoice === 2) {
