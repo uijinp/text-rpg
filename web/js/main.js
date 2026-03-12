@@ -292,26 +292,69 @@ function getMovementFlavorText(row, col, prevZone, nextZone) {
 
   if (ch === '=' || ch === '_') {
     const mid = getCurrentMapId();
-    if (mid === 'underworld') return '어두운 지하 통로를 따라 조심스럽게 나아갔다.';
-    if (mid === 'celestial') return '황금빛 구름 위의 길을 따라 걸어갔다.';
-    return '정비된 대로를 따라 차분히 걸음을 옮겼다.';
+    if (mid === 'underworld') return pick([
+      '어두운 지하 통로를 따라 조심스럽게 나아갔다.',
+      '축축한 통로 벽에서 물방울이 떨어진다.',
+      '발밑에서 돌멩이가 굴러가는 소리가 울렸다.',
+      '희미한 빛을 따라 지하 통로를 걸었다.',
+    ]);
+    if (mid === 'celestial') return pick([
+      '황금빛 구름 위의 길을 따라 걸어갔다.',
+      '바람에 실린 별의 파편이 눈앞을 스쳐 지나갔다.',
+      '구름 사이로 아득한 대지가 내려다보인다.',
+      '천상의 바람이 옷자락을 부드럽게 흔들었다.',
+    ]);
+    return pick([
+      '정비된 대로를 따라 차분히 걸음을 옮겼다.',
+      '포장된 길 위에 발자국 소리가 규칙적으로 울렸다.',
+      '잘 닦인 도로 양쪽으로 이정표가 세워져 있다.',
+      '대로변에 마차 바퀴 자국이 선명하게 남아 있다.',
+    ]);
   }
 
   if (ch === '.') {
     if (prevZone && AREAS[prevZone]) {
-      return `${AREAS[prevZone].name}에서 이어지는 길을 천천히 걸어갔다.`;
+      const zoneName = AREAS[prevZone].name;
+      return pick([
+        `${zoneName}에서 이어지는 길을 천천히 걸어갔다.`,
+        `${zoneName}의 풍경이 점차 멀어져 간다.`,
+        `${zoneName} 근처의 익숙한 길을 따라 걸었다.`,
+        `${zoneName}의 기운이 아직 느껴지는 오솔길이다.`,
+      ]);
     }
     const mid = getCurrentMapId();
-    if (mid === 'underworld') return '어둠 속에서 한 발짝 앞으로 나아갔다.';
-    if (mid === 'celestial') return '눈부신 구름 위에서 한 걸음 앞으로 나아갔다.';
-    return '한적한 길 위로 발걸음을 옮겼다.';
+    if (mid === 'underworld') return pick([
+      '어둠 속에서 한 발짝 앞으로 나아갔다.',
+      '발밑의 돌바닥이 차갑게 느껴진다.',
+      '어디선가 낮은 신음 같은 바람 소리가 들렸다.',
+      '손에 닿는 벽면이 끈적거린다.',
+    ]);
+    if (mid === 'celestial') return pick([
+      '눈부신 구름 위에서 한 걸음 앞으로 나아갔다.',
+      '발밑 구름이 솜처럼 부드럽게 발을 감쌌다.',
+      '하늘에서 내려오는 따스한 빛이 길을 밝혀 준다.',
+      '바람결에 은은한 종소리가 울려 퍼졌다.',
+    ]);
+    return pick([
+      '한적한 길 위로 발걸음을 옮겼다.',
+      '바람이 풀숲을 스치며 살랑거렸다.',
+      '길가에 작은 꽃들이 피어 있다.',
+      '새소리가 멀리서 들려오는 평화로운 길이다.',
+      '발밑에 낙엽이 바스락거렸다.',
+      '지나온 길을 돌아보니 아득히 멀어져 있다.',
+    ]);
   }
 
   if (nextZone && AREAS[nextZone]) {
     return AREAS[nextZone].desc;
   }
 
-  return '조심스럽게 한 걸음 앞으로 나아갔다.';
+  return pick([
+    '조심스럽게 한 걸음 앞으로 나아갔다.',
+    '낯선 지형을 살피며 발걸음을 내디뎠다.',
+    '주변을 경계하며 천천히 이동했다.',
+    '알 수 없는 기운이 감도는 곳을 지나간다.',
+  ]);
 }
 
 function buildMiniMapLines(player, radius = 5) {
@@ -414,9 +457,18 @@ async function tryStepMove(player, dr, dc, label) {
 
   const nextAreaName = getAreaNameByPos(player.mapRow, player.mapCol);
   if (prevAreaName === nextAreaName) {
-    UI.addSystemMsg(`  ${label}으로 한 칸 이동했습니다. (${nextAreaName} 내부)`);
+    UI.addSystemMsg(pick([
+      `  ${label}으로 한 칸 이동했습니다. (${nextAreaName} 내부)`,
+      `  ${nextAreaName} 안쪽으로 ${label} 방향으로 이동했습니다.`,
+      `  ${label}쪽으로 조금 더 깊이 들어갔습니다. (${nextAreaName})`,
+      `  ${nextAreaName}을(를) ${label}쪽으로 탐색했습니다.`,
+    ]));
   } else {
-    UI.addSystemMsg(`  ${label}으로 한 칸 이동했습니다. (${prevAreaName} → ${nextAreaName})`);
+    UI.addSystemMsg(pick([
+      `  ${label}으로 한 칸 이동했습니다. (${prevAreaName} → ${nextAreaName})`,
+      `  ${prevAreaName}에서 ${nextAreaName}(으)로 발을 내디뎠습니다.`,
+      `  ${label} 방향으로 이동하여 ${nextAreaName}에 접어들었습니다.`,
+    ]));
   }
   UI.addLog(`  위치: [${prevRow}, ${prevCol}] → [${nr}, ${nc}]`);
 
