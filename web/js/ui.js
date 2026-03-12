@@ -16,6 +16,9 @@ const UI = {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(screenId);
     if (el) el.classList.add('active');
+    /* F25: 맵 툴팁이 다른 화면에서 남지 않도록 항상 숨김 */
+    const tip = document.getElementById('map-tooltip');
+    if (tip) tip.classList.add('hidden');
   },
 
   goBack() {
@@ -54,6 +57,144 @@ const UI = {
 
   addSystemMsg(text) {
     this.addLog(text, 'system-msg');
+  },
+
+  /* ── 타자기 효과 ── */
+  _typewriterTimer: null,
+  _typewriterResolve: null,
+  _typewriterP: null,
+  _typewriterSegments: null,
+  _typewriterIdx: 0,
+
+  _KEYWORD_RULES: [
+    { pattern: /(\d+)\s*데미지/g, cls: 'kw-damage' },
+    { pattern: /(\d+)\s*회복/g, cls: 'kw-heal' },
+    { pattern: /\d+G/g, cls: 'kw-gold' },
+    { pattern: /Lv\.\d+/g, cls: 'kw-level' },
+    { pattern: /HP\s*\+?\d+/g, cls: 'kw-heal' },
+    { pattern: /공격력\s*\+\d+/g, cls: 'kw-damage' },
+    { pattern: /방어력\s*\+\d+/g, cls: 'kw-level' },
+  ],
+
+  _buildSegments(text) {
+    /* 텍스트를 [{text, cls}] 세그먼트 배열로 분해 */
+    const marks = []; // {start, end, cls}
+    for (const rule of this._KEYWORD_RULES) {
+      rule.pattern.lastIndex = 0;
+      let m;
+      while ((m = rule.pattern.exec(text)) !== null) {
+        marks.push({ start: m.index, end: m.index + m[0].length, cls: rule.cls });
+      }
+    }
+    marks.sort((a, b) => a.start - b.start);
+    /* 겹치는 구간 제거 */
+    const filtered = [];
+    let lastEnd = 0;
+    for (const mk of marks) {
+      if (mk.start >= lastEnd) { filtered.push(mk); lastEnd = mk.end; }
+    }
+    const segs = [];
+    let pos = 0;
+    for (const mk of filtered) {
+      if (mk.start > pos) segs.push({ text: text.slice(pos, mk.start), cls: '' });
+      segs.push({ text: text.slice(mk.start, mk.end), cls: mk.cls });
+      pos = mk.end;
+    }
+    if (pos < text.length) segs.push({ text: text.slice(pos), cls: '' });
+    return segs;
+  },
+
+  addLogTypewriter(text, speed = 25) {
+    return new Promise(resolve => {
+      const log = document.getElementById('game-log');
+      if (!log || !text || text.trim() === '') { resolve(); return; }
+
+      /* 이전 타자기 강제 완료 */
+      this.skipTypewriter();
+
+      const p = document.createElement('p');
+      p.className = 'text-appear';
+      log.appendChild(p);
+
+      const segments = this._buildSegments(text);
+      /* 글자 단위 큐 생성 */
+      const charQueue = [];
+      for (const seg of segments) {
+        for (const ch of seg.text) {
+          charQueue.push({ ch, cls: seg.cls });
+        }
+      }
+
+      this._typewriterP = p;
+      this._typewriterSegments = charQueue;
+      this._typewriterIdx = 0;
+      this._typewriterResolve = resolve;
+
+      let currentSpan = null;
+      let currentCls = '';
+
+      const tick = () => {
+        if (this._typewriterIdx >= charQueue.length) {
+          clearInterval(this._typewriterTimer);
+          this._typewriterTimer = null;
+          this._typewriterResolve = null;
+          log.scrollTop = log.scrollHeight;
+          resolve();
+          return;
+        }
+        const item = charQueue[this._typewriterIdx++];
+        if (item.cls !== currentCls || !currentSpan) {
+          if (item.cls) {
+            currentSpan = document.createElement('span');
+            currentSpan.className = item.cls;
+            p.appendChild(currentSpan);
+          } else {
+            currentSpan = null;
+          }
+          currentCls = item.cls;
+        }
+        if (currentSpan) {
+          currentSpan.textContent += item.ch;
+        } else {
+          p.appendChild(document.createTextNode(item.ch));
+        }
+        log.scrollTop = log.scrollHeight;
+      };
+
+      this._typewriterTimer = setInterval(tick, speed);
+    });
+  },
+
+  skipTypewriter() {
+    if (!this._typewriterTimer) return;
+    clearInterval(this._typewriterTimer);
+    this._typewriterTimer = null;
+    /* 남은 글자 즉시 렌더링 */
+    if (this._typewriterP && this._typewriterSegments) {
+      this._typewriterP.textContent = '';
+      const segments = this._buildSegments(
+        this._typewriterSegments.map(c => c.ch).join('')
+      );
+      for (const seg of segments) {
+        if (seg.cls) {
+          const span = document.createElement('span');
+          span.className = seg.cls;
+          span.textContent = seg.text;
+          this._typewriterP.appendChild(span);
+        } else {
+          this._typewriterP.appendChild(document.createTextNode(seg.text));
+        }
+      }
+      const log = document.getElementById('game-log');
+      if (log) log.scrollTop = log.scrollHeight;
+    }
+    if (this._typewriterResolve) {
+      this._typewriterResolve();
+      this._typewriterResolve = null;
+    }
+    this._typewriterP = null;
+    this._typewriterSegments = null;
+    this._typewriterIdx = 0;
   },
 
   showChoices(options) {
@@ -243,16 +384,120 @@ const UI = {
       container.appendChild(rowDiv);
     });
 
-    // 거점 라벨을 컨테이너 위에 절대 좌표로 배치
+    // 거점 라벨을 컨테이너 위에 절대 좌표로 배치 (F25: 인터랙티브)
     const tileSize = 14;
     const pad = 20; // container padding
+    const tooltip = document.getElementById('map-tooltip');
+
+    const hideTooltip = () => { if (tooltip) tooltip.classList.add('hidden'); };
+
+    /* 맵 영역 클릭 시 툴팁 닫기 */
+    container.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('map-label')) hideTooltip();
+    });
+
     for (const [key, name] of Object.entries(markerPositions)) {
       const [r, c] = key.split(',').map(Number);
+      /* 해당 마커의 zone 찾기 */
+      const markerChar = Object.entries(locations).find(([ch, v]) => v.name === name)?.[0];
+      const zoneId = markerChar ? locations[markerChar]?.zone : null;
+      const areaData = zoneId ? AREAS[zoneId] : null;
+      const isVisited = player.visitedLocations.has(zoneId);
+      const isLocked = zoneId && (typeof EventEngine !== 'undefined') && EventEngine.isZoneLocked(player, zoneId);
+      const isCurrent = (r === player.mapRow && c === player.mapCol);
+
       const label = document.createElement('div');
       label.className = 'map-label';
-      label.textContent = name;
+      if (isCurrent) label.classList.add('label-current');
+      else if (isLocked) label.classList.add('label-locked');
+      else if (isVisited) label.classList.add('label-visited');
+      else label.classList.add('label-unvisited');
+
+      label.textContent = (isLocked ? '🔒 ' : '') + name;
       label.style.top = `${pad + r * tileSize - 14}px`;
       label.style.left = `${pad + c * tileSize}px`;
+
+      /* F25: 클릭 시 툴팁 표시 */
+      label.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!tooltip) return;
+        tooltip.innerHTML = '';
+        tooltip.classList.remove('hidden');
+
+        const title = document.createElement('div');
+        title.className = 'tooltip-title';
+        title.textContent = name;
+        tooltip.appendChild(title);
+
+        /* 위험도 표시 */
+        const recLvl = areaData?.recommendedLevel || 0;
+        if (recLvl > 0) {
+          const danger = document.createElement('div');
+          danger.className = 'tooltip-danger';
+          let skulls = 0;
+          if (recLvl <= 2) skulls = 1;
+          else if (recLvl <= 5) skulls = 2;
+          else if (recLvl <= 8) skulls = 3;
+          else if (recLvl <= 11) skulls = 4;
+          else skulls = 5;
+          danger.textContent = '💀'.repeat(skulls);
+          tooltip.appendChild(danger);
+
+          const lvl = document.createElement('div');
+          lvl.className = 'tooltip-level';
+          lvl.textContent = `권장 레벨: Lv.${recLvl}`;
+          tooltip.appendChild(lvl);
+        } else {
+          const safe = document.createElement('div');
+          safe.className = 'tooltip-level';
+          safe.textContent = '안전 지대';
+          tooltip.appendChild(safe);
+        }
+
+        /* 상태 */
+        const status = document.createElement('div');
+        status.className = 'tooltip-status';
+        if (isLocked) {
+          status.classList.add('locked');
+          status.textContent = '🔒 잠김';
+        } else if (isVisited) {
+          status.classList.add('visited');
+          status.textContent = '✓ 탐험 완료';
+        } else {
+          status.classList.add('unexplored');
+          status.textContent = '? 미탐험';
+        }
+        tooltip.appendChild(status);
+
+        /* 빠른 이동 버튼 (방문한 비잠금 지역만) */
+        if (isVisited && !isLocked && !isCurrent && markerChar) {
+          const btn = document.createElement('button');
+          btn.className = 'btn-quick-travel';
+          btn.textContent = '⚡ 빠른 이동';
+          btn.addEventListener('click', () => {
+            hideTooltip();
+            player.mapRow = r;
+            player.mapCol = c;
+            player.currentLocation = zoneId;
+            player.visitedLocations.add(zoneId);
+            if (typeof UI !== 'undefined') {
+              UI.updateHeader();
+              UI.showScreen('screen-game');
+              UI.addSystemMsg(`  ★ ${name}(으)로 빠르게 이동했습니다!`);
+            }
+            /* 맵 닫기: back 버튼의 핸들러를 트리거 */
+            const backBtn = document.getElementById('btn-map-back');
+            if (backBtn) backBtn.click();
+          });
+          tooltip.appendChild(btn);
+        }
+
+        /* 툴팁 위치 계산 */
+        const rect = label.getBoundingClientRect();
+        tooltip.style.top = `${rect.bottom + 6}px`;
+        tooltip.style.left = `${Math.max(8, Math.min(window.innerWidth - 270, rect.left - 60))}px`;
+      });
+
       container.appendChild(label);
     }
 
@@ -270,6 +515,7 @@ const UI = {
       if (!backBtn) { resolve(); return; }
       const handler = () => {
         backBtn.removeEventListener('click', handler);
+        hideTooltip(); /* F25: 맵 닫을 때 툴팁 숨김 */
         resolve();
       };
       backBtn.addEventListener('click', handler);
@@ -620,6 +866,208 @@ const UI = {
     p.textContent = text;
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
+  },
+
+  /* F24: 전투 애니메이션 */
+  flashEnemyEntry(idx, type = 'hit') {
+    const entries = document.querySelectorAll('.battle-enemy-entry');
+    const entry = entries[idx];
+    if (!entry) return;
+    entry.classList.remove('enemy-hit', 'enemy-miss', 'enemy-critical');
+    void entry.offsetWidth; /* reflow trick */
+    entry.classList.add(`enemy-${type}`);
+    setTimeout(() => entry.classList.remove(`enemy-${type}`), 400);
+  },
+
+  shakeScreen() {
+    const area = document.querySelector('.battle-area');
+    if (!area) return;
+    area.classList.remove('screen-shake');
+    void area.offsetWidth;
+    area.classList.add('screen-shake');
+    setTimeout(() => area.classList.remove('screen-shake'), 400);
+  },
+
+  flashPlayerHpBar() {
+    const bar = document.getElementById('battle-player-hp-bar');
+    if (!bar) return;
+    bar.classList.remove('hp-dmg-flash');
+    void bar.offsetWidth;
+    bar.classList.add('hp-dmg-flash');
+    setTimeout(() => bar.classList.remove('hp-dmg-flash'), 400);
+  },
+
+  /* ── 토스트 알림 ── */
+  showToast(text, cssClass = '', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${cssClass}`.trim();
+    toast.textContent = text;
+    container.appendChild(toast);
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, duration + 500);
+  },
+
+  /* ── F8: 업적 패널 ── */
+  showAchievementPanel(player) {
+    this.clearLog();
+    this.addDivider('업적');
+    const log = document.getElementById('game-log');
+    if (!log) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'achievement-panel';
+
+    const categories = {};
+    for (const ach of ACHIEVEMENTS) {
+      if (!categories[ach.category]) categories[ach.category] = [];
+      categories[ach.category].push(ach);
+    }
+
+    for (const [catName, achs] of Object.entries(categories)) {
+      const catDiv = document.createElement('div');
+      catDiv.className = 'achievement-category';
+      const catTitle = document.createElement('div');
+      catTitle.className = 'achievement-category-title';
+      catTitle.textContent = catName;
+      catDiv.appendChild(catTitle);
+
+      for (const ach of achs) {
+        const unlocked = player.unlockedAchievements.includes(ach.id);
+        const item = document.createElement('div');
+        item.className = `achievement-item ${unlocked ? 'unlocked' : 'locked'}`;
+
+        const icon = document.createElement('div');
+        icon.className = 'achievement-icon';
+        icon.textContent = ach.icon;
+
+        const info = document.createElement('div');
+        info.className = 'achievement-info';
+        const name = document.createElement('div');
+        name.className = 'achievement-name';
+        name.textContent = ach.name;
+        const desc = document.createElement('div');
+        desc.className = 'achievement-desc';
+        desc.textContent = ach.desc;
+        info.appendChild(name);
+        info.appendChild(desc);
+
+        if (ach.reward) {
+          const reward = document.createElement('div');
+          reward.className = 'achievement-reward';
+          const parts = [];
+          if (ach.reward.gold) parts.push(`${ach.reward.gold}G`);
+          if (ach.reward.stat) {
+            if (ach.reward.stat.attack) parts.push(`공격+${ach.reward.stat.attack}`);
+            if (ach.reward.stat.defense) parts.push(`방어+${ach.reward.stat.defense}`);
+            if (ach.reward.stat.max_hp) parts.push(`HP+${ach.reward.stat.max_hp}`);
+          }
+          reward.textContent = `보상: ${parts.join(', ')}`;
+          info.appendChild(reward);
+        }
+
+        item.appendChild(icon);
+        item.appendChild(info);
+        if (unlocked) {
+          const check = document.createElement('div');
+          check.className = 'achievement-check';
+          check.textContent = '✓';
+          item.appendChild(check);
+        }
+        catDiv.appendChild(item);
+      }
+      panel.appendChild(catDiv);
+    }
+
+    const progress = AchievementManager.getProgress(player);
+    const progDiv = document.createElement('div');
+    progDiv.className = 'achievement-progress';
+    progDiv.textContent = `달성: ${progress.unlocked} / ${progress.total}`;
+    panel.appendChild(progDiv);
+
+    log.appendChild(panel);
+    log.scrollTop = 0;
+  },
+
+  /* ── F9: 스킬 트리 패널 ── */
+  showSkillTree(player) {
+    this.clearLog();
+    this.addDivider('스킬 트리');
+    const log = document.getElementById('game-log');
+    if (!log) return;
+
+    const tree = SKILL_TREES[player.job];
+    if (!tree) { this.addLog('  스킬 트리 데이터가 없습니다.'); return; }
+
+    const panel = document.createElement('div');
+    panel.className = 'skill-tree-panel';
+
+    const header = document.createElement('div');
+    header.className = 'skill-tree-header';
+    const spDisplay = document.createElement('div');
+    spDisplay.className = 'skill-points-display';
+    spDisplay.textContent = `스킬 포인트: ${player.skillPoints || 0}`;
+    header.appendChild(spDisplay);
+    panel.appendChild(header);
+
+    const renderTree = () => {
+      /* 브랜치 영역만 다시 렌더링 */
+      panel.querySelectorAll('.skill-branch').forEach(el => el.remove());
+      spDisplay.textContent = `스킬 포인트: ${player.skillPoints || 0}`;
+
+      for (const branch of tree.branches) {
+        const brDiv = document.createElement('div');
+        brDiv.className = 'skill-branch';
+        const brTitle = document.createElement('div');
+        brTitle.className = 'skill-branch-title';
+        brTitle.textContent = branch.name;
+        brDiv.appendChild(brTitle);
+
+        const nodesDiv = document.createElement('div');
+        nodesDiv.className = 'skill-nodes';
+
+        for (const node of branch.nodes) {
+          const unlocked = SkillTreeManager.isUnlocked(player, node.id);
+          const canUnlock = SkillTreeManager.canUnlock(player, node);
+          const nDiv = document.createElement('div');
+          nDiv.className = 'skill-node';
+          if (unlocked) nDiv.classList.add('node-unlocked');
+          else if (canUnlock) nDiv.classList.add('node-available');
+          else nDiv.classList.add('node-locked');
+
+          const nName = document.createElement('div');
+          nName.className = 'skill-node-name';
+          nName.textContent = node.name;
+          const nCost = document.createElement('div');
+          nCost.className = 'skill-node-cost';
+          nCost.textContent = unlocked ? '습득 완료' : `${node.cost}pt`;
+          const nType = document.createElement('div');
+          nType.className = 'skill-node-type';
+          nType.textContent = `${node.type === 'passive' ? '패시브' : '액티브'} · ${node.desc}`;
+
+          nDiv.appendChild(nName);
+          nDiv.appendChild(nCost);
+          nDiv.appendChild(nType);
+
+          if (canUnlock) {
+            nDiv.addEventListener('click', () => {
+              if (SkillTreeManager.unlock(player, node.id)) {
+                this.showToast(`✦ ${node.name} 습득!`, 'toast-achievement');
+                renderTree();
+              }
+            });
+          }
+
+          nodesDiv.appendChild(nDiv);
+        }
+        brDiv.appendChild(nodesDiv);
+        panel.appendChild(brDiv);
+      }
+    };
+
+    renderTree();
+    log.appendChild(panel);
+    log.scrollTop = 0;
   },
 
   clearBattleLog() {

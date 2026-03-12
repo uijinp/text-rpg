@@ -1,0 +1,187 @@
+/* skill_tree.js - 스킬 트리 시스템 */
+
+const SKILL_TREES = {
+  '전사': {
+    branches: [
+      { name: '💪 힘', nodes: [
+        { id: 'w_str_1', name: '근력 강화', type: 'passive', cost: 1, requires: [],
+          desc: '공격력 +3', effect: { attackBonus: 3 } },
+        { id: 'w_str_2', name: '파워 스트라이크', type: 'active', cost: 1, requires: ['w_str_1'],
+          desc: '2배 데미지 스킬',
+          skill: { name: '파워 스트라이크', multiplier: 2.0, desc: '전력으로 내려치는 일격 (2배 데미지)' } },
+        { id: 'w_str_3', name: '방어 관통', type: 'passive', cost: 2, requires: ['w_str_2'],
+          desc: '적 방어력 30% 무시', effect: { armorPiercePercent: 30 } },
+        { id: 'w_str_4', name: '분노의 일격', type: 'active', cost: 2, requires: ['w_str_3'],
+          desc: 'HP 낮을수록 강력 (최대 3배)',
+          skill: { name: '분노의 일격', multiplier: 1.5, hpScaling: true, desc: 'HP가 낮을수록 강력해지는 일격 (최대 3배)' } },
+      ]},
+      { name: '🛡 방어', nodes: [
+        { id: 'w_def_1', name: 'HP 강화', type: 'passive', cost: 1, requires: [],
+          desc: '최대 HP +30', effect: { maxHpBonus: 30 } },
+        { id: 'w_def_2', name: '철벽 방어', type: 'active', cost: 1, requires: ['w_def_1'],
+          desc: '받는 데미지 70% 감소',
+          skill: { name: '철벽 방어', multiplier: 0, defensive: true, defenseMultiplier: 0.3, desc: '이번 턴 받는 데미지 70% 감소' } },
+        { id: 'w_def_3', name: '반격', type: 'passive', cost: 2, requires: ['w_def_2'],
+          desc: '30% 확률로 반격', effect: { counterChance: 30 } },
+        { id: 'w_def_4', name: '불사의 의지', type: 'passive', cost: 2, requires: ['w_def_3'],
+          desc: 'HP가 0이 되면 1회 생존', effect: { lastStand: true } },
+      ]},
+      { name: '📋 전술', nodes: [
+        { id: 'w_tac_1', name: '급소 포착', type: 'passive', cost: 1, requires: [],
+          desc: '치명타 확률 +10%', effect: { critChanceBonus: 10 } },
+        { id: 'w_tac_2', name: '전쟁 함성', type: 'active', cost: 1, requires: ['w_tac_1'],
+          desc: '3턴간 공격력 +50%',
+          skill: { name: '전쟁 함성', multiplier: 0, buff: { stat: 'attack', percent: 50, turns: 3 }, desc: '3턴간 공격력 50% 증가' } },
+        { id: 'w_tac_3', name: '약점 간파', type: 'passive', cost: 2, requires: ['w_tac_2'],
+          desc: '추가 데미지 25%', effect: { bonusDamagePercent: 25 } },
+        { id: 'w_tac_4', name: '회전 베기', type: 'active', cost: 2, requires: ['w_tac_3'],
+          desc: '전체 적 1.2배 데미지',
+          skill: { name: '회전 베기', multiplier: 1.2, aoe: true, desc: '모든 적에게 1.2배 데미지' } },
+      ]},
+    ]
+  },
+  '마법사': {
+    branches: [
+      { name: '🔥 마력', nodes: [
+        { id: 'm_pow_1', name: '마력 증폭', type: 'passive', cost: 1, requires: [],
+          desc: '공격력 +4', effect: { attackBonus: 4 } },
+        { id: 'm_pow_2', name: '메테오', type: 'active', cost: 1, requires: ['m_pow_1'],
+          desc: '2.5배 데미지 마법',
+          skill: { name: '메테오', multiplier: 2.5, desc: '하늘에서 운석을 떨어뜨린다 (2.5배 데미지)' } },
+        { id: 'm_pow_3', name: '마력 폭주', type: 'passive', cost: 2, requires: ['m_pow_2'],
+          desc: '30% 확률 추가타', effect: { doubleStrikeChance: 30 } },
+        { id: 'm_pow_4', name: '연쇄 번개', type: 'active', cost: 2, requires: ['m_pow_3'],
+          desc: '전체 적 1.5배 데미지',
+          skill: { name: '연쇄 번개', multiplier: 1.5, aoe: true, desc: '번개가 모든 적을 관통한다 (전체 1.5배)' } },
+      ]},
+      { name: '🔮 결계', nodes: [
+        { id: 'm_bar_1', name: '생명력 강화', type: 'passive', cost: 1, requires: [],
+          desc: '최대 HP +25', effect: { maxHpBonus: 25 } },
+        { id: 'm_bar_2', name: '마력 방벽+', type: 'active', cost: 1, requires: ['m_bar_1'],
+          desc: '받는 데미지 80% 감소',
+          skill: { name: '마력 방벽+', multiplier: 0, defensive: true, defenseMultiplier: 0.2, desc: '강화된 마력 방벽 (데미지 80% 감소)' } },
+        { id: 'm_bar_3', name: '회복 마법', type: 'active', cost: 2, requires: ['m_bar_2'],
+          desc: 'HP 20% 회복',
+          skill: { name: '회복 마법', multiplier: 0, healPercent: 20, desc: '최대 HP의 20%를 회복' } },
+        { id: 'm_bar_4', name: '시간 정지', type: 'active', cost: 2, requires: ['m_bar_3'],
+          desc: '적 1턴 행동 불가',
+          skill: { name: '시간 정지', multiplier: 0, stun: true, desc: '모든 적이 1턴 동안 행동 불가' } },
+      ]},
+      { name: '⚡ 원소', nodes: [
+        { id: 'm_ele_1', name: '화상 마법', type: 'passive', cost: 1, requires: [],
+          desc: '화상 확률 +15%', effect: { burnChanceBonus: 15 } },
+        { id: 'm_ele_2', name: '빙결', type: 'active', cost: 1, requires: ['m_ele_1'],
+          desc: '적 1턴 스턴 + 1.5배',
+          skill: { name: '빙결', multiplier: 1.5, stun: true, desc: '적을 얼려 1턴 스턴시킨다 (1.5배 데미지)' } },
+        { id: 'm_ele_3', name: '원소 친화', type: 'passive', cost: 2, requires: ['m_ele_2'],
+          desc: '스킬 데미지 +30%', effect: { skillDamagePercent: 30 } },
+        { id: 'm_ele_4', name: '원소 폭발', type: 'active', cost: 2, requires: ['m_ele_3'],
+          desc: '전체 적 2배 데미지',
+          skill: { name: '원소 폭발', multiplier: 2.0, aoe: true, desc: '원소의 힘으로 모든 적을 강타 (전체 2배)' } },
+      ]},
+    ]
+  },
+  '도적': {
+    branches: [
+      { name: '🗡 암살', nodes: [
+        { id: 'r_ass_1', name: '급소 숙련', type: 'passive', cost: 1, requires: [],
+          desc: '치명타 확률 +15%', effect: { critChanceBonus: 15 } },
+        { id: 'r_ass_2', name: '급소 찌르기', type: 'active', cost: 1, requires: ['r_ass_1'],
+          desc: '2.5배 데미지',
+          skill: { name: '급소 찌르기', multiplier: 2.5, desc: '급소를 정확히 찌른다 (2.5배 데미지)' } },
+        { id: 'r_ass_3', name: '암살자의 눈', type: 'passive', cost: 2, requires: ['r_ass_2'],
+          desc: '치명타 확률 +20%', effect: { critChanceBonus: 20 } },
+        { id: 'r_ass_4', name: '그림자 일격', type: 'active', cost: 2, requires: ['r_ass_3'],
+          desc: '3배 데미지 + 높은 치명타',
+          skill: { name: '그림자 일격', multiplier: 3.0, critBoost: 30, desc: '그림자 속에서 치명적 일격 (3배 + 치명타 확률 UP)' } },
+      ]},
+      { name: '🧪 독', nodes: [
+        { id: 'r_poi_1', name: '독 강화', type: 'passive', cost: 1, requires: [],
+          desc: '독 데미지 +50%', effect: { poisonDamageBonus: 50 } },
+        { id: 'r_poi_2', name: '맹독 바르기', type: 'active', cost: 1, requires: ['r_poi_1'],
+          desc: '강화된 독 공격',
+          skill: { name: '맹독 바르기', multiplier: 1.3, poison: true, poisonStrong: true, desc: '맹독을 바른 일격 (1.3배 + 강화 독)' } },
+        { id: 'r_poi_3', name: '독안개', type: 'active', cost: 2, requires: ['r_poi_2'],
+          desc: '전체 적에게 독',
+          skill: { name: '독안개', multiplier: 0.8, aoe: true, poison: true, desc: '독안개로 모든 적에게 독을 퍼뜨린다 (전체 0.8배 + 독)' } },
+        { id: 'r_poi_4', name: '치명독', type: 'passive', cost: 2, requires: ['r_poi_3'],
+          desc: '5% 확률 즉사', effect: { instantKillChance: 5 } },
+      ]},
+      { name: '💨 민첩', nodes: [
+        { id: 'r_agi_1', name: '회피 훈련', type: 'passive', cost: 1, requires: [],
+          desc: '회피 확률 +10%', effect: { evadeChanceBonus: 10 } },
+        { id: 'r_agi_2', name: '연속 공격', type: 'active', cost: 1, requires: ['r_agi_1'],
+          desc: '2회 연속 공격',
+          skill: { name: '연속 공격', multiplier: 0.8, hits: 2, desc: '빠른 속도로 2회 공격 (각 0.8배)' } },
+        { id: 'r_agi_3', name: '분신', type: 'passive', cost: 2, requires: ['r_agi_2'],
+          desc: '회피 확률 +25%', effect: { evadeChanceBonus: 25 } },
+        { id: 'r_agi_4', name: '질풍', type: 'active', cost: 2, requires: ['r_agi_3'],
+          desc: '3회 연속 공격',
+          skill: { name: '질풍', multiplier: 0.7, hits: 3, desc: '바람처럼 3회 연속 공격 (각 0.7배)' } },
+      ]},
+    ]
+  },
+};
+
+const SkillTreeManager = {
+  getAllNodes(job) {
+    const tree = SKILL_TREES[job];
+    if (!tree) return [];
+    const nodes = [];
+    for (const branch of tree.branches) nodes.push(...branch.nodes);
+    return nodes;
+  },
+
+  isUnlocked(player, nodeId) {
+    return player.unlockedSkills.includes(nodeId);
+  },
+
+  canUnlock(player, node) {
+    if (this.isUnlocked(player, node.id)) return false;
+    if (player.skillPoints < node.cost) return false;
+    return node.requires.every(reqId => player.unlockedSkills.includes(reqId));
+  },
+
+  unlock(player, nodeId) {
+    const nodes = this.getAllNodes(player.job);
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node || !this.canUnlock(player, node)) return false;
+    player.skillPoints -= node.cost;
+    player.unlockedSkills.push(nodeId);
+    this.recalcPassives(player);
+    return true;
+  },
+
+  recalcPassives(player) {
+    const buffs = {
+      attackBonus: 0, defenseBonus: 0, maxHpBonus: 0,
+      critChanceBonus: 0, evadeChanceBonus: 0,
+      bonusDamagePercent: 0, armorPiercePercent: 0,
+      skillDamagePercent: 0, doubleStrikeChance: 0,
+      counterChance: 0, burnChanceBonus: 0,
+      poisonDamageBonus: 0, instantKillChance: 0,
+      lastStand: false,
+    };
+    const nodes = this.getAllNodes(player.job);
+    for (const node of nodes) {
+      if (!player.unlockedSkills.includes(node.id)) continue;
+      if (node.type !== 'passive' || !node.effect) continue;
+      for (const [key, val] of Object.entries(node.effect)) {
+        if (typeof val === 'boolean') buffs[key] = val;
+        else if (typeof val === 'number') buffs[key] = (buffs[key] || 0) + val;
+      }
+    }
+    player.passiveBuffs = buffs;
+  },
+
+  getActiveSkills(player) {
+    const nodes = this.getAllNodes(player.job);
+    const skills = [];
+    for (const node of nodes) {
+      if (!player.unlockedSkills.includes(node.id)) continue;
+      if (node.type !== 'active' || !node.skill) continue;
+      skills.push(node.skill);
+    }
+    return skills;
+  },
+};

@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDPad();
   setupDPadMap();
   setupMiniMapToggle();
+
+  /* F23: 타자기 효과 스킵 핸들러 */
+  document.getElementById('game-log')?.addEventListener('click', () => {
+    UI.skipTypewriter();
+  });
 });
 
 function pick(lines) {
@@ -367,6 +372,9 @@ async function tryStepMove(player, dr, dc, label) {
   player.mapRow = nr;
   player.mapCol = nc;
 
+  /* F8: 걸음 수 추적 */
+  if (player.stats) player.stats.stepsWalked++;
+
   const ch = getTileChar(nr, nc);
   const locs = getCurrentLocations();
   if (locs[ch]) {
@@ -396,6 +404,22 @@ async function tryStepMove(player, dr, dc, label) {
   UI.updateHeader();
   updateMiniMap(player);
   UI.addLog(`  ${getMovementFlavorText(nr, nc, curZone, nextZone)}`);
+
+  /* F8: 업적 체크 (이동 후) */
+  if (typeof AchievementManager !== 'undefined') AchievementManager.check(player);
+
+  /* F10: 스토리릿 체크 (인카운터 전) */
+  if (typeof StoryletManager !== 'undefined') {
+    const storylet = StoryletManager.checkAndTrigger(player);
+    if (storylet) {
+      const slResult = await StoryletManager.trigger(storylet, player);
+      if (slResult === 'gameover') return { ok: false, gameover: true };
+      if (slResult !== null && slResult !== undefined) {
+        await UI.waitForTap();
+      }
+    }
+  }
+
   const zoneMeta = AREAS[nextZone];
   if (!zoneMeta || zoneMeta.encounter_chance <= 0) return { ok: true };
   if (Math.random() >= zoneMeta.encounter_chance) return { ok: true };
@@ -615,7 +639,7 @@ async function showMoreMenu(player) {
       while (true) {
         UI.clearLog();
         UI.addDivider('정보 보기');
-        const infoChoice = await UI.showChoices(['퀘스트', '지도 보기', '상태 확인', '돌아가기']);
+        const infoChoice = await UI.showChoices(['퀘스트', '지도 보기', '상태 확인', '업적', '스킬 트리', '돌아가기']);
 
         if (infoChoice === 0) {
           UI.showQuestLog(buildQuestData(player));
@@ -628,6 +652,18 @@ async function showMoreMenu(player) {
         }
         if (infoChoice === 2) {
           UI.showStatus(player);
+          await UI.waitForTap();
+          continue;
+        }
+        if (infoChoice === 3) {
+          /* F8: 업적 패널 */
+          UI.showAchievementPanel(player);
+          await UI.waitForTap();
+          continue;
+        }
+        if (infoChoice === 4) {
+          /* F9: 스킬 트리 */
+          UI.showSkillTree(player);
           await UI.waitForTap();
           continue;
         }

@@ -21,26 +21,33 @@ const CombatSystem = {
     shadow_lazarus: { intros: ['그림자 라자러스가 냉소와 함께 검을 뽑는다.', '라자러스: "여기까지 왔군. 후회하게 해주지."'], style: 'boss_mix', breathChance: 0.2, guardChance: 0.2, evadeChance: 0.1 },
   },
 
-  getSkills(job) {
+  getSkills(player) {
+    const job = typeof player === 'string' ? player : player.job;
+    /* 기본 스킬 */
+    let base = [];
     switch (job) {
       case '전사':
-        return [
+        base = [
           { name: '강타', mpCost: 0, multiplier: 1.5, desc: '강력한 일격 (1.5배 데미지)' },
-          { name: '방어', mpCost: 0, multiplier: 0,   desc: '이번 턴 받는 데미지 50% 감소', defensive: true },
-        ];
+          { name: '방어', mpCost: 0, multiplier: 0, desc: '이번 턴 받는 데미지 50% 감소', defensive: true },
+        ]; break;
       case '마법사':
-        return [
+        base = [
           { name: '파이어볼', mpCost: 0, multiplier: 2.0, desc: '화염 마법 (2배 데미지)' },
-          { name: '마력 방벽', mpCost: 0, multiplier: 0,  desc: '이번 턴 받는 데미지 70% 감소', defensive: true },
-        ];
+          { name: '마력 방벽', mpCost: 0, multiplier: 0, desc: '이번 턴 받는 데미지 70% 감소', defensive: true },
+        ]; break;
       case '도적':
-        return [
+        base = [
           { name: '독 바르기', mpCost: 0, multiplier: 1.2, desc: '독 공격 (1.2배 + 독 부여)', poison: true },
           { name: '그림자 숨기', mpCost: 0, multiplier: 0, desc: '이번 턴 회피 (데미지 무효)', evasion: true },
-        ];
-      default:
-        return [];
+        ]; break;
     }
+    /* F9: 스킬 트리 액티브 스킬 추가 */
+    if (typeof player === 'object' && typeof SkillTreeManager !== 'undefined') {
+      const treeSkills = SkillTreeManager.getActiveSkills(player);
+      base.push(...treeSkills);
+    }
+    return base;
   },
 
   spawnEnemy(enemyKey) {
@@ -197,9 +204,12 @@ const CombatSystem = {
       UI.showBattleLog(`  ${enemies.map(e => e.label).join(', ')}이(가) 나타났다!`);
     }
 
-    const skills = this.getSkills(player.job);
+    const skills = this.getSkills(player);
     let turn = 1;
     let targetIdx = 0;
+    /* F9: 전투 시작 시 임시 버프 초기화 */
+    player.tempBuffs = [];
+    let enemyStunned = false; /* 시간 정지 등 */
 
     const alive = () => enemies.filter(e => e.hp > 0);
     const allDead = () => enemies.every(e => e.hp <= 0);
@@ -234,16 +244,22 @@ const CombatSystem = {
         /* ── 기본 공격 ── */
         const atkResult = player.getAttack();
         if (this._enemyEvaded(target)) {
-          UI.showBattleLog(`  ${target.label}이(가) 재빨리 회피했다!`);
+          UI.showBattleLog(`  ${target.label}이(가) 재빨리 회피했다!`, 'battle-text-system');
+          UI.flashEnemyEntry(targetIdx, 'miss');
         } else {
           const dmg = this._calcPlayerDamage(target, atkResult.damage);
           target.hp = Math.max(0, target.hp - dmg);
+          if (player.stats) player.stats.totalDamageDealt += dmg;
           if (atkResult.critical) {
-            UI.showBattleLog(`  ★ 치명타! ${target.label}에게 ${dmg} 데미지!`);
+            if (player.stats) player.stats.criticalHits++;
+            UI.showBattleLog(`  ★ 치명타! ${target.label}에게 ${dmg} 데미지!`, 'battle-text-critical');
+            UI.flashEnemyEntry(targetIdx, 'critical');
+            UI.shakeScreen();
           } else {
-            UI.showBattleLog(`  ${player.name}의 공격! ${target.label}에게 ${dmg} 데미지!`);
+            UI.showBattleLog(`  ${player.name}의 공격! ${target.label}에게 ${dmg} 데미지!`, 'battle-text-player');
+            UI.flashEnemyEntry(targetIdx, 'hit');
           }
-          if (target.hp <= 0) UI.showBattleLog(`  ☠ ${target.label} 처치!`);
+          if (target.hp <= 0) UI.showBattleLog(`  ☠ ${target.label} 처치!`, 'battle-text-critical');
         }
         playerActed = true;
 
@@ -252,24 +268,77 @@ const CombatSystem = {
         const skill = skills[actionIdx - 1];
         if (skill.defensive) {
           defending = true;
-          UI.showBattleLog(`  ${player.name}이(가) ${skill.name}!`);
+          /* F9: 강화된 방어 스킬 (defenseMultiplier) */
+          if (skill.defenseMultiplier !== undefined) defending = skill.defenseMultiplier;
+          UI.showBattleLog(`  ${player.name}이(가) ${skill.name}!`, 'battle-text-player');
         } else if (skill.evasion) {
           evading = true;
-          UI.showBattleLog(`  ${player.name}이(가) ${skill.name}!`);
+          UI.showBattleLog(`  ${player.name}이(가) ${skill.name}!`, 'battle-text-player');
+        } else if (skill.buff) {
+          /* F9: 버프 스킬 */
+          player.tempBuffs.push({ stat: skill.buff.stat, percent: skill.buff.percent, turnsLeft: skill.buff.turns });
+          UI.showBattleLog(`  ${player.name}의 ${skill.name}! ${skill.buff.turns}턴간 ${skill.buff.stat === 'attack' ? '공격력' : skill.buff.stat} +${skill.buff.percent}%!`, 'battle-text-player');
+        } else if (skill.healPercent) {
+          /* F9: 회복 마법 */
+          const healed = player.heal(Math.floor(player.maxHp * skill.healPercent / 100));
+          UI.showBattleLog(`  ${player.name}의 ${skill.name}! HP ${healed} 회복! (${player.hp}/${player.maxHp})`, 'battle-text-player');
+        } else if (skill.stun && skill.multiplier === 0) {
+          /* F9: 시간 정지 (데미지 없는 스턴) */
+          enemyStunned = true;
+          UI.showBattleLog(`  ${player.name}의 ${skill.name}! 적들이 움직일 수 없다!`, 'battle-text-player');
         } else {
+          /* 공격 스킬 */
           const base = player.getAttack().damage;
-          if (this._enemyEvaded(target)) {
-            UI.showBattleLog(`  ${target.label}이(가) ${player.name}의 스킬을 피했다!`);
-          } else {
-            const dmg = this._calcPlayerDamage(target, Math.floor(base * skill.multiplier));
-            target.hp = Math.max(0, target.hp - dmg);
-            UI.showBattleLog(`  ${player.name}의 ${skill.name}! ${target.label}에게 ${dmg} 데미지!`);
-            if (skill.poison && target.hp > 0) {
-              target.poisoned = true;
-              target.poisonTurns = 3;
-              UI.showBattleLog(`  ${target.label}이(가) 독에 걸렸다!`);
+          let mult = skill.multiplier;
+          /* F9: HP 비례 스킬 */
+          if (skill.hpScaling) {
+            const hpRatio = 1 - (player.hp / player.maxHp);
+            mult = skill.multiplier + hpRatio * 1.5;
+          }
+          /* F9: 스킬 데미지 보너스 */
+          const pb = player.passiveBuffs || {};
+          if (pb.skillDamagePercent) mult *= (1 + pb.skillDamagePercent / 100);
+
+          /* AOE 스킬: 전체 적 대상 */
+          const targets = skill.aoe ? alive() : [target];
+          for (const t of targets) {
+            const tIdx = enemies.indexOf(t);
+            if (this._enemyEvaded(t)) {
+              UI.showBattleLog(`  ${t.label}이(가) ${player.name}의 스킬을 피했다!`, 'battle-text-system');
+              UI.flashEnemyEntry(tIdx, 'miss');
+            } else {
+              const dmg = this._calcPlayerDamage(t, Math.floor(base * mult));
+              t.hp = Math.max(0, t.hp - dmg);
+              if (player.stats) player.stats.totalDamageDealt += dmg;
+              UI.showBattleLog(`  ${player.name}의 ${skill.name}! ${t.label}에게 ${dmg} 데미지!`, 'battle-text-player');
+              UI.flashEnemyEntry(tIdx, 'hit');
+              /* 독 부여 */
+              if (skill.poison && t.hp > 0) {
+                t.poisoned = true;
+                t.poisonTurns = skill.poisonStrong ? 4 : 3;
+                UI.showBattleLog(`  ${t.label}이(가) 독에 걸렸다!`, 'battle-text-system');
+              }
+              /* 스턴 */
+              if (skill.stun && t.hp > 0) {
+                t.stunned = true;
+                UI.showBattleLog(`  ${t.label}이(가) 얼어붙었다!`, 'battle-text-system');
+              }
+              if (t.hp <= 0) UI.showBattleLog(`  ☠ ${t.label} 처치!`, 'battle-text-critical');
             }
-            if (target.hp <= 0) UI.showBattleLog(`  ☠ ${target.label} 처치!`);
+          }
+          /* 다중 타격 스킬 */
+          if (skill.hits && skill.hits > 1) {
+            for (let h = 1; h < skill.hits; h++) {
+              const t = target.hp > 0 ? target : alive()[0];
+              if (!t) break;
+              const tIdx = enemies.indexOf(t);
+              const dmg = this._calcPlayerDamage(t, Math.floor(base * mult));
+              t.hp = Math.max(0, t.hp - dmg);
+              if (player.stats) player.stats.totalDamageDealt += dmg;
+              UI.showBattleLog(`  ${h + 1}연타! ${t.label}에게 ${dmg} 데미지!`, 'battle-text-player');
+              UI.flashEnemyEntry(tIdx, 'hit');
+              if (t.hp <= 0) UI.showBattleLog(`  ☠ ${t.label} 처치!`, 'battle-text-critical');
+            }
           }
         }
         playerActed = true;
@@ -284,10 +353,12 @@ const CombatSystem = {
         const info = ITEMS[itemName];
         if (info.effect === 'heal') {
           const healed = player.heal(info.value);
-          UI.showBattleLog(`  ${itemName} 사용! HP ${healed} 회복! (${player.hp}/${player.maxHp})`);
+          if (player.stats) player.stats.potionsUsed++;
+          UI.showBattleLog(`  ${itemName} 사용! HP ${healed} 회복! (${player.hp}/${player.maxHp})`, 'battle-text-player');
         } else if (info.effect === 'cure') {
           player.poisoned = false;
-          UI.showBattleLog(`  ${itemName} 사용! 독 상태 해제!`);
+          if (player.stats) player.stats.potionsUsed++;
+          UI.showBattleLog(`  ${itemName} 사용! 독 상태 해제!`, 'battle-text-player');
         }
         playerActed = true;
 
@@ -297,13 +368,13 @@ const CombatSystem = {
         if (enemies.length >= 3) fleeChance -= 0.1;
         if (player.inventory.includes('행운의 부적')) fleeChance += 0.2;
         if (Math.random() < fleeChance) {
-          UI.showBattleLog('  도망에 성공했다!');
+          UI.showBattleLog('  도망에 성공했다!', 'battle-text-system');
           await this._battleDelay(600);
           UI.showScreen('screen-game');
           UI.updateHeader();
           return 'fled';
         } else {
-          UI.showBattleLog('  도망에 실패했다!');
+          UI.showBattleLog('  도망에 실패했다!', 'battle-text-system');
           playerActed = true;
         }
       }
@@ -315,16 +386,16 @@ const CombatSystem = {
           const pd = Math.floor(e.maxHp * 0.05);
           e.hp = Math.max(0, e.hp - pd);
           e.poisonTurns--;
-          UI.showBattleLog(`  ${e.label}이(가) 독으로 ${pd} 데미지!`);
+          UI.showBattleLog(`  ${e.label}이(가) 독으로 ${pd} 데미지!`, 'battle-text-system');
           if (e.poisonTurns <= 0) e.poisoned = false;
-          if (e.hp <= 0) UI.showBattleLog(`  ☠ ${e.label} 처치!`);
+          if (e.hp <= 0) UI.showBattleLog(`  ☠ ${e.label} 처치!`, 'battle-text-critical');
         }
         if (e.burnTurns > 0 && e.hp > 0) {
           const bd = Math.max(3, Math.floor(e.maxHp * 0.04));
           e.hp = Math.max(0, e.hp - bd);
           e.burnTurns -= 1;
-          UI.showBattleLog(`  ${e.label}이(가) 화상으로 ${bd} 데미지!`);
-          if (e.hp <= 0) UI.showBattleLog(`  ☠ ${e.label} 처치!`);
+          UI.showBattleLog(`  ${e.label}이(가) 화상으로 ${bd} 데미지!`, 'battle-text-system');
+          if (e.hp <= 0) UI.showBattleLog(`  ☠ ${e.label} 처치!`, 'battle-text-critical');
         }
       }
 
@@ -332,26 +403,48 @@ const CombatSystem = {
       if (allDead()) break;
 
       /* ── 적 턴: 살아있는 모든 적이 공격 ── */
-      if (playerActed) {
+      if (playerActed && !enemyStunned) {
         for (const e of alive()) {
+          /* F9: 스턴된 적은 건너뜀 */
+          if (e.stunned) { e.stunned = false; UI.showBattleLog(`  ${e.label}이(가) 얼어있어 움직이지 못한다!`, 'battle-text-system'); continue; }
           await this._battleDelay(350);
           const atk = this._resolveEnemyAttack(player, e);
 
           if (atk.guard) {
-            UI.showBattleLog(`  ${atk.text}`);
+            UI.showBattleLog(`  ${atk.text}`, 'battle-text-enemy');
           } else if (evading) {
-            UI.showBattleLog(`  ${e.label}의 공격을 회피했다!`);
+            UI.showBattleLog(`  ${e.label}의 공격을 회피했다!`, 'battle-text-player');
           } else if (defending) {
-            const reduction = player.job === '마법사' ? 0.3 : 0.5;
+            const reduction = (typeof defending === 'number') ? defending : (player.job === '마법사' ? 0.3 : 0.5);
             const reduced = Math.floor(atk.dmg * reduction);
             player.hp = Math.max(0, player.hp - reduced);
-            UI.showBattleLog(`  ${atk.text} 방어로 ${reduced} 데미지!`);
+            UI.showBattleLog(`  ${atk.text} 방어로 ${reduced} 데미지!`, 'battle-text-player');
+            UI.flashPlayerHpBar();
           } else {
             player.hp = Math.max(0, player.hp - atk.dmg);
-            UI.showBattleLog(`  ${atk.text} ${atk.dmg} 데미지!`);
+            UI.showBattleLog(`  ${atk.text} ${atk.dmg} 데미지!`, 'battle-text-enemy');
+            if (atk.dmg > 0) UI.flashPlayerHpBar();
           }
           if (atk.drainHeal) {
-            UI.showBattleLog(`  ${e.label}이(가) ${atk.drainHeal} HP를 흡수했다!`);
+            UI.showBattleLog(`  ${e.label}이(가) ${atk.drainHeal} HP를 흡수했다!`, 'battle-text-enemy');
+          }
+
+          /* F9: 반격 패시브 */
+          const pb = player.passiveBuffs || {};
+          if (!evading && !defending && pb.counterChance && Math.random() * 100 < pb.counterChance) {
+            const cDmg = this._calcPlayerDamage(e, Math.floor(player.getAttack().damage * 0.6));
+            e.hp = Math.max(0, e.hp - cDmg);
+            UI.showBattleLog(`  반격! ${e.label}에게 ${cDmg} 데미지!`, 'battle-text-player');
+            UI.flashEnemyEntry(enemies.indexOf(e), 'hit');
+            if (e.hp <= 0) UI.showBattleLog(`  ☠ ${e.label} 처치!`, 'battle-text-critical');
+          }
+
+          /* F9: 불사의 의지 */
+          if (!player.isAlive() && pb.lastStand && !player.lastStandUsed) {
+            player.hp = 1;
+            player.lastStandUsed = true;
+            UI.showBattleLog(`  ★ 불사의 의지 발동! HP 1로 생존!`, 'battle-text-critical');
+            UI.shakeScreen();
           }
 
           UI.updateBattleUI(player, enemies, turn, targetIdx);
@@ -362,24 +455,33 @@ const CombatSystem = {
         if (player.isAlive() && player.poisoned) {
           const pDmg = Math.floor(player.maxHp * 0.03);
           player.hp = Math.max(0, player.hp - pDmg);
-          UI.showBattleLog(`  독으로 ${pDmg} 데미지!`);
+          UI.showBattleLog(`  독으로 ${pDmg} 데미지!`, 'battle-text-enemy');
+          UI.flashPlayerHpBar();
         }
         if (player.isAlive() && (player.burnTurns || 0) > 0) {
           const bDmg = Math.max(4, Math.floor(player.maxHp * 0.04));
           player.hp = Math.max(0, player.hp - bDmg);
           player.burnTurns -= 1;
-          UI.showBattleLog(`  화상으로 ${bDmg} 데미지!`);
+          UI.showBattleLog(`  화상으로 ${bDmg} 데미지!`, 'battle-text-enemy');
+          UI.flashPlayerHpBar();
         }
 
         /* 적 방어 해제 */
         for (const e of enemies) {
           if (e.guardTurns > 0) {
             e.guardTurns -= 1;
-            if (e.guardTurns === 0) UI.showBattleLog(`  ${e.label}의 방어 태세가 풀렸다.`);
+            if (e.guardTurns === 0) UI.showBattleLog(`  ${e.label}의 방어 태세가 풀렸다.`, 'battle-text-system');
           }
         }
 
         UI.updateBattleUI(player, enemies, turn, targetIdx);
+      }
+      /* F9: 적 스턴 해제 */
+      if (enemyStunned) { enemyStunned = false; }
+      /* F9: 임시 버프 턴 소모 */
+      if (player.tempBuffs) {
+        player.tempBuffs.forEach(b => b.turnsLeft--);
+        player.tempBuffs = player.tempBuffs.filter(b => b.turnsLeft > 0);
       }
 
       turn++;
@@ -397,9 +499,15 @@ const CombatSystem = {
   async _handleVictory(player, enemies) {
     UI.showBattleLog('');
     if (enemies.length === 1) {
-      UI.showBattleLog(`  ★ ${enemies[0].name}을(를) 물리쳤다!`);
+      UI.showBattleLog(`  ★ ${enemies[0].name}을(를) 물리쳤다!`, 'battle-text-critical');
     } else {
-      UI.showBattleLog(`  ★ 모든 적을 물리쳤다!`);
+      UI.showBattleLog(`  ★ 모든 적을 물리쳤다!`, 'battle-text-critical');
+    }
+
+    /* F8: 통계 업데이트 */
+    if (player.stats) {
+      player.stats.battlesWon++;
+      player.stats.monstersKilled += enemies.length;
     }
 
     let totalGold = 0;
@@ -416,23 +524,31 @@ const CombatSystem = {
     }
 
     player.gold += totalGold;
-    UI.showBattleLog(`  ${totalGold}G 획득!`);
+    if (player.stats) player.stats.totalGoldEarned += totalGold;
+    UI.showBattleLog(`  ${totalGold}G 획득!`, 'battle-text-critical');
 
     const leveled = player.gainExp(totalExp);
-    UI.showBattleLog(`  경험치 +${totalExp}`);
+    UI.showBattleLog(`  경험치 +${totalExp}`, 'battle-text-system');
     if (leveled) {
-      UI.showBattleLog(`  ★ 레벨 업! Lv.${player.level}! HP 완전 회복!`);
+      UI.showBattleLog(`  ★ 레벨 업! Lv.${player.level}! HP 완전 회복!`, 'battle-text-critical');
+      /* F9: 패시브 재계산 (maxHpBonus 반영) */
+      if (typeof SkillTreeManager !== 'undefined') SkillTreeManager.recalcPassives(player);
     }
 
     allDrops.forEach(item => {
       player.inventory.push(item);
-      UI.showBattleLog(`  ▶ ${item} 드롭!`);
+      if (player.stats) player.stats.itemsCollected++;
+      UI.showBattleLog(`  ▶ ${item} 드롭!`, 'battle-text-system');
     });
 
     UI.updateBattleUI(player, enemies, 0, 0);
     await UI.waitForTap();
     UI.showScreen('screen-game');
     UI.updateHeader();
+
+    /* F8: 업적 체크 */
+    if (typeof AchievementManager !== 'undefined') AchievementManager.check(player);
+
     return 'win';
   },
 

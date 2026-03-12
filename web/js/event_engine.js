@@ -87,7 +87,11 @@ const EventEngine = {
     /* ── 텍스트 ── */
     if (act === 'print') {
       const text = this.formatText(action.text, player);
-      text.split('\n').forEach(line => UI.addLog(line));
+      const lines = text.split('\n');
+      for (const line of lines) {
+        if (line.trim() === '') { UI.addLog(''); continue; }
+        await UI.addLogTypewriter(line);
+      }
       return null;
     }
 
@@ -114,6 +118,7 @@ const EventEngine = {
       for (let i = 0; i < count; i++) {
         player.inventory.push(action.item);
       }
+      if (player.stats) player.stats.itemsCollected += count;
       if (action.message !== false) {
         UI.addSystemMsg(`  ▶ ${action.item} x${count}을(를) 획득했습니다!`);
       }
@@ -130,6 +135,7 @@ const EventEngine = {
     if (act === 'add_gold') {
       const amt = action.amount;
       player.gold += amt;
+      if (player.stats) player.stats.totalGoldEarned += amt;
       if (action.message !== false) {
         UI.addSystemMsg(`  ▶ ${amt}G 획득!`);
       }

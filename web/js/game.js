@@ -23,6 +23,24 @@ class Player {
     this.mapId = 'mainland';
     this.mapRow = null;
     this.mapCol = null;
+
+    /* F8: 업적 추적 통계 */
+    this.stats = {
+      monstersKilled: 0, totalGoldEarned: 0, bossesDefeated: 0,
+      battlesWon: 0, stepsWalked: 0, criticalHits: 0,
+      totalDamageDealt: 0, potionsUsed: 0, itemsCollected: 0,
+    };
+    this.unlockedAchievements = [];
+
+    /* F10: 스토리릿 */
+    this.seenStorylets = [];
+
+    /* F9: 스킬 트리 */
+    this.skillPoints = 0;
+    this.unlockedSkills = [];
+    this.passiveBuffs = {};
+    this.tempBuffs = [];  /* 전투 중 임시 버프 [{stat, percent, turnsLeft}] */
+    this.lastStandUsed = false;
   }
 
   /* Python player 호환 프로퍼티: YAML {player.xxx} 치환에서 사용 */
@@ -42,7 +60,21 @@ class Player {
   getAttack() {
     let base = this.attack;
     if (this.equippedWeapon) base += this.equippedWeapon.attack_bonus || 0;
-    if (this.job === "도적" && Math.random() < 0.25) {
+    /* F9: 패시브 공격 보너스 */
+    const pb = this.passiveBuffs || {};
+    base += pb.attackBonus || 0;
+    /* F9: 임시 버프 (전쟁 함성 등) */
+    for (const b of (this.tempBuffs || [])) {
+      if (b.stat === 'attack' && b.turnsLeft > 0) {
+        base = Math.floor(base * (1 + b.percent / 100));
+      }
+    }
+    /* F9: 보너스 데미지 % */
+    if (pb.bonusDamagePercent) base = Math.floor(base * (1 + pb.bonusDamagePercent / 100));
+    /* 치명타 판정 */
+    let critChance = this.job === "도적" ? 0.25 : 0;
+    critChance += (pb.critChanceBonus || 0) / 100;
+    if (Math.random() < critChance) {
       return { damage: base * 2, critical: true };
     }
     return { damage: base, critical: false };
@@ -51,6 +83,8 @@ class Player {
   getDefense() {
     let base = this.defense;
     if (this.equippedArmor) base += this.equippedArmor.defense_bonus || 0;
+    /* F9: 패시브 방어 보너스 */
+    base += (this.passiveBuffs?.defenseBonus || 0);
     return base;
   }
 
@@ -80,10 +114,13 @@ class Player {
   _levelUp() {
     this.level++;
     this.expToNext = Math.floor(this.expToNext * 1.4);
-    this.maxHp += 15;
+    const hpBonus = 15 + ((this.passiveBuffs?.maxHpBonus) ? 0 : 0); /* 기본 성장 */
+    this.maxHp += hpBonus;
     this.hp = this.maxHp;
     this.attack += 3;
     this.defense += 1;
+    /* F9: 레벨업 시 스킬 포인트 획득 */
+    this.skillPoints = (this.skillPoints || 0) + 1;
   }
 
   toJSON() {
@@ -109,6 +146,14 @@ class Player {
       mapId: this.mapId,
       mapRow: this.mapRow,
       mapCol: this.mapCol,
+      /* F8 */
+      stats: { ...this.stats },
+      unlockedAchievements: [...this.unlockedAchievements],
+      /* F10 */
+      seenStorylets: [...this.seenStorylets],
+      /* F9 */
+      skillPoints: this.skillPoints,
+      unlockedSkills: [...this.unlockedSkills],
     };
   }
 
@@ -130,6 +175,29 @@ class Player {
     p.mapId = data.mapId || 'mainland';
     p.mapRow = Number.isInteger(data.mapRow) ? data.mapRow : null;
     p.mapCol = Number.isInteger(data.mapCol) ? data.mapCol : null;
+
+    /* F8: 업적 */
+    p.stats = data.stats || {
+      monstersKilled: 0, totalGoldEarned: 0, bossesDefeated: 0,
+      battlesWon: 0, stepsWalked: 0, criticalHits: 0,
+      totalDamageDealt: 0, potionsUsed: 0, itemsCollected: 0,
+    };
+    p.unlockedAchievements = data.unlockedAchievements || [];
+
+    /* F10: 스토리릿 */
+    p.seenStorylets = data.seenStorylets || [];
+
+    /* F9: 스킬 트리 (기존 세이브 호환) */
+    p.skillPoints = data.skillPoints ?? Math.max(0, p.level - 1);
+    p.unlockedSkills = data.unlockedSkills || [];
+    p.passiveBuffs = {};
+    p.tempBuffs = [];
+    p.lastStandUsed = false;
+    /* 패시브 재계산 */
+    if (typeof SkillTreeManager !== 'undefined' && p.unlockedSkills.length > 0) {
+      SkillTreeManager.recalcPassives(p);
+    }
+
     return p;
   }
 }
