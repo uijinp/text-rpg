@@ -7,7 +7,7 @@ extends RefCounted
 var player_name: String = ""
 var job: String = ""
 var level: int = 1
-var exp: int = 0
+var xp: int = 0
 var exp_to_level: int = 50
 
 # ── 스탯 ──
@@ -67,7 +67,7 @@ func init_class(job_name: String) -> void:
 	defense = cls.get("defense", 5)
 	gold = 30
 	level = 1
-	exp = 0
+	xp = 0
 	exp_to_level = 50
 	inventory = ["소형 포션", "소형 포션", "소형 포션"]
 	equipped_weapon = ""
@@ -149,15 +149,15 @@ func is_alive() -> bool:
 
 # ── 경험치 & 레벨업 ──
 func gain_exp(amount: int) -> bool:
-	exp += amount
-	if exp >= exp_to_level:
+	xp += amount
+	if xp >= exp_to_level:
 		_level_up()
 		return true
 	return false
 
 func _level_up() -> void:
-	while exp >= exp_to_level:
-		exp -= exp_to_level
+	while xp >= exp_to_level:
+		xp -= exp_to_level
 		level += 1
 		exp_to_level = int(50 * pow(1.2, level - 1))
 		max_hp += 8
@@ -172,7 +172,7 @@ func to_dict() -> Dictionary:
 		"name": player_name,
 		"job": job,
 		"level": level,
-		"exp": exp,
+		"exp": xp,
 		"exp_to_level": exp_to_level,
 		"hp": hp,
 		"max_hp": max_hp,
@@ -199,7 +199,7 @@ func from_dict(data: Dictionary) -> void:
 	player_name = data.get("name", "")
 	job = data.get("job", "전사")
 	level = data.get("level", 1)
-	exp = data.get("exp", 0)
+	xp = data.get("exp", 0)
 	exp_to_level = data.get("exp_to_level", 50)
 	hp = data.get("hp", 100)
 	max_hp = data.get("max_hp", 100)

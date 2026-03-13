@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=2 format=3 uid="uid://c0y5674dpsno2"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 
@@ -24,6 +24,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.04, 0.04, 0.06, 1)
 
 [node name="VBox" type="VBoxContainer" parent="TitleScreen"]
@@ -53,8 +55,8 @@ text = "- 텍스트 RPG -"
 horizontal_alignment = 1
 
 [node name="Spacer" type="Control" parent="TitleScreen/VBox"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 
 [node name="NewGameBtn" type="Button" parent="TitleScreen/VBox"]
 layout_mode = 2
@@ -70,12 +72,16 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="BG" type="ColorRect" parent="CreateScreen"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.04, 0.04, 0.06, 1)
 
 [node name="VBox" type="VBoxContainer" parent="CreateScreen"]
@@ -99,8 +105,8 @@ text = "캐릭터 생성"
 horizontal_alignment = 1
 
 [node name="Spacer1" type="Control" parent="CreateScreen/VBox"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="CreateScreen/VBox"]
 layout_mode = 2
@@ -112,8 +118,8 @@ placeholder_text = "캐릭터 이름 입력"
 max_length = 12
 
 [node name="Spacer2" type="Control" parent="CreateScreen/VBox"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
 
 [node name="JobLabel" type="Label" parent="CreateScreen/VBox"]
 layout_mode = 2
@@ -137,6 +143,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="BattleScreen" type="Control" parent="."]
 visible = false
@@ -144,12 +152,16 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="BG" type="ColorRect" parent="BattleScreen"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.04, 0.04, 0.06, 1)
 
 [node name="ToastContainer" type="VBoxContainer" parent="."]
@@ -160,4 +172,3 @@ offset_top = 10.0
 offset_bottom = 100.0
 grow_horizontal = 2
 mouse_filter = 2
-alignment = 0

@@ -83,7 +83,6 @@ func _ready() -> void:
 	# 페이드 오버레이 생성 (최상단 레이어)
 	_fade_rect = ColorRect.new()
 	_fade_rect.name = "FadeOverlay"
-	_fade_rect.layout_mode = 1
 	_fade_rect.anchors_preset = 15
 	_fade_rect.anchor_right = 1.0
 	_fade_rect.anchor_bottom = 1.0
@@ -160,7 +159,6 @@ func _show_load_slots() -> void:
 
 	var panel := PanelContainer.new()
 	panel.name = "LoadSlots"
-	panel.layout_mode = 1
 	panel.anchor_left = 0.1
 	panel.anchor_top = 0.3
 	panel.anchor_right = 0.9
@@ -235,7 +233,6 @@ func _setup_game_screen() -> void:
 	# ── SubViewportContainer ──
 	var viewport_container := SubViewportContainer.new()
 	viewport_container.name = "FieldViewport"
-	viewport_container.layout_mode = 1
 	viewport_container.anchors_preset = 15
 	viewport_container.anchor_right = 1.0
 	viewport_container.anchor_bottom = 0.6
@@ -262,7 +259,6 @@ func _setup_game_screen() -> void:
 	var dialog_scene := load("res://scenes/ui/dialog_box.tscn")
 	dialog_box = dialog_scene.instantiate()
 	dialog_box.name = "DialogBox"
-	dialog_box.layout_mode = 1
 	dialog_box.anchor_top = 0.35
 	dialog_box.anchor_right = 1.0
 	dialog_box.anchor_bottom = 0.95
@@ -277,7 +273,6 @@ func _setup_game_screen() -> void:
 	var shop_scene := load("res://scenes/ui/shop_panel.tscn")
 	shop_panel = shop_scene.instantiate()
 	shop_panel.name = "ShopPanel"
-	shop_panel.layout_mode = 1
 	shop_panel.anchor_top = 0.1
 	shop_panel.anchor_right = 1.0
 	shop_panel.anchor_bottom = 0.95
@@ -295,7 +290,6 @@ func _setup_game_screen() -> void:
 	var save_scene := load("res://scenes/ui/save_load_panel.tscn")
 	save_load_panel = save_scene.instantiate()
 	save_load_panel.name = "SaveLoadPanel"
-	save_load_panel.layout_mode = 1
 	save_load_panel.anchor_top = 0.15
 	save_load_panel.anchor_right = 1.0
 	save_load_panel.anchor_bottom = 0.9
@@ -312,7 +306,6 @@ func _setup_game_screen() -> void:
 	var skill_tree_scene := load("res://scenes/ui/skill_tree_panel.tscn")
 	skill_tree_panel = skill_tree_scene.instantiate()
 	skill_tree_panel.name = "SkillTreePanel"
-	skill_tree_panel.layout_mode = 1
 	skill_tree_panel.anchor_top = 0.05
 	skill_tree_panel.anchor_right = 1.0
 	skill_tree_panel.anchor_bottom = 0.95
@@ -329,7 +322,6 @@ func _setup_game_screen() -> void:
 	var achievement_scene := load("res://scenes/ui/achievement_panel.tscn")
 	achievement_panel = achievement_scene.instantiate()
 	achievement_panel.name = "AchievementPanel"
-	achievement_panel.layout_mode = 1
 	achievement_panel.anchor_top = 0.05
 	achievement_panel.anchor_right = 1.0
 	achievement_panel.anchor_bottom = 0.95
@@ -346,7 +338,6 @@ func _setup_game_screen() -> void:
 	var world_map_scene := load("res://scenes/ui/world_map_panel.tscn")
 	world_map_panel = world_map_scene.instantiate()
 	world_map_panel.name = "WorldMapPanel"
-	world_map_panel.layout_mode = 1
 	world_map_panel.anchor_top = 0.05
 	world_map_panel.anchor_right = 1.0
 	world_map_panel.anchor_bottom = 0.95
@@ -376,7 +367,6 @@ func _setup_game_screen() -> void:
 func _create_hud() -> Control:
 	var panel := PanelContainer.new()
 	panel.name = "HUD"
-	panel.layout_mode = 1
 	panel.anchor_right = 1.0
 	panel.offset_bottom = 40.0
 
@@ -425,7 +415,6 @@ func _update_hud() -> void:
 func _create_dpad() -> Control:
 	var container := Control.new()
 	container.name = "DPad"
-	container.layout_mode = 1
 	container.anchor_top = 0.65
 	container.anchor_right = 1.0
 	container.anchor_bottom = 1.0
@@ -791,7 +780,7 @@ func _on_status() -> void:
 		dialog_box.show_dialog()
 		var p := GameState.player
 		var status_text := "[color=#d4a017][b]%s[/b][/color] (%s)\n" % [p.player_name, p.job]
-		status_text += "Lv.%d  EXP: %d/%d\n" % [p.level, p.exp, p.exp_to_level]
+		status_text += "Lv.%d  EXP: %d/%d\n" % [p.level, p.xp, p.exp_to_level]
 		status_text += "HP: %d/%d\n" % [p.hp, p.max_hp]
 		status_text += "ATK: %d  DEF: %d\n" % [p.get_attack()["damage"], p.get_defense()]
 		status_text += "💰 %dG\n" % p.gold
@@ -889,7 +878,6 @@ func _setup_battle_screen(enemies: Array) -> void:
 	if bg == null:
 		bg = ColorRect.new()
 		bg.name = "BG"
-		bg.layout_mode = 1
 		bg.anchors_preset = 15
 		bg.anchor_right = 1.0
 		bg.anchor_bottom = 1.0
@@ -908,7 +896,6 @@ func _setup_battle_screen(enemies: Array) -> void:
 			if ResourceLoader.exists(bg_path):
 				bg_img_node = TextureRect.new()
 				bg_img_node.name = "BGImage"
-				bg_img_node.layout_mode = 1
 				bg_img_node.anchors_preset = 15
 				bg_img_node.anchor_right = 1.0
 				bg_img_node.anchor_bottom = 0.35
@@ -920,7 +907,6 @@ func _setup_battle_screen(enemies: Array) -> void:
 	# 적 표시 영역 (상단 30%)
 	var enemy_panel := HBoxContainer.new()
 	enemy_panel.name = "EnemyPanel"
-	enemy_panel.layout_mode = 1
 	enemy_panel.anchor_right = 1.0
 	enemy_panel.anchor_bottom = 0.3
 	enemy_panel.offset_left = 10.0
@@ -976,7 +962,6 @@ func _setup_battle_screen(enemies: Array) -> void:
 	var log_label := RichTextLabel.new()
 	log_label.name = "BattleLog"
 	log_label.bbcode_enabled = true
-	log_label.layout_mode = 1
 	log_label.anchor_top = 0.3
 	log_label.anchor_right = 1.0
 	log_label.anchor_bottom = 0.6
@@ -989,7 +974,6 @@ func _setup_battle_screen(enemies: Array) -> void:
 	# 플레이어 HP 바 (로그 아래)
 	var player_info := HBoxContainer.new()
 	player_info.name = "PlayerInfo"
-	player_info.layout_mode = 1
 	player_info.anchor_top = 0.6
 	player_info.anchor_right = 1.0
 	player_info.offset_left = 10.0
@@ -1023,7 +1007,6 @@ func _setup_battle_screen(enemies: Array) -> void:
 	# 전투 버튼 (하단)
 	var btn_container := VBoxContainer.new()
 	btn_container.name = "BattleButtons"
-	btn_container.layout_mode = 1
 	btn_container.anchor_top = 0.67
 	btn_container.anchor_right = 1.0
 	btn_container.anchor_bottom = 1.0
