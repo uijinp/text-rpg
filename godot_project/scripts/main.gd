@@ -23,7 +23,13 @@ extends Control
 var field_manager: Node2D = null
 var hud: Control = null
 var dpad: Control = null
-var dialog_box: Control = null
+
+# ── UI 컴포넌트 (씬 인스턴스) ──
+var dialog_box = null  # scripts/ui/dialog_box.gd
+var shop_panel = null   # scripts/ui/shop_panel.gd
+
+# ── 상태 ──
+var _event_running: bool = false
 
 func _ready() -> void:
 	# 시그널 연결
@@ -42,13 +48,28 @@ func _ready() -> void:
 	# 이어하기 버튼 활성화 체크
 	continue_btn.disabled = not GameState.has_any_save()
 
+	# 이벤트 엔진 시그널
+	EventEngine.dialog_text.connect(_on_event_text)
+	EventEngine.dialog_divider.connect(_on_event_divider)
+	EventEngine.dialog_menu.connect(_on_event_menu)
+	EventEngine.dialog_show.connect(_on_event_dialog_show)
+	EventEngine.dialog_hide.connect(_on_event_dialog_hide)
+	EventEngine.shop_requested.connect(_on_shop_requested)
+	EventEngine.save_requested.connect(_on_save_requested)
+	EventEngine.game_over_requested.connect(_on_game_over)
+
 	# 전투 시스템 시그널
 	CombatSystem.battle_started.connect(_on_battle_started)
 	CombatSystem.battle_ended.connect(_on_battle_ended)
 	CombatSystem.battle_log.connect(_on_battle_log)
 	CombatSystem.battle_choices_requested.connect(_on_battle_choices)
 	CombatSystem.battle_ui_update.connect(_on_battle_ui_update)
-	CombatSystem.wait_for_tap_requested.connect(_on_wait_for_tap)
+	CombatSystem.wait_for_tap_requested.connect(_on_battle_wait_for_tap)
+	CombatSystem.enemy_flash.connect(_on_enemy_flash)
+	CombatSystem.player_hp_flash.connect(_on_player_hp_flash)
+	CombatSystem.screen_shake.connect(_on_screen_shake)
+	CombatSystem.target_select_requested.connect(_on_target_select)
+	CombatSystem.battle_item_menu_requested.connect(_on_battle_item_menu)
 
 	# 초기 화면
 	_show_screen("title")
@@ -65,7 +86,10 @@ func _show_screen(name: String) -> void:
 	if name == "game":
 		_setup_game_screen()
 
-# ── 타이틀 ──
+# ══════════════════════════════════════════════════
+#  타이틀 & 캐릭터 생성
+# ══════════════════════════════════════════════════
+
 func _on_new_game() -> void:
 	_show_screen("create")
 	name_input.text = ""
@@ -78,14 +102,16 @@ func _on_continue() -> void:
 			return
 	GameState.show_toast("저장된 게임이 없습니다.", "toast-warning")
 
-# ── 캐릭터 생성 ──
 func _create_character(job: String) -> void:
 	var pname: String = name_input.text.strip_edges()
 	if pname == "":
 		pname = "모험가"
 	GameState.new_game(pname, job)
 
-# ── 게임 화면 설정 ──
+# ══════════════════════════════════════════════════
+#  게임 화면 설정
+# ══════════════════════════════════════════════════
+
 func _setup_game_screen() -> void:
 	if field_manager != null:
 		# 이미 설정됨 — 위치만 업데이트
@@ -93,34 +119,31 @@ func _setup_game_screen() -> void:
 		_update_hud()
 		return
 
-	# 필드 매니저 (TileMap + 플레이어 + 카메라)
+	# ── 필드 매니저 (TileMap + 플레이어 + 카메라) ──
 	field_manager = Node2D.new()
 	field_manager.name = "FieldManager"
 	field_manager.set_script(load("res://scripts/field/field_manager.gd"))
 
-	# TileMapLayer
 	var tile_map_layer := TileMapLayer.new()
 	tile_map_layer.name = "TileMapLayer"
 	field_manager.add_child(tile_map_layer)
 
-	# 플레이어 스프라이트
 	var player_sprite := Sprite2D.new()
 	player_sprite.name = "PlayerSprite"
 	field_manager.add_child(player_sprite)
 
-	# 카메라
 	var camera := Camera2D.new()
 	camera.name = "Camera2D"
 	camera.zoom = Vector2(2, 2)
 	field_manager.add_child(camera)
 
-	# SubViewportContainer로 필드 표시
+	# ── SubViewportContainer ──
 	var viewport_container := SubViewportContainer.new()
 	viewport_container.name = "FieldViewport"
 	viewport_container.layout_mode = 1
-	viewport_container.anchors_preset = 15  # Full rect
+	viewport_container.anchors_preset = 15
 	viewport_container.anchor_right = 1.0
-	viewport_container.anchor_bottom = 0.6  # 상단 60%
+	viewport_container.anchor_bottom = 0.6
 	viewport_container.stretch = true
 
 	var sub_viewport := SubViewport.new()
@@ -132,18 +155,46 @@ func _setup_game_screen() -> void:
 
 	game_screen.add_child(viewport_container)
 
-	# HUD (화면 상단)
+	# ── HUD (화면 상단) ──
 	hud = _create_hud()
 	game_screen.add_child(hud)
 
-	# D-Pad + 버튼 (화면 하단)
+	# ── D-Pad + 버튼 (화면 하단) ──
 	dpad = _create_dpad()
 	game_screen.add_child(dpad)
 
-	# 대화 상자 (하단 오버레이)
-	dialog_box = _create_dialog_box()
+	# ── 대화 상자 (하단 오버레이) ── PackedScene 인스턴스
+	var dialog_scene := load("res://scenes/ui/dialog_box.tscn")
+	dialog_box = dialog_scene.instantiate()
+	dialog_box.name = "DialogBox"
+	dialog_box.layout_mode = 1
+	dialog_box.anchor_top = 0.35
+	dialog_box.anchor_right = 1.0
+	dialog_box.anchor_bottom = 0.95
+	dialog_box.offset_left = 8.0
+	dialog_box.offset_right = -8.0
+	dialog_box.offset_top = 4.0
+	dialog_box.offset_bottom = -4.0
 	dialog_box.visible = false
 	game_screen.add_child(dialog_box)
+
+	# ── 상점 패널 (오버레이) ──
+	var shop_scene := load("res://scenes/ui/shop_panel.tscn")
+	shop_panel = shop_scene.instantiate()
+	shop_panel.name = "ShopPanel"
+	shop_panel.layout_mode = 1
+	shop_panel.anchor_top = 0.1
+	shop_panel.anchor_right = 1.0
+	shop_panel.anchor_bottom = 0.95
+	shop_panel.offset_left = 8.0
+	shop_panel.offset_right = -8.0
+	shop_panel.visible = false
+	shop_panel.shop_closed.connect(func():
+		shop_panel.visible = false
+		EventEngine.on_shop_closed()
+		_update_hud()
+	)
+	game_screen.add_child(shop_panel)
 
 	# 필드 매니저 시그널
 	field_manager.encounter_triggered.connect(_on_encounter)
@@ -154,15 +205,20 @@ func _setup_game_screen() -> void:
 	field_manager.load_map(GameState.player.current_map)
 	_update_hud()
 
+# ══════════════════════════════════════════════════
+#  HUD
+# ══════════════════════════════════════════════════
+
 func _create_hud() -> Control:
 	var panel := PanelContainer.new()
 	panel.name = "HUD"
 	panel.layout_mode = 1
 	panel.anchor_right = 1.0
-	panel.offset_bottom = 36.0
+	panel.offset_bottom = 40.0
 
 	var hbox := HBoxContainer.new()
 	hbox.name = "HBox"
+	hbox.add_theme_constant_override("separation", 12)
 
 	var name_label := Label.new()
 	name_label.name = "NameLabel"
@@ -182,11 +238,25 @@ func _create_hud() -> Control:
 
 	var gold_label := Label.new()
 	gold_label.name = "GoldLabel"
-	gold_label.text = "💰 30G"
+	gold_label.text = "30G"
 	hbox.add_child(gold_label)
 
 	panel.add_child(hbox)
 	return panel
+
+func _update_hud() -> void:
+	if hud == null or GameState.player == null:
+		return
+	var p := GameState.player
+	var hbox: HBoxContainer = hud.get_node("HBox")
+	hbox.get_node("NameLabel").text = "%s (%s)" % [p.player_name, p.job]
+	hbox.get_node("LvLabel").text = "Lv.%d" % p.level
+	hbox.get_node("HpLabel").text = "HP: %d/%d" % [p.hp, p.max_hp]
+	hbox.get_node("GoldLabel").text = "%dG" % p.gold
+
+# ══════════════════════════════════════════════════
+#  D-Pad + 하단 버튼
+# ══════════════════════════════════════════════════
 
 func _create_dpad() -> Control:
 	var container := Control.new()
@@ -282,36 +352,14 @@ func _create_dpad() -> Control:
 
 	return container
 
-func _create_dialog_box() -> Control:
-	var panel := PanelContainer.new()
-	panel.name = "DialogBox"
-	panel.layout_mode = 1
-	panel.anchor_top = 0.4
-	panel.anchor_right = 1.0
-	panel.anchor_bottom = 0.95
-	panel.offset_left = 10.0
-	panel.offset_right = -10.0
+# ══════════════════════════════════════════════════
+#  입력 처리
+# ══════════════════════════════════════════════════
 
-	var vbox := VBoxContainer.new()
-	vbox.name = "VBox"
-
-	var text_label := RichTextLabel.new()
-	text_label.name = "DialogText"
-	text_label.bbcode_enabled = true
-	text_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	text_label.scroll_active = true
-	vbox.add_child(text_label)
-
-	var btn_container := VBoxContainer.new()
-	btn_container.name = "ButtonContainer"
-	vbox.add_child(btn_container)
-
-	panel.add_child(vbox)
-	return panel
-
-# ── 입력 처리 ──
 func _input(event: InputEvent) -> void:
 	if GameState.current_screen != "game":
+		return
+	if _event_running:
 		return
 	if event.is_action_pressed("move_up"):
 		_move_player(Vector2i(0, -1))
@@ -325,22 +373,17 @@ func _input(event: InputEvent) -> void:
 func _move_player(direction: Vector2i) -> void:
 	if field_manager == null or GameState.player == null:
 		return
-	if dialog_box.visible:
+	if _event_running or (dialog_box != null and dialog_box.visible):
+		return
+	if shop_panel != null and shop_panel.visible:
 		return
 	field_manager.try_move(direction)
 	_update_hud()
 
-func _update_hud() -> void:
-	if hud == null or GameState.player == null:
-		return
-	var p := GameState.player
-	var hbox: HBoxContainer = hud.get_node("HBox")
-	hbox.get_node("NameLabel").text = "%s (%s)" % [p.player_name, p.job]
-	hbox.get_node("LvLabel").text = "Lv.%d" % p.level
-	hbox.get_node("HpLabel").text = "HP: %d/%d" % [p.hp, p.max_hp]
-	hbox.get_node("GoldLabel").text = "💰 %dG" % p.gold
+# ══════════════════════════════════════════════════
+#  필드 이벤트
+# ══════════════════════════════════════════════════
 
-# ── 필드 이벤트 ──
 func _on_encounter(enemies: Array) -> void:
 	await CombatSystem.start_battle(GameState.player, enemies)
 
@@ -356,159 +399,366 @@ func _on_player_zone_changed(_old_zone: String, new_zone: String) -> void:
 	_update_hud()
 
 func _on_area_explore() -> void:
-	if GameState.player == null:
+	if GameState.player == null or _event_running:
 		return
 	var zone: String = GameState.player.current_location
 	var event_data: Variant = GameData.get_area_event(zone)
 	if event_data != null:
-		_show_dialog()
+		_event_running = true
+		dpad.visible = false
 		await EventEngine.run_area_event(zone)
-		_hide_dialog()
+		if dialog_box != null:
+			dialog_box.hide_dialog()
+		dpad.visible = true
+		_event_running = false
+		_update_hud()
 	else:
 		GameState.show_toast("이 지역에는 특별한 것이 없다.", "toast-info")
 
-func _on_inventory() -> void:
-	if GameState.player == null:
+# ══════════════════════════════════════════════════
+#  이벤트 엔진 UI 핸들러
+# ══════════════════════════════════════════════════
+
+func _on_event_text(text: String) -> void:
+	if dialog_box == null:
 		return
-	_show_dialog()
-	var p := GameState.player
-	var text_label: RichTextLabel = dialog_box.get_node("VBox/DialogText")
-	text_label.text = ""
+	if not dialog_box.visible:
+		dialog_box.show_dialog()
+	await dialog_box.show_text(text)
+	# 타자기 완료 후 탭 대기
+	await dialog_box.wait_for_tap()
+	EventEngine.on_dialog_tap()
 
-	var inv_text := "[b]인벤토리[/b]\n"
-	if p.equipped_weapon != "":
-		inv_text += "⚔️ 무기: %s\n" % p.equipped_weapon
-	if p.equipped_armor != "":
-		inv_text += "🛡️ 방어구: %s\n" % p.equipped_armor
-	inv_text += "\n"
+func _on_event_divider(title: String) -> void:
+	if dialog_box == null:
+		return
+	if not dialog_box.visible:
+		dialog_box.show_dialog()
+	dialog_box.show_divider(title)
 
-	if p.inventory.is_empty():
-		inv_text += "(빈 가방)"
-	else:
-		var count_map: Dictionary = {}
-		for item in p.inventory:
-			count_map[item] = count_map.get(item, 0) + 1
-		for item_name in count_map:
-			var cnt: int = count_map[item_name]
+func _on_event_menu(options: Array) -> void:
+	if dialog_box == null:
+		return
+	if not dialog_box.visible:
+		dialog_box.show_dialog()
+	var selected: int = await dialog_box.show_choices(options)
+	EventEngine.on_menu_selected(selected)
+
+func _on_event_dialog_show() -> void:
+	if dialog_box == null:
+		return
+	if not dialog_box.visible:
+		dialog_box.show_dialog()
+
+func _on_event_dialog_hide() -> void:
+	if dialog_box != null:
+		dialog_box.hide_dialog()
+
+func _on_shop_requested(player: PlayerData, shop_type: String) -> void:
+	if shop_panel == null:
+		return
+	shop_panel.open_shop(player, shop_type)
+
+func _on_save_requested() -> void:
+	GameState.save_game(0)
+
+func _on_game_over() -> void:
+	GameState.show_toast("전투에서 패배했다...", "toast-warning")
+	if dialog_box != null:
+		dialog_box.hide_dialog()
+	_event_running = false
+	await get_tree().create_timer(2.0).timeout
+	_show_screen("title")
+
+# ══════════════════════════════════════════════════
+#  인벤토리 / 상태 / 지도
+# ══════════════════════════════════════════════════
+
+func _on_inventory() -> void:
+	if GameState.player == null or _event_running:
+		return
+	_event_running = true
+	if dialog_box != null:
+		dialog_box.show_dialog()
+		var p := GameState.player
+
+		var inv_text := "[color=#d4a017][b]인벤토리[/b][/color]\n"
+		if p.equipped_weapon != "":
+			inv_text += "⚔️ 무기: %s\n" % p.equipped_weapon
+		if p.equipped_armor != "":
+			inv_text += "🛡️ 방어구: %s\n" % p.equipped_armor
+		inv_text += "\n"
+
+		if p.inventory.is_empty():
+			inv_text += "(빈 가방)"
+		else:
+			var count_map: Dictionary = {}
+			for item in p.inventory:
+				count_map[item] = count_map.get(item, 0) + 1
+			for item_name in count_map:
+				var cnt: int = count_map[item_name]
+				var info: Dictionary = GameData.get_item(item_name)
+				var desc: String = info.get("desc", "")
+				if cnt > 1:
+					inv_text += "• %s x%d — %s\n" % [item_name, cnt, desc]
+				else:
+					inv_text += "• %s — %s\n" % [item_name, desc]
+
+		await dialog_box.show_text(inv_text, false)
+
+		# 장비/사용/닫기 메뉴
+		var menu_options: Array[String] = []
+		var usable_items: Array = []
+
+		# 장비 가능한 아이템 확인
+		for item_name in p.inventory:
 			var info: Dictionary = GameData.get_item(item_name)
-			var desc: String = info.get("desc", "")
-			if cnt > 1:
-				inv_text += "• %s x%d — %s\n" % [item_name, cnt, desc]
+			if info.get("type", "") in ["weapon", "armor"]:
+				if item_name not in usable_items:
+					usable_items.append({"name": item_name, "action": "equip"})
+			elif info.get("effect", "") == "heal" or info.get("effect", "") == "cure":
+				if item_name not in [u["name"] for u in usable_items]:
+					usable_items.append({"name": item_name, "action": "use"})
+
+		for u in usable_items:
+			var info: Dictionary = GameData.get_item(u["name"])
+			if u["action"] == "equip":
+				menu_options.append("장착: %s" % u["name"])
 			else:
-				inv_text += "• %s — %s\n" % [item_name, desc]
+				menu_options.append("사용: %s" % u["name"])
+		menu_options.append("닫기")
 
-	text_label.text = inv_text
+		var selected: int = await dialog_box.show_choices(menu_options)
 
-	# 닫기 버튼
-	var btn_container: VBoxContainer = dialog_box.get_node("VBox/ButtonContainer")
-	_clear_buttons(btn_container)
-	var close_btn := Button.new()
-	close_btn.text = "닫기"
-	close_btn.pressed.connect(func(): _hide_dialog())
-	btn_container.add_child(close_btn)
+		if selected < usable_items.size():
+			var chosen = usable_items[selected]
+			if chosen["action"] == "equip":
+				_equip_item(p, chosen["name"])
+			elif chosen["action"] == "use":
+				_use_item(p, chosen["name"])
+			_update_hud()
+
+		dialog_box.hide_dialog()
+	_event_running = false
+
+func _equip_item(p: PlayerData, item_name: String) -> void:
+	var info: Dictionary = GameData.get_item(item_name)
+	if info.get("type", "") == "weapon":
+		if p.equipped_weapon != "":
+			p.inventory.append(p.equipped_weapon)
+		p.equipped_weapon = item_name
+		var idx := p.inventory.find(item_name)
+		if idx >= 0:
+			p.inventory.remove_at(idx)
+		GameState.show_toast("⚔️ %s 장착!" % item_name, "toast-info")
+	elif info.get("type", "") == "armor":
+		if p.equipped_armor != "":
+			p.inventory.append(p.equipped_armor)
+		p.equipped_armor = item_name
+		var idx := p.inventory.find(item_name)
+		if idx >= 0:
+			p.inventory.remove_at(idx)
+		GameState.show_toast("🛡️ %s 장착!" % item_name, "toast-info")
+
+func _use_item(p: PlayerData, item_name: String) -> void:
+	var idx := p.inventory.find(item_name)
+	if idx < 0:
+		return
+	var info: Dictionary = GameData.get_item(item_name)
+	p.inventory.remove_at(idx)
+	if info.get("effect", "") == "heal":
+		var healed: int = p.heal(info.get("value", 30))
+		GameState.show_toast("HP %d 회복! (%d/%d)" % [healed, p.hp, p.max_hp], "toast-info")
+		p.stats["potionsUsed"] = p.stats.get("potionsUsed", 0) + 1
+	elif info.get("effect", "") == "cure":
+		p.poisoned = false
+		GameState.show_toast("독 상태 해제!", "toast-info")
+		p.stats["potionsUsed"] = p.stats.get("potionsUsed", 0) + 1
 
 func _on_status() -> void:
-	if GameState.player == null:
+	if GameState.player == null or _event_running:
 		return
-	_show_dialog()
-	var p := GameState.player
-	var text_label: RichTextLabel = dialog_box.get_node("VBox/DialogText")
-	var status_text := "[b]%s[/b] (%s)\n" % [p.player_name, p.job]
-	status_text += "Lv.%d  EXP: %d/%d\n" % [p.level, p.exp, p.exp_to_level]
-	status_text += "HP: %d/%d\n" % [p.hp, p.max_hp]
-	status_text += "ATK: %d  DEF: %d\n" % [p.attack, p.defense]
-	status_text += "💰 %dG\n" % p.gold
-	status_text += "어둠 점수: %d\n" % p.dark_points
-	status_text += "스킬 포인트: %d\n" % p.skill_points
-	status_text += "\n[b]전투 기록[/b]\n"
-	status_text += "승리: %d  처치: %d\n" % [p.stats.get("battlesWon", 0), p.stats.get("monstersKilled", 0)]
-	status_text += "걸음: %d  업적: %d/%d\n" % [
-		p.stats.get("stepsWalked", 0),
-		p.unlocked_achievements.size(),
-		GameData.achievements.size()
-	]
-	text_label.text = status_text
+	_event_running = true
+	if dialog_box != null:
+		dialog_box.show_dialog()
+		var p := GameState.player
+		var status_text := "[color=#d4a017][b]%s[/b][/color] (%s)\n" % [p.player_name, p.job]
+		status_text += "Lv.%d  EXP: %d/%d\n" % [p.level, p.exp, p.exp_to_level]
+		status_text += "HP: %d/%d\n" % [p.hp, p.max_hp]
+		status_text += "ATK: %d  DEF: %d\n" % [p.get_attack()["damage"], p.get_defense()]
+		status_text += "💰 %dG\n" % p.gold
+		status_text += "어둠 점수: %d\n" % p.dark_points
+		status_text += "스킬 포인트: %d\n" % p.skill_points
+		status_text += "\n[color=#d4a017][b]전투 기록[/b][/color]\n"
+		status_text += "승리: %d  처치: %d\n" % [p.stats.get("battlesWon", 0), p.stats.get("monstersKilled", 0)]
+		status_text += "걸음: %d  업적: %d/%d\n" % [
+			p.stats.get("stepsWalked", 0),
+			p.unlocked_achievements.size(),
+			GameData.achievements.size()
+		]
 
-	var btn_container: VBoxContainer = dialog_box.get_node("VBox/ButtonContainer")
-	_clear_buttons(btn_container)
-	var close_btn := Button.new()
-	close_btn.text = "닫기"
-	close_btn.pressed.connect(func(): _hide_dialog())
-	btn_container.add_child(close_btn)
+		await dialog_box.show_text(status_text, false)
+		await dialog_box.show_choices(["닫기"])
+		dialog_box.hide_dialog()
+	_event_running = false
 
 func _on_world_map() -> void:
 	GameState.show_toast("월드맵은 Phase 6에서 구현 예정", "toast-info")
 
-# ── 대화 상자 ──
-func _show_dialog() -> void:
-	dialog_box.visible = true
-	var text_label: RichTextLabel = dialog_box.get_node("VBox/DialogText")
-	text_label.text = ""
-	_clear_buttons(dialog_box.get_node("VBox/ButtonContainer"))
+# ══════════════════════════════════════════════════
+#  전투 시스템 UI 핸들러
+# ══════════════════════════════════════════════════
 
-func _hide_dialog() -> void:
-	dialog_box.visible = false
-	_clear_buttons(dialog_box.get_node("VBox/ButtonContainer"))
-
-func _clear_buttons(container: VBoxContainer) -> void:
-	for child in container.get_children():
-		child.queue_free()
-
-# ── 이벤트 엔진 연결 ──
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_READY:
-		EventEngine.dialog_text.connect(_on_dialog_text)
-		EventEngine.dialog_menu.connect(_on_dialog_menu)
-
-func _on_dialog_text(text: String) -> void:
-	if not dialog_box.visible:
-		_show_dialog()
-	var text_label: RichTextLabel = dialog_box.get_node("VBox/DialogText")
-	text_label.text += text + "\n"
-
-	# 탭/클릭으로 진행
-	var btn_container: VBoxContainer = dialog_box.get_node("VBox/ButtonContainer")
-	_clear_buttons(btn_container)
-	var tap_btn := Button.new()
-	tap_btn.text = "▶ 계속"
-	tap_btn.pressed.connect(func():
-		tap_btn.queue_free()
-		EventEngine.on_dialog_tap()
-	)
-	btn_container.add_child(tap_btn)
-
-func _on_dialog_menu(options: Array) -> void:
-	var btn_container: VBoxContainer = dialog_box.get_node("VBox/ButtonContainer")
-	_clear_buttons(btn_container)
-	for i in range(options.size()):
-		var btn := Button.new()
-		btn.text = options[i]
-		var idx := i
-		btn.pressed.connect(func():
-			_clear_buttons(btn_container)
-			EventEngine.on_menu_selected(idx)
-		)
-		btn_container.add_child(btn)
-
-# ── 전투 시스템 연결 ──
-func _on_battle_started(_player: PlayerData, _enemies: Array) -> void:
+func _on_battle_started(_player: PlayerData, enemies: Array) -> void:
 	_show_screen("battle")
-	var battle_log_label := _get_or_create_battle_log()
-	battle_log_label.text = ""
+	_setup_battle_screen(enemies)
 
 func _on_battle_ended(result: String) -> void:
 	if result == "win" or result == "fled":
 		_show_screen("game")
 		_update_hud()
 	elif result == "lose":
-		# 게임 오버 → 타이틀로
-		GameState.show_toast("전투에서 패배했다...", "toast-warning")
-		await get_tree().create_timer(2.0).timeout
-		_show_screen("title")
+		if not _event_running:
+			GameState.show_toast("전투에서 패배했다...", "toast-warning")
+			await get_tree().create_timer(2.0).timeout
+			_show_screen("title")
+
+func _setup_battle_screen(enemies: Array) -> void:
+	# 기존 전투 UI 클리어
+	for child in battle_screen.get_children():
+		if child.name != "BG":
+			child.queue_free()
+
+	# 배경
+	var bg: ColorRect = battle_screen.get_node_or_null("BG")
+	if bg == null:
+		bg = ColorRect.new()
+		bg.name = "BG"
+		bg.layout_mode = 1
+		bg.anchors_preset = 15
+		bg.anchor_right = 1.0
+		bg.anchor_bottom = 1.0
+		bg.color = Color(0.04, 0.04, 0.06, 1)
+		battle_screen.add_child(bg)
+
+	# 적 표시 영역 (상단 30%)
+	var enemy_panel := HBoxContainer.new()
+	enemy_panel.name = "EnemyPanel"
+	enemy_panel.layout_mode = 1
+	enemy_panel.anchor_right = 1.0
+	enemy_panel.anchor_bottom = 0.3
+	enemy_panel.offset_left = 10.0
+	enemy_panel.offset_top = 10.0
+	enemy_panel.offset_right = -10.0
+	enemy_panel.alignment = BoxContainer.ALIGNMENT_CENTER
+	enemy_panel.add_theme_constant_override("separation", 16)
+	battle_screen.add_child(enemy_panel)
+
+	for i in range(enemies.size()):
+		var e: Dictionary = enemies[i]
+		var vbox := VBoxContainer.new()
+		vbox.name = "Enemy_%d" % i
+		vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+
+		# 적 이미지
+		var sprite := TextureRect.new()
+		sprite.name = "Sprite"
+		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sprite.custom_minimum_size = Vector2(80, 80)
+		var img_path := "res://assets/monsters/%s.webp" % e.get("key", "")
+		if ResourceLoader.exists(img_path):
+			sprite.texture = load(img_path)
+		vbox.add_child(sprite)
+
+		# 이름
+		var name_label := Label.new()
+		name_label.name = "NameLabel"
+		name_label.text = e.get("label", e.get("name", "???"))
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(name_label)
+
+		# HP 바
+		var hp_bar := ProgressBar.new()
+		hp_bar.name = "HPBar"
+		hp_bar.max_value = e.get("max_hp", 50)
+		hp_bar.value = e.get("hp", 50)
+		hp_bar.custom_minimum_size = Vector2(80, 12)
+		hp_bar.show_percentage = false
+		vbox.add_child(hp_bar)
+
+		# HP 텍스트
+		var hp_label := Label.new()
+		hp_label.name = "HPLabel"
+		hp_label.text = "%d/%d" % [e.get("hp", 50), e.get("max_hp", 50)]
+		hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(hp_label)
+
+		enemy_panel.add_child(vbox)
+
+	# 전투 로그 (중간)
+	var log_label := RichTextLabel.new()
+	log_label.name = "BattleLog"
+	log_label.bbcode_enabled = true
+	log_label.layout_mode = 1
+	log_label.anchor_top = 0.3
+	log_label.anchor_right = 1.0
+	log_label.anchor_bottom = 0.6
+	log_label.offset_left = 10.0
+	log_label.offset_top = 5.0
+	log_label.offset_right = -10.0
+	log_label.scroll_following = true
+	battle_screen.add_child(log_label)
+
+	# 플레이어 HP 바 (로그 아래)
+	var player_info := HBoxContainer.new()
+	player_info.name = "PlayerInfo"
+	player_info.layout_mode = 1
+	player_info.anchor_top = 0.6
+	player_info.anchor_right = 1.0
+	player_info.offset_left = 10.0
+	player_info.offset_right = -10.0
+	player_info.offset_bottom = 30.0
+
+	var player_name_label := Label.new()
+	player_name_label.name = "PlayerName"
+	player_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if GameState.player:
+		player_name_label.text = "%s Lv.%d" % [GameState.player.player_name, GameState.player.level]
+	player_info.add_child(player_name_label)
+
+	var player_hp_bar := ProgressBar.new()
+	player_hp_bar.name = "PlayerHPBar"
+	player_hp_bar.custom_minimum_size = Vector2(120, 16)
+	player_hp_bar.show_percentage = false
+	if GameState.player:
+		player_hp_bar.max_value = GameState.player.max_hp
+		player_hp_bar.value = GameState.player.hp
+	player_info.add_child(player_hp_bar)
+
+	var player_hp_label := Label.new()
+	player_hp_label.name = "PlayerHPLabel"
+	if GameState.player:
+		player_hp_label.text = "%d/%d" % [GameState.player.hp, GameState.player.max_hp]
+	player_info.add_child(player_hp_label)
+
+	battle_screen.add_child(player_info)
+
+	# 전투 버튼 (하단)
+	var btn_container := VBoxContainer.new()
+	btn_container.name = "BattleButtons"
+	btn_container.layout_mode = 1
+	btn_container.anchor_top = 0.67
+	btn_container.anchor_right = 1.0
+	btn_container.anchor_bottom = 1.0
+	btn_container.offset_left = 20.0
+	btn_container.offset_right = -20.0
+	btn_container.offset_top = 5.0
+	battle_screen.add_child(btn_container)
 
 func _on_battle_log(text: String, style: String) -> void:
-	var log_label := _get_or_create_battle_log()
-	if text == "":
+	var log_label: RichTextLabel = battle_screen.get_node_or_null("BattleLog")
+	if log_label == null or text == "":
 		return
 	var color: String = "white"
 	match style:
@@ -523,8 +773,9 @@ func _on_battle_log(text: String, style: String) -> void:
 	log_label.text += "[color=%s]%s[/color]\n" % [color, text]
 
 func _on_battle_choices(skills: Array) -> void:
-	# 전투 버튼 생성
-	var btn_container := _get_or_create_battle_buttons()
+	var btn_container: VBoxContainer = battle_screen.get_node_or_null("BattleButtons")
+	if btn_container == null:
+		return
 	_clear_buttons(btn_container)
 
 	# 기본 공격
@@ -537,7 +788,7 @@ func _on_battle_choices(skills: Array) -> void:
 	for i in range(skills.size()):
 		var skill: Dictionary = skills[i]
 		var skill_btn := Button.new()
-		skill_btn.text = skill.get("name", "스킬")
+		skill_btn.text = "%s — %s" % [skill.get("name", "스킬"), skill.get("desc", "")]
 		var idx := i + 1
 		skill_btn.pressed.connect(func(): _clear_buttons(btn_container); CombatSystem.on_choice_made(idx))
 		btn_container.add_child(skill_btn)
@@ -556,12 +807,39 @@ func _on_battle_choices(skills: Array) -> void:
 	flee_btn.pressed.connect(func(): _clear_buttons(btn_container); CombatSystem.on_choice_made(flee_idx))
 	btn_container.add_child(flee_btn)
 
-func _on_battle_ui_update(_player: PlayerData, _enemies: Array, _turn: int, _target_idx: int) -> void:
-	# 전투 UI 업데이트 (Phase 3에서 상세 구현)
-	pass
+func _on_battle_ui_update(player: PlayerData, enemies: Array, _turn: int, _target_idx: int) -> void:
+	# 적 HP 업데이트
+	var enemy_panel: HBoxContainer = battle_screen.get_node_or_null("EnemyPanel")
+	if enemy_panel:
+		for i in range(enemies.size()):
+			var vbox: VBoxContainer = enemy_panel.get_node_or_null("Enemy_%d" % i)
+			if vbox == null:
+				continue
+			var e: Dictionary = enemies[i]
+			var hp_bar: ProgressBar = vbox.get_node_or_null("HPBar")
+			if hp_bar:
+				hp_bar.value = e.get("hp", 0)
+			var hp_label: Label = vbox.get_node_or_null("HPLabel")
+			if hp_label:
+				hp_label.text = "%d/%d" % [max(0, e.get("hp", 0)), e.get("max_hp", 50)]
+			# 죽은 적 반투명
+			var sprite: TextureRect = vbox.get_node_or_null("Sprite")
+			if sprite and e.get("hp", 0) <= 0:
+				sprite.modulate = Color(0.3, 0.3, 0.3, 0.5)
 
-func _on_wait_for_tap() -> void:
-	var btn_container := _get_or_create_battle_buttons()
+	# 플레이어 HP 업데이트
+	var player_hp_bar: ProgressBar = battle_screen.get_node_or_null("PlayerInfo/PlayerHPBar")
+	if player_hp_bar:
+		player_hp_bar.max_value = player.max_hp
+		player_hp_bar.value = player.hp
+	var player_hp_label: Label = battle_screen.get_node_or_null("PlayerInfo/PlayerHPLabel")
+	if player_hp_label:
+		player_hp_label.text = "%d/%d" % [player.hp, player.max_hp]
+
+func _on_battle_wait_for_tap() -> void:
+	var btn_container: VBoxContainer = battle_screen.get_node_or_null("BattleButtons")
+	if btn_container == null:
+		return
 	_clear_buttons(btn_container)
 	var tap_btn := Button.new()
 	tap_btn.text = "▶ 탭하여 계속"
@@ -571,39 +849,117 @@ func _on_wait_for_tap() -> void:
 	)
 	btn_container.add_child(tap_btn)
 
-func _get_or_create_battle_log() -> RichTextLabel:
-	var existing: RichTextLabel = battle_screen.get_node_or_null("BattleLog")
-	if existing:
-		return existing
-	var log_label := RichTextLabel.new()
-	log_label.name = "BattleLog"
-	log_label.bbcode_enabled = true
-	log_label.layout_mode = 1
-	log_label.anchor_right = 1.0
-	log_label.anchor_bottom = 0.6
-	log_label.offset_left = 10.0
-	log_label.offset_top = 10.0
-	log_label.offset_right = -10.0
-	log_label.scroll_following = true
-	battle_screen.add_child(log_label)
-	return log_label
+func _on_target_select(enemies: Array) -> void:
+	var btn_container: VBoxContainer = battle_screen.get_node_or_null("BattleButtons")
+	if btn_container == null:
+		return
+	_clear_buttons(btn_container)
 
-func _get_or_create_battle_buttons() -> VBoxContainer:
-	var existing: VBoxContainer = battle_screen.get_node_or_null("BattleButtons")
-	if existing:
-		return existing
-	var container := VBoxContainer.new()
-	container.name = "BattleButtons"
-	container.layout_mode = 1
-	container.anchor_top = 0.65
-	container.anchor_right = 1.0
-	container.anchor_bottom = 1.0
-	container.offset_left = 20.0
-	container.offset_right = -20.0
-	battle_screen.add_child(container)
-	return container
+	var label := Label.new()
+	label.text = "대상 선택:"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_container.add_child(label)
 
-# ── 토스트 ──
+	for i in range(enemies.size()):
+		var e: Dictionary = enemies[i]
+		if e.get("hp", 0) <= 0:
+			continue
+		var btn := Button.new()
+		btn.text = "%s (HP: %d/%d)" % [e.get("label", "???"), e.get("hp", 0), e.get("max_hp", 50)]
+		var idx := i
+		btn.pressed.connect(func(): _clear_buttons(btn_container); CombatSystem.on_target_selected(idx))
+		btn_container.add_child(btn)
+
+func _on_battle_item_menu(player: PlayerData) -> void:
+	var btn_container: VBoxContainer = battle_screen.get_node_or_null("BattleButtons")
+	if btn_container == null:
+		return
+	_clear_buttons(btn_container)
+
+	var label := Label.new()
+	label.text = "아이템 선택:"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_container.add_child(label)
+
+	# 사용 가능한 아이템만 표시
+	var usable: Array[String] = []
+	for item_name in player.inventory:
+		var info: Dictionary = GameData.get_item(item_name)
+		if info.get("effect", "") in ["heal", "cure"]:
+			if item_name not in usable:
+				usable.append(item_name)
+
+	if usable.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "(사용 가능한 아이템 없음)"
+		btn_container.add_child(empty_label)
+	else:
+		for item_name in usable:
+			var info: Dictionary = GameData.get_item(item_name)
+			var count := player.inventory.count(item_name)
+			var btn := Button.new()
+			btn.text = "%s x%d — %s" % [item_name, count, info.get("desc", "")]
+			var _item := item_name
+			btn.pressed.connect(func(): _clear_buttons(btn_container); CombatSystem.on_item_selected(_item))
+			btn_container.add_child(btn)
+
+	# 취소 버튼
+	var cancel_btn := Button.new()
+	cancel_btn.text = "취소"
+	cancel_btn.pressed.connect(func(): _clear_buttons(btn_container); CombatSystem.on_item_selected(""))
+	btn_container.add_child(cancel_btn)
+
+func _on_enemy_flash(index: int, flash_type: String) -> void:
+	var enemy_panel: HBoxContainer = battle_screen.get_node_or_null("EnemyPanel")
+	if enemy_panel == null:
+		return
+	var vbox: VBoxContainer = enemy_panel.get_node_or_null("Enemy_%d" % index)
+	if vbox == null:
+		return
+	var sprite: TextureRect = vbox.get_node_or_null("Sprite")
+	if sprite == null:
+		return
+
+	# 플래시 효과
+	var flash_color := Color.WHITE
+	match flash_type:
+		"hit":
+			flash_color = Color(1.5, 1.5, 1.5, 1)
+		"critical":
+			flash_color = Color(2, 1.5, 0, 1)
+		"miss":
+			flash_color = Color(0.5, 0.5, 1, 1)
+
+	var orig_modulate := sprite.modulate
+	var tween := create_tween()
+	tween.tween_property(sprite, "modulate", flash_color, 0.08)
+	tween.tween_property(sprite, "modulate", orig_modulate, 0.15)
+
+func _on_player_hp_flash() -> void:
+	var player_hp_bar: ProgressBar = battle_screen.get_node_or_null("PlayerInfo/PlayerHPBar")
+	if player_hp_bar == null:
+		return
+	var tween := create_tween()
+	tween.tween_property(player_hp_bar, "modulate", Color(1.5, 0.3, 0.3, 1), 0.1)
+	tween.tween_property(player_hp_bar, "modulate", Color.WHITE, 0.2)
+
+func _on_screen_shake() -> void:
+	# 전투 화면 흔들림 효과
+	var original_pos := battle_screen.position
+	var tween := create_tween()
+	for i in range(4):
+		var offset := Vector2(randf_range(-6, 6), randf_range(-4, 4))
+		tween.tween_property(battle_screen, "position", original_pos + offset, 0.04)
+	tween.tween_property(battle_screen, "position", original_pos, 0.05)
+
+# ══════════════════════════════════════════════════
+#  유틸리티
+# ══════════════════════════════════════════════════
+
+func _clear_buttons(container: VBoxContainer) -> void:
+	for child in container.get_children():
+		child.queue_free()
+
 func _show_toast(text: String, _style: String) -> void:
 	var label := Label.new()
 	label.text = text
@@ -611,7 +967,6 @@ func _show_toast(text: String, _style: String) -> void:
 	label.modulate = Color(1, 1, 1, 1)
 	toast_container.add_child(label)
 
-	# 페이드 아웃
 	var tween := create_tween()
 	tween.tween_interval(2.0)
 	tween.tween_property(label, "modulate:a", 0.0, 0.5)

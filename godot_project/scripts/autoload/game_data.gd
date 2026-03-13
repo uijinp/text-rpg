@@ -74,10 +74,12 @@ func _load_area_events() -> void:
 	var file_name := dir.get_next()
 	while file_name != "":
 		if file_name.ends_with(".json"):
-			var zone := file_name.get_basename()
 			var data := _load_json("res://data/areas/%s" % file_name)
-			if data:
-				area_events[zone] = data
+			if data is Dictionary:
+				# JSON 구조: {"town": {"actions": [...], "scenes": {...}}}
+				# 내부 zone 키를 풀어서 저장
+				for zone_key in data:
+					area_events[zone_key] = data[zone_key]
 		file_name = dir.get_next()
 
 func _load_json(path: String) -> Variant:

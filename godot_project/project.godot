@@ -38,7 +38,8 @@ window/handheld/orientation=1
 [gui]
 
 theme/custom="res://themes/dark_fantasy.tres"
-theme/custom_font="res://assets/fonts/default_font.tres"
+; 한글 폰트 필요시: assets/fonts/에 .ttf 추가 후 여기 설정
+; theme/custom_font="res://assets/fonts/NotoSansKR-Regular.tres"
 
 [input]
 
