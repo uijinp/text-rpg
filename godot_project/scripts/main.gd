@@ -28,6 +28,9 @@ var dpad: Control = null
 var dialog_box = null      # scripts/ui/dialog_box.gd
 var shop_panel = null      # scripts/ui/shop_panel.gd
 var save_load_panel = null # scripts/ui/save_load_panel.gd
+var skill_tree_panel = null  # scripts/ui/skill_tree_panel.gd
+var achievement_panel = null # scripts/ui/achievement_panel.gd
+var world_map_panel = null   # scripts/ui/world_map_panel.gd
 
 # ── 상태 ──
 var _event_running: bool = false
@@ -58,6 +61,7 @@ func _ready() -> void:
 	EventEngine.shop_requested.connect(_on_shop_requested)
 	EventEngine.save_requested.connect(_on_save_requested)
 	EventEngine.game_over_requested.connect(_on_game_over)
+	EventEngine.show_map_requested.connect(_on_show_map_from_event)
 
 	# 전투 시스템 시그널
 	CombatSystem.battle_started.connect(_on_battle_started)
@@ -263,6 +267,58 @@ func _setup_game_screen() -> void:
 	)
 	game_screen.add_child(save_load_panel)
 
+	# ── 스킬 트리 패널 (오버레이) ──
+	var skill_tree_scene := load("res://scenes/ui/skill_tree_panel.tscn")
+	skill_tree_panel = skill_tree_scene.instantiate()
+	skill_tree_panel.name = "SkillTreePanel"
+	skill_tree_panel.layout_mode = 1
+	skill_tree_panel.anchor_top = 0.05
+	skill_tree_panel.anchor_right = 1.0
+	skill_tree_panel.anchor_bottom = 0.95
+	skill_tree_panel.offset_left = 8.0
+	skill_tree_panel.offset_right = -8.0
+	skill_tree_panel.visible = false
+	skill_tree_panel.panel_closed.connect(func():
+		skill_tree_panel.visible = false
+		_update_hud()
+	)
+	game_screen.add_child(skill_tree_panel)
+
+	# ── 업적 패널 (오버레이) ──
+	var achievement_scene := load("res://scenes/ui/achievement_panel.tscn")
+	achievement_panel = achievement_scene.instantiate()
+	achievement_panel.name = "AchievementPanel"
+	achievement_panel.layout_mode = 1
+	achievement_panel.anchor_top = 0.05
+	achievement_panel.anchor_right = 1.0
+	achievement_panel.anchor_bottom = 0.95
+	achievement_panel.offset_left = 8.0
+	achievement_panel.offset_right = -8.0
+	achievement_panel.visible = false
+	achievement_panel.panel_closed.connect(func():
+		achievement_panel.visible = false
+		_update_hud()
+	)
+	game_screen.add_child(achievement_panel)
+
+	# ── 월드맵 패널 (오버레이) ──
+	var world_map_scene := load("res://scenes/ui/world_map_panel.tscn")
+	world_map_panel = world_map_scene.instantiate()
+	world_map_panel.name = "WorldMapPanel"
+	world_map_panel.layout_mode = 1
+	world_map_panel.anchor_top = 0.05
+	world_map_panel.anchor_right = 1.0
+	world_map_panel.anchor_bottom = 0.95
+	world_map_panel.offset_left = 8.0
+	world_map_panel.offset_right = -8.0
+	world_map_panel.visible = false
+	world_map_panel.panel_closed.connect(func():
+		world_map_panel.visible = false
+		_update_hud()
+	)
+	world_map_panel.fast_travel_requested.connect(_on_fast_travel)
+	game_screen.add_child(world_map_panel)
+
 	# 필드 매니저 시그널
 	field_manager.encounter_triggered.connect(_on_encounter)
 	field_manager.location_entered.connect(_on_location_entered)
@@ -382,40 +438,71 @@ func _create_dpad() -> Control:
 	menu_btn.pressed.connect(_on_area_explore)
 	container.add_child(menu_btn)
 
-	# 하단 버튼들
+	# 하단 버튼들 (Row 1)
 	var btn_y := center.y + offset + 40
+	var small_btn_w := 72.0
+	var small_btn_h := 34.0
+	var btn_gap := 4.0
+	var start_x := 10.0
 
 	var inv_btn := Button.new()
 	inv_btn.name = "InventoryBtn"
 	inv_btn.text = "인벤토리"
-	inv_btn.position = Vector2(20, btn_y)
-	inv_btn.size = Vector2(100, 40)
+	inv_btn.position = Vector2(start_x, btn_y)
+	inv_btn.size = Vector2(90, small_btn_h)
 	inv_btn.pressed.connect(_on_inventory)
 	container.add_child(inv_btn)
 
 	var status_btn := Button.new()
 	status_btn.name = "StatusBtn"
 	status_btn.text = "상태"
-	status_btn.position = Vector2(130, btn_y)
-	status_btn.size = Vector2(80, 40)
+	status_btn.position = Vector2(start_x + 94, btn_y)
+	status_btn.size = Vector2(small_btn_w, small_btn_h)
 	status_btn.pressed.connect(_on_status)
 	container.add_child(status_btn)
 
 	var save_btn := Button.new()
 	save_btn.name = "SaveBtn"
 	save_btn.text = "저장"
-	save_btn.position = Vector2(220, btn_y)
-	save_btn.size = Vector2(80, 40)
+	save_btn.position = Vector2(start_x + 170, btn_y)
+	save_btn.size = Vector2(small_btn_w, small_btn_h)
 	save_btn.pressed.connect(_on_save)
 	container.add_child(save_btn)
 
 	var map_btn := Button.new()
 	map_btn.name = "MapBtn"
 	map_btn.text = "지도"
-	map_btn.position = Vector2(310, btn_y)
-	map_btn.size = Vector2(80, 40)
+	map_btn.position = Vector2(start_x + 246, btn_y)
+	map_btn.size = Vector2(small_btn_w, small_btn_h)
 	map_btn.pressed.connect(_on_world_map)
 	container.add_child(map_btn)
+
+	# 하단 버튼들 (Row 2) — Phase 6: 스킬트리, 업적
+	var btn_y2 := btn_y + small_btn_h + btn_gap
+
+	var skill_btn := Button.new()
+	skill_btn.name = "SkillTreeBtn"
+	skill_btn.text = "스킬트리"
+	skill_btn.position = Vector2(start_x, btn_y2)
+	skill_btn.size = Vector2(90, small_btn_h)
+	skill_btn.pressed.connect(_on_skill_tree)
+	container.add_child(skill_btn)
+
+	var ach_btn := Button.new()
+	ach_btn.name = "AchievementBtn"
+	ach_btn.text = "업적"
+	ach_btn.position = Vector2(start_x + 94, btn_y2)
+	ach_btn.size = Vector2(small_btn_w, small_btn_h)
+	ach_btn.pressed.connect(_on_achievement)
+	container.add_child(ach_btn)
+
+	var load_btn := Button.new()
+	load_btn.name = "LoadBtn"
+	load_btn.text = "불러오기"
+	load_btn.position = Vector2(start_x + 170, btn_y2)
+	load_btn.size = Vector2(90, small_btn_h)
+	load_btn.pressed.connect(_on_load)
+	container.add_child(load_btn)
 
 	return container
 
@@ -445,6 +532,12 @@ func _move_player(direction: Vector2i) -> void:
 	if shop_panel != null and shop_panel.visible:
 		return
 	if save_load_panel != null and save_load_panel.visible:
+		return
+	if skill_tree_panel != null and skill_tree_panel.visible:
+		return
+	if achievement_panel != null and achievement_panel.visible:
+		return
+	if world_map_panel != null and world_map_panel.visible:
 		return
 	field_manager.try_move(direction)
 	_update_hud()
@@ -682,7 +775,48 @@ func _on_save() -> void:
 		save_load_panel.open_panel("save")
 
 func _on_world_map() -> void:
-	GameState.show_toast("월드맵은 Phase 6에서 구현 예정", "toast-info")
+	if GameState.player == null or _event_running:
+		return
+	if world_map_panel != null:
+		world_map_panel.open_panel(GameState.player)
+
+func _on_skill_tree() -> void:
+	if GameState.player == null or _event_running:
+		return
+	if skill_tree_panel != null:
+		skill_tree_panel.open_panel(GameState.player)
+
+func _on_achievement() -> void:
+	if GameState.player == null or _event_running:
+		return
+	if achievement_panel != null:
+		achievement_panel.open_panel(GameState.player)
+
+func _on_load() -> void:
+	if GameState.player == null or _event_running:
+		return
+	if save_load_panel != null:
+		save_load_panel.open_panel("load")
+
+func _on_fast_travel(map_id: String, zone: String, position: Vector2i) -> void:
+	if GameState.player == null:
+		return
+	GameState.player.current_map = map_id
+	GameState.player.current_location = zone
+	GameState.player.map_position = position
+	# 맵 다시 로드
+	if field_manager != null:
+		field_manager.load_map(map_id)
+	_update_hud()
+	var area_data: Dictionary = GameData.get_area(zone)
+	var zone_name: String = area_data.get("name", zone)
+	GameState.show_toast("🌀 %s(으)로 이동!" % zone_name, "toast-warp")
+
+func _on_show_map_from_event() -> void:
+	if GameState.player == null:
+		return
+	if world_map_panel != null:
+		world_map_panel.open_panel(GameState.player)
 
 # ══════════════════════════════════════════════════
 #  전투 시스템 UI 핸들러

@@ -16,6 +16,7 @@ signal shop_requested(player: PlayerData, shop_type: String)  # 상점 열기
 signal shop_closed_signal()                          # 상점 닫기 완료
 signal save_requested()                              # 저장 요청
 signal game_over_requested()                         # 게임오버
+signal show_map_requested()                          # 월드맵 표시
 
 var _menu_result: int = -1
 var _waiting_for_menu: bool = false
@@ -139,7 +140,7 @@ func _execute_action(act: Dictionary, player: PlayerData, ctx: Dictionary) -> Va
 			game_over_requested.emit()
 			return "return"
 		"show_map":
-			GameState.show_toast("월드맵 표시 (Phase 6)", "toast-info")
+			show_map_requested.emit()
 		"show_status":
 			pass  # main.gd에서 직접 처리
 		"show_inventory":
