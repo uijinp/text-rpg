@@ -1,0 +1,276 @@
+{
+  "volcano": {
+    "actions": [
+      {
+        "action": "set_location",
+        "zone": "volcano"
+      },
+      {
+        "action": "if",
+        "cond": {
+          "flag": "volcano_cleared"
+        },
+        "then": [
+          {
+            "action": "print",
+            "text": "\n  이미 탐색한 화산 지대이다. 대장간의 불꽃만 조용히 타고 있다."
+          },
+          {
+            "action": "break"
+          }
+        ],
+        "else": [
+          {
+            "action": "divider",
+            "title": "화산 지대"
+          },
+          {
+            "action": "print",
+            "text": "\n열기가 발밑에서부터 치솟는 화산 지대.\n검붉은 용암이 바위 틈으로 흘러내리고,\n멀리서 화산이 붉은 연기를 뿜고 있다.\n"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "print",
+            "text": "  바위 뒤에서 화염 정령이 솟아올랐다!"
+          },
+          {
+            "action": "battle",
+            "enemy": "fire_elemental"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "goto",
+            "scene": "fork"
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "fork": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "분기점"
+          },
+          {
+            "action": "print",
+            "text": "\n앞에 두 갈래 길이 나타난다.\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "분화구 능선을 오른다 (위험하지만 보상이 크다)",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n  하늘에서 용암 드레이크가 급강하한다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "lava_drake"
+                  },
+                  {
+                    "action": "goto",
+                    "scene": "forge"
+                  }
+                ]
+              },
+              {
+                "label": "동굴로 들어간다 (비교적 안전)",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n  동굴 속에서 또 다른 화염 정령이 나타난다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "fire_elemental"
+                  },
+                  {
+                    "action": "random",
+                    "branches": [
+                      {
+                        "weight": 0.3,
+                        "actions": [
+                          {
+                            "action": "damage",
+                            "amount": 25,
+                            "message": false
+                          },
+                          {
+                            "action": "print",
+                            "text": "  용암 함정! 발밑의 바위가 무너진다! (-25 HP)"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 0.7,
+                        "actions": []
+                      }
+                    ]
+                  },
+                  {
+                    "action": "goto",
+                    "scene": "forge"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "forge": {
+        "actions": [
+          {
+            "action": "pause"
+          },
+          {
+            "action": "divider",
+            "title": "화산 대장간"
+          },
+          {
+            "action": "print",
+            "text": "\n동굴 깊숙한 곳에 고대의 대장간이 타오르고 있다.\n거대한 화염이 인간 형상을 취하며 말한다.\n\n대장간 정령: \"무엇을 원하느냐, 필멸자여.\n              이 불꽃에는 만물을 다시 만드는 힘이 있다.\"\n"
+          },
+          {
+            "action": "if",
+            "cond": {
+              "has_item": "파라오의 검"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "  ▶ 파라오의 검을 소지하고 있다!"
+              },
+              {
+                "action": "menu",
+                "options": [
+                  {
+                    "label": "파라오의 검을 강화한다 (→ 염화의 검, 공격력 +30)",
+                    "actions": [
+                      {
+                        "action": "remove_item",
+                        "item": "파라오의 검"
+                      },
+                      {
+                        "action": "add_item",
+                        "item": "염화의 검",
+                        "message": false
+                      },
+                      {
+                        "action": "print",
+                        "text": "\n파라오의 검이 용암 속에 담겨진다.\n불꽃이 검신을 감싸며 새로운 형태로 재탄생한다!\n\n▶ [염화의 검] 획득! (공격력 +30) 화산의 불꽃으로 단련된 전설의 검!\n"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "그냥 둔다 (대신 용암 갑옷을 받는다)",
+                    "actions": [
+                      {
+                        "action": "add_item",
+                        "item": "용암 갑옷",
+                        "message": false
+                      },
+                      {
+                        "action": "print",
+                        "text": "\n  ▶ [용암 갑옷] 획득! (방어력 +12)"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "else": [
+              {
+                "action": "add_item",
+                "item": "용암 갑옷",
+                "message": false
+              },
+              {
+                "action": "print",
+                "text": "\n대장간 정령: \"강화할 무기가 없군. 대신 이것을 가져가라.\"\n\n▶ [용암 갑옷] 획득! (방어력 +12)\n"
+              }
+            ]
+          },
+          {
+            "action": "goto",
+            "scene": "trapped_miner"
+          }
+        ]
+      },
+      "trapped_miner": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "갇힌 광부"
+          },
+          {
+            "action": "print",
+            "text": "\n대장간 옆 통로에서 신음이 들린다.\n용암에 길이 막힌 광부가 갇혀 있다.\n\n광부: \"제발... 여기서 나가게 해주세요...\"\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "구출한다 (HP -20)",
+                "actions": [
+                  {
+                    "action": "damage",
+                    "amount": 20,
+                    "message": false
+                  },
+                  {
+                    "action": "sub_dark",
+                    "amount": 1,
+                    "message": false
+                  },
+                  {
+                    "action": "add_gold",
+                    "amount": 40,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n뜨거운 바위를 치우며 광부를 구했다. (-20 HP)\n\n광부: \"감사합니다! 이건 제가 모은 금화입니다.\"\n▶ +40G\n▶ 어둠 점수 -1\n"
+                  }
+                ]
+              },
+              {
+                "label": "무시한다",
+                "actions": [
+                  {
+                    "action": "add_dark",
+                    "amount": 1,
+                    "message": false
+                  },
+                  {
+                    "action": "add_gold",
+                    "amount": 60,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n...지나쳤다.\n통로 반대편에 광부가 버린 금화 주머니가 있다.\n▶ +60G\n▶ 어둠 점수 +1\n"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "set_flag",
+            "key": "volcano_cleared"
+          },
+          {
+            "action": "print",
+            "text": "  ▶ 화산 지대 탐색 완료!"
+          }
+        ]
+      }
+    }
+  }
+}

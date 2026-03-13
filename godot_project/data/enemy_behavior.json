@@ -1,0 +1,140 @@
+{
+  "goblin": {
+    "intros": [
+      "수풀 사이에서 고블린이 비열하게 웃었다!",
+      "고블린이 녹슨 칼을 휘두르며 달려든다!"
+    ],
+    "style": "trickster",
+    "evadeChance": 0.08
+  },
+  "wolf": {
+    "intros": [
+      "늑대가 낮게 으르렁거리며 원을 그린다.",
+      "굶주린 늑대가 송곳니를 드러냈다!"
+    ],
+    "style": "beast",
+    "multiHitChance": 0.22
+  },
+  "bandit": {
+    "intros": [
+      "산적 두목이 칼끝을 겨누며 도발한다.",
+      "산적이 비열한 미소와 함께 달려든다!"
+    ],
+    "style": "trickster",
+    "evadeChance": 0.1
+  },
+  "dark_mage": {
+    "intros": [
+      "암흑 마법사가 검은 마력을 모은다.",
+      "암흑 마법사의 눈동자가 보랏빛으로 번뜩인다."
+    ],
+    "style": "caster",
+    "skillChance": 0.35
+  },
+  "vampire": {
+    "intros": [
+      "뱀파이어가 붉은 눈으로 피를 갈망한다.",
+      "차가운 웃음과 함께 뱀파이어가 날개를 펼친다."
+    ],
+    "style": "drain"
+  },
+  "swamp_snake": {
+    "intros": [
+      "독사가 혀를 날름거리며 노린다.",
+      "축축한 늪 위에서 독사가 튀어나왔다!"
+    ],
+    "style": "poisoner",
+    "poisonChance": 0.35
+  },
+  "swamp_witch": {
+    "intros": [
+      "늪지 마녀가 저주를 중얼거린다.",
+      "마녀의 지팡이 끝에서 독안개가 피어오른다."
+    ],
+    "style": "poisoner",
+    "poisonChance": 0.3
+  },
+  "sand_scorpion": {
+    "intros": [
+      "사막 전갈이 집게를 부딪치며 다가온다.",
+      "모래를 가르며 사막 전갈이 돌진한다!"
+    ],
+    "style": "poisoner",
+    "poisonChance": 0.3
+  },
+  "ice_golem": {
+    "intros": [
+      "얼음 골렘이 둔중한 몸을 일으킨다.",
+      "서리 입자가 흩날리며 얼음 골렘이 다가온다."
+    ],
+    "style": "tank",
+    "guardChance": 0.25
+  },
+  "frost_wyrm": {
+    "intros": [
+      "서리 비룡이 냉기를 토해낸다!",
+      "비룡의 날갯짓에 혹한의 바람이 몰아친다."
+    ],
+    "style": "breath",
+    "breathChance": 0.3
+  },
+  "fire_elemental": {
+    "intros": [
+      "화염 정령이 이글거리며 요동친다.",
+      "불꽃 소용돌이 속에서 화염 정령이 떠오른다."
+    ],
+    "style": "burner",
+    "burnChance": 0.32
+  },
+  "lava_drake": {
+    "intros": [
+      "용암 드레이크가 뜨거운 숨을 내뿜는다.",
+      "대지를 녹이며 드레이크가 포효한다!"
+    ],
+    "style": "breath",
+    "burnChance": 0.25,
+    "breathChance": 0.28
+  },
+  "dragon_whelp": {
+    "intros": [
+      "새끼 드래곤이 날개를 퍼덕이며 불꽃을 튄다.",
+      "작지만 사나운 드래곤이 송곳니를 드러냈다!"
+    ],
+    "style": "breath",
+    "breathChance": 0.22
+  },
+  "dragon": {
+    "intros": [
+      "드래곤이 하늘을 가르며 강림했다!",
+      "거대한 용의 포효가 전장을 뒤흔든다!"
+    ],
+    "style": "boss_breath",
+    "breathChance": 0.35
+  },
+  "shadow_knight": {
+    "intros": [
+      "그림자 기사가 검은 검을 겨눈다.",
+      "어둠 속에서 그림자 기사가 모습을 드러냈다."
+    ],
+    "style": "duelist",
+    "evadeChance": 0.12
+  },
+  "dark_sentinel": {
+    "intros": [
+      "어둠의 파수꾼이 무거운 방패를 들었다.",
+      "침묵의 파수꾼이 길을 막아선다."
+    ],
+    "style": "tank",
+    "guardChance": 0.3
+  },
+  "shadow_lazarus": {
+    "intros": [
+      "그림자 라자러스가 냉소와 함께 검을 뽑는다.",
+      "라자러스: \"여기까지 왔군. 후회하게 해주지.\""
+    ],
+    "style": "boss_mix",
+    "breathChance": 0.2,
+    "guardChance": 0.2,
+    "evadeChance": 0.1
+  }
+}

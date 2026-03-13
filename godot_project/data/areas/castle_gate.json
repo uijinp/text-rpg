@@ -1,0 +1,80 @@
+{
+  "castle_gate": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "flag": "castle_gate_cleared"
+        },
+        "then": [
+          {
+            "action": "print",
+            "text": "  성문은 이미 돌파했습니다."
+          }
+        ],
+        "else": [
+          {
+            "action": "divider",
+            "title": "마왕의 성 정문"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "정문으로 들어간다 (언데드 기사 전투)",
+                "actions": [
+                  {
+                    "action": "battle",
+                    "enemy": "undead_knight",
+                    "on_lose": [
+                      {
+                        "action": "game_over"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "비밀 통로로 잠입한다 (전투 없음)",
+                "when": {
+                  "flag": "secret_passage"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  비밀 통로를 통해 성 안으로 잠입했다."
+                  },
+                  {
+                    "action": "set_flag",
+                    "key": "stealth_entry"
+                  }
+                ]
+              },
+              {
+                "label": "서쪽 구멍으로 들어간다 (소규모 전투)",
+                "when": {
+                  "flag": "rescued_scout"
+                },
+                "actions": [
+                  {
+                    "action": "battle",
+                    "enemy": "goblin",
+                    "on_lose": [
+                      {
+                        "action": "game_over"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "set_flag",
+            "key": "castle_gate_cleared"
+          }
+        ]
+      }
+    ]
+  }
+}

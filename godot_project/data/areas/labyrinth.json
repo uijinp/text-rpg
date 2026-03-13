@@ -1,0 +1,323 @@
+{
+  "labyrinth": {
+    "actions": [
+      {
+        "action": "set_location",
+        "zone": "labyrinth"
+      },
+      {
+        "action": "if",
+        "cond": {
+          "flag": "labyrinth_cleared"
+        },
+        "then": [
+          {
+            "action": "print",
+            "text": "\n  이미 탐색한 미궁이다. 골렘의 잔해만 남아있다."
+          },
+          {
+            "action": "break"
+          }
+        ],
+        "else": [
+          {
+            "action": "divider",
+            "title": "지하 미궁"
+          },
+          {
+            "action": "print",
+            "text": "\n폐허 지하에서 발견한 숨겨진 계단.\n끝이 보이지 않는 어둠 속으로 내려간다.\n벽에 라자러스의 문장이 희미하게 새겨져 있다...\n\n\"이곳은 라자러스가 증거를 숨기기 위해 만든 미궁인가?\"\n"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "goto",
+            "scene": "floor1"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "goto",
+            "scene": "floor2"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "goto",
+            "scene": "cursed_chest"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "goto",
+            "scene": "floor3_boss"
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "floor1": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "미궁 1층 - 세 갈래 길"
+          },
+          {
+            "action": "print",
+            "text": "\n세 갈래 길이 나타난다.\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "왼쪽 통로 (어둡고 좁다)",
+                "actions": [
+                  {
+                    "action": "random",
+                    "branches": [
+                      {
+                        "weight": 0.4,
+                        "actions": [
+                          {
+                            "action": "damage",
+                            "amount": 25,
+                            "message": false
+                          },
+                          {
+                            "action": "print",
+                            "text": "  함정 발동! 천장에서 돌이 떨어진다! (-25 HP)"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 0.6,
+                        "actions": [
+                          {
+                            "action": "add_gold",
+                            "amount": 50,
+                            "message": false
+                          },
+                          {
+                            "action": "print",
+                            "text": "  좁은 통로 끝에 숨겨진 보물함이 있다! (+50G)"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "중앙 통로 (정면에 빛이 보인다)",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n  중앙 통로에서 미궁 수호자가 나타난다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "labyrinth_guardian"
+                  }
+                ]
+              },
+              {
+                "label": "오른쪽 통로 (바닥에 금화가 흩어져 있다)",
+                "actions": [
+                  {
+                    "action": "add_item",
+                    "item": "대형 포션",
+                    "message": false
+                  },
+                  {
+                    "action": "add_gold",
+                    "amount": 30,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "  보물함에서 대형 포션과 금화를 발견했다! (+대형 포션, +30G)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "floor2": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "미궁 2층 - 봉인의 방"
+          },
+          {
+            "action": "print",
+            "text": "\n석판에 글자가 새겨져 있다.\n\"봉인의 열쇠는 무엇인가?\"\n"
+          },
+          {
+            "action": "if",
+            "cond": {
+              "any_flag": [
+                "found_diary",
+                "lazarus_elf_clue"
+              ]
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "  (당신이 가진 단서를 바탕으로 답을 알 수 있다...)"
+              },
+              {
+                "action": "print",
+                "text": "  ▶ 자동 해결! 석판이 빛나며 문이 열린다."
+              }
+            ],
+            "else": [
+              {
+                "action": "menu",
+                "options": [
+                  {
+                    "label": "'진실'",
+                    "actions": [
+                      {
+                        "action": "print",
+                        "text": "  정답! 석판이 빛나며 문이 열린다."
+                      }
+                    ]
+                  },
+                  {
+                    "label": "'힘'",
+                    "actions": [
+                      {
+                        "action": "damage",
+                        "amount": 30,
+                        "message": false
+                      },
+                      {
+                        "action": "print",
+                        "text": "  오답! 함정이 발동한다! (-30 HP)"
+                      },
+                      {
+                        "action": "print",
+                        "text": "  ...그래도 문은 천천히 열렸다."
+                      }
+                    ]
+                  },
+                  {
+                    "label": "'용기'",
+                    "actions": [
+                      {
+                        "action": "damage",
+                        "amount": 30,
+                        "message": false
+                      },
+                      {
+                        "action": "print",
+                        "text": "  오답! 함정이 발동한다! (-30 HP)"
+                      },
+                      {
+                        "action": "print",
+                        "text": "  ...그래도 문은 천천히 열렸다."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "cursed_chest": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "저주의 보물함"
+          },
+          {
+            "action": "print",
+            "text": "\n구석에 검은 기운이 감도는 보물함이 있다.\n강한 힘의 기운이 느껴진다... 하지만 불길하다.\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "연다 (강한 힘을 얻지만 대가가 있을 수 있다)",
+                "actions": [
+                  {
+                    "action": "add_stat",
+                    "attack": 8,
+                    "message": false
+                  },
+                  {
+                    "action": "add_dark",
+                    "amount": 2,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n검은 기운이 당신의 몸으로 스며든다.\n힘이 솟아오르지만, 마음 한 구석이 어두워진다.\n\n▶ 공격력 +8!\n▶ 어둠 점수 +2\n"
+                  }
+                ]
+              },
+              {
+                "label": "부순다 (안전한 선택)",
+                "actions": [
+                  {
+                    "action": "add_item",
+                    "item": "대형 포션",
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n  보물함을 부수자 안에서 대형 포션이 나왔다."
+                  }
+                ]
+              },
+              {
+                "label": "무시한다",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n  불길한 느낌을 무시하고 지나쳤다."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "floor3_boss": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "미궁 최하층 - 봉인의 수호자"
+          },
+          {
+            "action": "print",
+            "text": "\n거대한 석조 골렘이 천장까지 닿는 크기로 일어선다!\n눈에서 붉은 빛이 번뜩인다.\n\n골렘: \"[...침...입...자...처...단...]\"\n"
+          },
+          {
+            "action": "battle",
+            "enemy": "labyrinth_golem"
+          },
+          {
+            "action": "add_item",
+            "item": "봉인의 검",
+            "message": false
+          },
+          {
+            "action": "set_flag",
+            "key": "labyrinth_cleared"
+          },
+          {
+            "action": "print",
+            "text": "\n골렘이 부서지며 뒤에 숨겨진 석실이 드러난다.\n대좌 위에 빛나는 검이 놓여 있다.\n\n\"이 검은... 봉인의 힘이 서려 있다.\"\n\n▶ [봉인의 검] 획득! (공격력 +20, 라자러스에게 특효)\n▶ 지하 미궁 공략 완료!\n"
+          }
+        ]
+      }
+    }
+  }
+}

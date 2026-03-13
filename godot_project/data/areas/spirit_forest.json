@@ -1,0 +1,180 @@
+{
+  "spirit_forest": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "spirit_forest_visited"
+        },
+        "then": [
+          {
+            "action": "divider",
+            "title": "정령왕의 숲 입구"
+          },
+          {
+            "action": "print",
+            "text": "\n엘프 마을을 지나자 한때 신성했던 숲의 중심부에 도달했다.\n그러나 푸른 빛은 온데간데없고, 보랏빛의 타락한 에너지가 숲을 뒤덮고 있다.\n숨을 쉴 때마다 탁한 공기가 폐부를 찌른다.\n나무들의 사이로 기괴하게 뒤틀린 정령들이 배회한다.\n"
+          },
+          {
+            "action": "set_flag",
+            "key": "spirit_forest_visited",
+            "value": true
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "오염된 정령왕의 숲"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "오염원 조사 및 정화",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n  탁한 기운이 모인 웅덩이 근처를 조심스레 조사했다."
+                  },
+                  {
+                    "action": "random",
+                    "branches": [
+                      {
+                        "weight": 0.5,
+                        "actions": [
+                          {
+                            "action": "add_gold",
+                            "amount": 60
+                          },
+                          {
+                            "action": "print",
+                            "text": "  웅덩이 바닥에서 정화된 보석 조각들을 발견했다!"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 0.5,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  보랏빛 진흙이 솟구치더니 타락한 정령이 모습을 드러냈다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "corrupted_spirit"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "세계수 중심부로 접근 (보스전)",
+                "when": {
+                  "not_flag": "spirit_forest_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "spirit_boss"
+                  }
+                ]
+              },
+              {
+                "label": "정화된 세계수의 그늘 아래 휴식 (클리어 후)",
+                "when": {
+                  "flag": "spirit_forest_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n푸르게 빛나는 세계수의 잔가지들이 부드러운 바람에 흔들린다.\n따스한 숲의 기운이 몸의 상처를 치유해 주는 것 같다.\n"
+                  },
+                  {
+                    "action": "heal",
+                    "amount": "full"
+                  },
+                  {
+                    "action": "pause"
+                  }
+                ]
+              },
+              {
+                "label": "엘프 마을 방향으로 돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "spirit_boss": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "세계수의 심장부"
+          },
+          {
+            "action": "print",
+            "text": "\n거주할 수 없을 만큼 짙게 내리깔린 瘴氣(장기) 속에서 거대한 실루엣이 떠오른다.\n숲의 주인이었던 존재는, 현재 완전히 이성을 잃고 파괴만을 갈구하고 있다.\n타락한 정령왕의 무자비한 마력 폭풍이 몰아친다!\n"
+          },
+          {
+            "action": "battle",
+            "name": "타락한 정령왕",
+            "enemy": "spirit_king",
+            "hp_multiply": 1.15,
+            "on_win": [
+              {
+                "action": "divider",
+                "title": "정령의 해방"
+              },
+              {
+                "action": "print",
+                "text": "\n치명타를 입은 정령왕의 몸에서 검붉은 기운이 씻겨 나가듯 흩어졌다.\n그는 잠시 후 원래의 투명하고 푸른빛을 되찾으며 환하게 웃어 보였다.\n\n정령왕: \"나를 구원해 주어 고맙네... 이것은 감사의 선물일세.\"\n\n세계수가 다시금 황금빛을 뿜어내고 숲이 원래의 아름다움을 되찾았다.\n"
+              },
+              {
+                "action": "set_flag",
+                "key": "spirit_forest_cleared",
+                "value": true
+              },
+              {
+                "action": "add_item",
+                "item": "정령왕의 가지",
+                "count": 1
+              },
+              {
+                "action": "add_item",
+                "item": "세계수의 이슬",
+                "count": 1
+              },
+              {
+                "action": "pause"
+              }
+            ],
+            "on_lose": [
+              {
+                "action": "print",
+                "text": "\n압도적인 마력의 폭풍에 휩쓸려 의식을 잃고 말았다.\n타락의 기운이 온몸을 잠식해 들어온다...\n"
+              },
+              {
+                "action": "game_over"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

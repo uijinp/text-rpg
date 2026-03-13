@@ -1,0 +1,446 @@
+{
+  "dark_tower": {
+    "actions": [
+      {
+        "action": "set_location",
+        "zone": "dark_tower"
+      },
+      {
+        "action": "if",
+        "cond": {
+          "flag": "lazarus_defeated"
+        },
+        "then": [
+          {
+            "action": "print",
+            "text": "\n  어둠의 탑은 이미 비어 있다. 라자러스의 잔재만 남아있다."
+          },
+          {
+            "action": "break"
+          }
+        ],
+        "else": [
+          {
+            "action": "divider",
+            "title": "어둠의 탑"
+          },
+          {
+            "action": "print",
+            "text": "\n마왕의 성 뒤편, 검은 바위산 위에 솟은 뒤틀린 탑.\n입구에서 불길한 기운이 흘러나온다.\n이곳이 왕의 고문 라자러스의 은신처인가...\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "탑에 진입한다",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "floor1"
+                  }
+                ]
+              },
+              {
+                "label": "돌아간다",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "floor1": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "1층 - 그림자 기사"
+          },
+          {
+            "action": "print",
+            "text": "\n계단을 오르자 검은 갑옷의 기사가 길을 막는다.\n갑옷 안에서 보랏빛 연기가 피어오른다.\n"
+          },
+          {
+            "action": "battle",
+            "enemy": "shadow_knight"
+          },
+          {
+            "action": "print",
+            "text": "\n기사의 갑옷이 부서지며 안에 아무것도 없다.\n라자러스의 그림자 마법으로 만들어진 인형이었다.\n"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "goto",
+            "scene": "floor2"
+          }
+        ]
+      },
+      "floor2": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "2층 - 라자러스의 서재"
+          },
+          {
+            "action": "print",
+            "text": "\n책상 위에 일기장이 펼쳐져 있다.\n\n───────────────────────────────────────\n...계획대로다. 봉인 반지를 손에 넣었고,\n젤드리온에게 죄를 뒤집어씌웠다.\n왕은 나를 의심하지 않는다. 어리석은 늙은이.\n\n젤드리온이 어둠에 빠지면, 왕국은 혼란에 빠질 것이고,\n그 혼란 속에서 나는 진정한 권력을 잡을 것이다.\n\n엘프 마을에서 배운 봉인술이 핵심이었다.\n봉인 반지의 마력을 내 것으로 만드는 것...\n곧 완성될 것이다.\n───────────────────────────────────────\n"
+          },
+          {
+            "action": "set_flag",
+            "key": "lazarus_truth_complete"
+          },
+          {
+            "action": "print",
+            "text": "  ▶ [라자러스의 진실] 음모의 전모가 밝혀졌다!"
+          },
+          {
+            "action": "print",
+            "text": "\n서재 구석의 감옥에 엘프가 갇혀 있다.\n\"도... 도와주세요... 라자러스가 엘프 마을의 정보를 캐내려...\"\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "해방한다",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  엘프: '감사합니다! 장로님께 소식을 전하겠습니다!'"
+                  }
+                ]
+              },
+              {
+                "label": "무시한다",
+                "actions": [
+                  {
+                    "action": "add_dark",
+                    "amount": 1,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "  ...지나쳤다.\n  ▶ 어둠 점수 +1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "goto",
+            "scene": "floor3"
+          }
+        ]
+      },
+      "floor3": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "3층 - 라자러스와의 대면"
+          },
+          {
+            "action": "print",
+            "text": "\n최상층. 넓은 방 중앙에 흰 머리의 남자가 서 있다.\n미소를 띤 채 유유히 와인잔을 돌린다.\n\n라자러스: \"오, 여기까지 왔나. 대단하군.\"\n           \"알겠나? 이 모든 것은 내 계획대로야.\n            젤드리온은 내 꼭두각시에 불과하지.\n            마왕이 왕국을 위협하는 한, 왕은 나에게 의존할 수밖에 없어.\"\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "'증거는 모두 모았다. 자수해라.'",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "lazarus_choice1"
+                  }
+                ]
+              },
+              {
+                "label": "'말은 됐다. 싸우자.'",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "lazarus_fight"
+                  }
+                ]
+              },
+              {
+                "label": "'함께 왕국을 지배하자.'",
+                "actions": [
+                  {
+                    "action": "add_dark",
+                    "amount": 5,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n라자러스가 크게 웃는다.\n\n라자러스: \"재미있군. 하지만 왕좌에는 한 명이면 충분하다.\"\n\n▶ 어둠 점수 +5\n"
+                  },
+                  {
+                    "action": "goto",
+                    "scene": "lazarus_fight"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "lazarus_choice1": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": [
+              {
+                "flag": "lazarus_elf_clue"
+              },
+              {
+                "flag": "seal_magic_understood"
+              }
+            ],
+            "then": [
+              {
+                "action": "print",
+                "text": "\n당신은 엘프에게서 배운 봉인술의 약점을 간파했다.\n라자러스의 보호막이 금이 간다!\n\n라자러스: \"뭐...?! 어떻게 봉인술의 구조를...?!\"\n"
+              },
+              {
+                "action": "goto",
+                "scene": "lazarus_fight_weakened"
+              }
+            ],
+            "else": [
+              {
+                "action": "print",
+                "text": "\n  라자러스: '증거? 하! 그래봤자 네가 죽으면 아무 소용없지.'"
+              },
+              {
+                "action": "goto",
+                "scene": "lazarus_fight"
+              }
+            ]
+          }
+        ]
+      },
+      "lazarus_fight_weakened": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": {
+              "flag": "mercenary_hired"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "  ▶ 고용한 용병 크레인이 뒤에서 기습한다!"
+              },
+              {
+                "action": "print",
+                "text": "  ▶ 라자러스 HP 대폭 감소!"
+              },
+              {
+                "action": "set_flag",
+                "key": "mercenary_hired",
+                "value": false
+              },
+              {
+                "action": "if",
+                "cond": {
+                  "equipped_weapon": "봉인의 검"
+                },
+                "then": [
+                  {
+                    "action": "print",
+                    "text": "  ▶ 봉인의 검이 라자러스에게 반응하며 빛난다! (추가 데미지)"
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": 10,
+                    "message": false
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus",
+                    "hp_multiply": 0.45
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": -10,
+                    "message": false
+                  }
+                ],
+                "else": [
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus",
+                    "hp_multiply": 0.45
+                  }
+                ]
+              }
+            ],
+            "else": [
+              {
+                "action": "if",
+                "cond": {
+                  "equipped_weapon": "봉인의 검"
+                },
+                "then": [
+                  {
+                    "action": "print",
+                    "text": "  ▶ 봉인의 검이 라자러스에게 반응하며 빛난다! (추가 데미지)"
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": 10,
+                    "message": false
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus",
+                    "hp_multiply": 0.6
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": -10,
+                    "message": false
+                  }
+                ],
+                "else": [
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus",
+                    "hp_multiply": 0.6
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "goto",
+            "scene": "lazarus_victory"
+          }
+        ]
+      },
+      "lazarus_fight": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": {
+              "flag": "mercenary_hired"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "  ▶ 고용한 용병 크레인이 뒤에서 기습한다!"
+              },
+              {
+                "action": "print",
+                "text": "  ▶ 라자러스 HP 감소!"
+              },
+              {
+                "action": "set_flag",
+                "key": "mercenary_hired",
+                "value": false
+              },
+              {
+                "action": "if",
+                "cond": {
+                  "equipped_weapon": "봉인의 검"
+                },
+                "then": [
+                  {
+                    "action": "print",
+                    "text": "  ▶ 봉인의 검이 라자러스에게 반응하며 빛난다! (추가 데미지)"
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": 10,
+                    "message": false
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus",
+                    "hp_multiply": 0.75
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": -10,
+                    "message": false
+                  }
+                ],
+                "else": [
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus",
+                    "hp_multiply": 0.75
+                  }
+                ]
+              }
+            ],
+            "else": [
+              {
+                "action": "if",
+                "cond": {
+                  "equipped_weapon": "봉인의 검"
+                },
+                "then": [
+                  {
+                    "action": "print",
+                    "text": "  ▶ 봉인의 검이 라자러스에게 반응하며 빛난다! (추가 데미지)"
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": 10,
+                    "message": false
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus"
+                  },
+                  {
+                    "action": "add_stat",
+                    "attack": -10,
+                    "message": false
+                  }
+                ],
+                "else": [
+                  {
+                    "action": "battle",
+                    "enemy": "shadow_lazarus"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "goto",
+            "scene": "lazarus_victory"
+          }
+        ]
+      },
+      "lazarus_victory": {
+        "actions": [
+          {
+            "action": "set_flag",
+            "key": "lazarus_defeated"
+          },
+          {
+            "action": "add_item",
+            "item": "봉인 반지",
+            "message": false
+          },
+          {
+            "action": "print",
+            "text": "\n라자러스가 무릎을 꿇는다.\n품에서 반짝이는 반지가 굴러 떨어진다.\n\n라자러스: \"...이런 결말이...\"\n\n▶ [봉인 반지] 획득! 왕의 봉인 반지. 모든 것의 시작이자 끝.\n▶ 어둠의 탑 공략 완료!\n"
+          }
+        ]
+      }
+    }
+  }
+}

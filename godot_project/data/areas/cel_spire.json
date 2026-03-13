@@ -1,0 +1,152 @@
+{
+  "cel_spire": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "cel_spire_visited"
+        },
+        "then": [
+          {
+            "action": "set_flag",
+            "key": "cel_spire_visited",
+            "value": true
+          },
+          {
+            "action": "print",
+            "text": "  순수한 빛으로 이루어진 수정 첨탑이 하늘 끝까지 솟아있다."
+          },
+          {
+            "action": "print",
+            "text": "  여섯 날개를 펼친 세라핌들이 첨탑을 지키고 있다."
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "수정 첨탑"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "첨탑 탐색",
+                "when": {
+                  "not_flag": "cel_spire_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  세라핌 수호자가 빛의 창을 휘두르며 내려온다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "seraph_guardian",
+                    "on_win": [
+                      {
+                        "action": "print",
+                        "text": "  또 다른 세라핌 수호자가 분노하며 덮쳐온다!"
+                      },
+                      {
+                        "action": "battle",
+                        "enemy": "seraph_guardian",
+                        "on_win": [
+                          {
+                            "action": "set_flag",
+                            "key": "cel_spire_cleared",
+                            "value": true
+                          },
+                          {
+                            "action": "print",
+                            "text": "  첨탑 꼭대기에서 신성한 대검을 발견했다!"
+                          },
+                          {
+                            "action": "add_item",
+                            "item": "대천사의 대검"
+                          },
+                          {
+                            "action": "add_gold",
+                            "amount": 200
+                          },
+                          {
+                            "action": "print",
+                            "text": "  여명의 왕좌로 가는 마지막 길이 열렸다."
+                          }
+                        ],
+                        "on_lose": [
+                          {
+                            "action": "print",
+                            "text": "  당신은 패배했다..."
+                          }
+                        ]
+                      }
+                    ],
+                    "on_lose": [
+                      {
+                        "action": "print",
+                        "text": "  당신은 패배했다..."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "첨탑 탐색",
+                "when": {
+                  "flag": "cel_spire_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "random",
+                    "options": [
+                      {
+                        "weight": 50,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  세라핌 수호자가 나타났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "seraph_guardian"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 50,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  신성 골렘이 깨어났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "divine_golem"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

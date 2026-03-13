@@ -1,0 +1,363 @@
+{
+  "town": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "town_event_done"
+        },
+        "then": [
+          {
+            "action": "divider",
+            "title": "여정의 시작"
+          },
+          {
+            "action": "print",
+            "text": "\n빛나는 왕도 '아르카디아'. 석 달 전부터 불길한 일들이 이어지고 있다.\n장로 갈리아르가 당신에게 재앙의 근원을 끊어달라고 부탁했다.\n"
+          },
+          {
+            "action": "set_flag",
+            "key": "town_event_done"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "아르카디아 마을"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "상점 '황금 방패'",
+                "actions": [
+                  {
+                    "action": "open_shop"
+                  }
+                ]
+              },
+              {
+                "label": "대장장이 브론",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "blacksmith"
+                  }
+                ]
+              },
+              {
+                "label": "선술집 '술꾼의 안식처'",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "tavern"
+                  }
+                ]
+              },
+              {
+                "label": "성당",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "priest"
+                  }
+                ]
+              },
+              {
+                "label": "골목 어린아이",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "child"
+                  }
+                ]
+              },
+              {
+                "label": "마을 탐색 종료",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "blacksmith": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": {
+              "flag": "blacksmith_done"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "\n  브론: '카이를 부탁드리오. 꼭 돌아오게 해주시오.'"
+              }
+            ],
+            "else": [
+              {
+                "action": "divider",
+                "title": "대장장이 브론"
+              },
+              {
+                "action": "print",
+                "text": "\n근육질의 대장장이가 모루를 두드리다 멈추며 말했다.\n\"오, 용사라는 분이군요. 실은 부탁이 있소.\n 숲 속 광산에서 아들 '카이'가 이틀째 연락이 없소.\n 찾아주신다면 꼭 보답하겠소.\"\n"
+              },
+              {
+                "action": "menu",
+                "options": [
+                  {
+                    "label": "부탁을 수락한다",
+                    "actions": [
+                      {
+                        "action": "set_flag",
+                        "key": "blacksmith_quest"
+                      },
+                      {
+                        "action": "print",
+                        "text": "  브론: '고맙소! 꼭 부탁드리오.'"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "거절한다",
+                    "actions": [
+                      {
+                        "action": "print",
+                        "text": "  브론: '...그렇군요. 조심해서 가시오.'"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "set_flag",
+                "key": "blacksmith_done"
+              }
+            ]
+          }
+        ]
+      },
+      "tavern": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": {
+              "flag": "tavern_done"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "\n  술꾼들이 시끄럽게 떠들고 있다."
+              }
+            ],
+            "else": [
+              {
+                "action": "divider",
+                "title": "선술집 '술꾼의 안식처'"
+              },
+              {
+                "action": "print",
+                "text": "\n한쪽 구석에서 낡은 망토의 남자가 속삭인다.\n\"마왕 젤드리온... 사실 그는 왕국의 궁정 마법사였소.\n 어떤 음모로 억울하게 추방당한 뒤 어둠에 빠졌다는 소문이 있소.\"\n"
+              },
+              {
+                "action": "menu",
+                "options": [
+                  {
+                    "label": "더 자세히 듣는다",
+                    "actions": [
+                      {
+                        "action": "set_flag",
+                        "key": "heard_maou_truth"
+                      },
+                      {
+                        "action": "print",
+                        "text": "\n남자: '성 안 지하 도서관에 진실이 담긴 책이 있다 들었소.\n       찾을 수 있다면... 다른 길이 열릴지도 모르오.'\n\n▶ [단서] 마왕의 비밀에 대한 실마리를 얻었다!\n"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "관심 없다",
+                    "actions": [
+                      {
+                        "action": "print",
+                        "text": "  술꾼: '에이, 어차피 짐승 같은 놈이잖아.'"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "set_flag",
+                "key": "tavern_done"
+              }
+            ]
+          }
+        ]
+      },
+      "priest": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "아르카디아 성당"
+          },
+          {
+            "action": "if",
+            "cond": {
+              "not_flag": "priest_done"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "\n제사장 알테르가 기도를 마치고 당신을 맞이한다.\n\"용사여, 빛의 가호를 드리겠소.\"\n"
+              },
+              {
+                "action": "heal",
+                "amount": "full"
+              },
+              {
+                "action": "print",
+                "text": "  ▶ HP 완전 회복! ({player.hp}/{player.max_hp})"
+              },
+              {
+                "action": "print",
+                "text": "\n알테르: \"성 안에는 죄 없이 갇힌 이들이 있을 것이오.\n         그들을 외면하지 마시오. 진정한 영웅은\n         힘이 아닌 마음으로 판가름 나는 법이오.\"\n"
+              },
+              {
+                "action": "set_flag",
+                "key": "priest_blessing"
+              },
+              {
+                "action": "set_flag",
+                "key": "priest_done"
+              }
+            ],
+            "else": [
+              {
+                "action": "print",
+                "text": "\n  알테르: '다시 오셨군요. 빛이 함께하기를.'"
+              }
+            ]
+          },
+          {
+            "action": "print",
+            "text": "\n  알테르: '여정을 빛이 기억하게 하시겠습니까?'"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "게임 저장",
+                "actions": [
+                  {
+                    "action": "save"
+                  },
+                  {
+                    "action": "print",
+                    "text": "  알테르: '빛이 여정을 기억할 것입니다. 평안하십시오.'"
+                  }
+                ]
+              },
+              {
+                "label": "성당을 나간다",
+                "actions": []
+              }
+            ]
+          }
+        ]
+      },
+      "child": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": {
+              "flag": "child_done"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "\n  아이: '뭉치를 구해줘서 고마워요!'"
+              }
+            ],
+            "else": [
+              {
+                "action": "divider",
+                "title": "골목 어린아이"
+              },
+              {
+                "action": "print",
+                "text": "\n골목에서 어린 소녀가 울고 있다.\n\"고양이 '뭉치'가 우물에 빠졌어요... 꺼내주세요!\"\n"
+              },
+              {
+                "action": "menu",
+                "options": [
+                  {
+                    "label": "우물로 내려가 고양이를 구한다",
+                    "actions": [
+                      {
+                        "action": "if",
+                        "cond": {
+                          "random_lt": 0.3
+                        },
+                        "then": [
+                          {
+                            "action": "damage",
+                            "amount": 10,
+                            "message": false
+                          },
+                          {
+                            "action": "print",
+                            "text": "  내려가다 미끄러졌다! 10 데미지."
+                          }
+                        ]
+                      },
+                      {
+                        "action": "add_item",
+                        "item": "행운의 부적",
+                        "message": false
+                      },
+                      {
+                        "action": "set_flag",
+                        "key": "helped_child"
+                      },
+                      {
+                        "action": "print",
+                        "text": "\n가까스로 뭉치를 구출했다!\n소녀가 눈물을 닦으며 부적을 건네준다.\n\"엄마가 소중히 여기던 거예요. 용사님께 드릴게요!\"\n\n▶ [행운의 부적 획득] 전투 중 도망 성공률 +20%\n"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "바빠서 그냥 지나친다",
+                    "actions": [
+                      {
+                        "action": "add_dark",
+                        "amount": 1,
+                        "message": false
+                      },
+                      {
+                        "action": "print",
+                        "text": "  아이의 울음소리를 뒤로하고 발걸음을 옮겼다..."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "action": "set_flag",
+                "key": "child_done"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

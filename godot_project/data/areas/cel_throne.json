@@ -1,0 +1,186 @@
+{
+  "cel_throne": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "cel_throne_visited"
+        },
+        "then": [
+          {
+            "action": "set_flag",
+            "key": "cel_throne_visited",
+            "value": true
+          },
+          {
+            "action": "print",
+            "text": "  천상 왕국의 최정점. 눈부신 빛이 사방에서 쏟아진다."
+          },
+          {
+            "action": "print",
+            "text": "  황금 왕좌 위에 거대한 날개를 펼친 존재가 앉아 있다."
+          },
+          {
+            "action": "print",
+            "text": "  타락한 대천사... 여명의 지배자가 눈을 떴다."
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "여명의 왕좌"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "타락한 대천사에게 도전",
+                "when": {
+                  "not_flag": "cel_throne_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  \"인간이여... 네가 이곳까지 왔다는 것은 인정하마.\""
+                  },
+                  {
+                    "action": "print",
+                    "text": "  \"하지만 최후의 심판은 이미 시작되었다. 누구도 막을 수 없다!\""
+                  },
+                  {
+                    "action": "pause"
+                  },
+                  {
+                    "action": "print",
+                    "text": "  타락한 대천사가 여섯 날개를 펼치며 일어섰다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "fallen_archangel",
+                    "on_win": [
+                      {
+                        "action": "set_flag",
+                        "key": "cel_throne_cleared",
+                        "value": true
+                      },
+                      {
+                        "action": "print",
+                        "text": "  대천사가 무릎을 꿇었다."
+                      },
+                      {
+                        "action": "print",
+                        "text": "  \"...고맙다. 어둠이 내 눈을 가리고 있었구나.\""
+                      },
+                      {
+                        "action": "pause"
+                      },
+                      {
+                        "action": "print",
+                        "text": "  대천사의 눈에서 타락의 기운이 사라진다."
+                      },
+                      {
+                        "action": "print",
+                        "text": "  \"이 왕관을 가져가라. 너라면... 세계를 지킬 수 있을 것이다.\""
+                      },
+                      {
+                        "action": "add_item",
+                        "item": "여명의 왕관"
+                      },
+                      {
+                        "action": "add_gold",
+                        "amount": 400
+                      },
+                      {
+                        "action": "print",
+                        "text": "  대천사가 순수한 빛 속으로 승천했다."
+                      },
+                      {
+                        "action": "print",
+                        "text": "  당신은 천상 세계를 구원했다!"
+                      },
+                      {
+                        "action": "pause"
+                      }
+                    ],
+                    "on_lose": [
+                      {
+                        "action": "print",
+                        "text": "  \"약하구나... 이것이 인간의 한계인가.\""
+                      },
+                      {
+                        "action": "print",
+                        "text": "  당신은 패배했다..."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "왕좌 탐색",
+                "when": {
+                  "flag": "cel_throne_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "random",
+                    "options": [
+                      {
+                        "weight": 30,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  세라핌 수호자가 나타났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "seraph_guardian"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 30,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  신성 골렘이 깨어났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "divine_golem"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 40,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  왕좌에 평화가 깃들었다. 따스한 빛이 몸을 감싼다."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

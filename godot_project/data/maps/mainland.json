@@ -1,0 +1,269 @@
+{
+  "raw": [
+    "###########################################################################",
+    "#.^^^^^^^.........................................................^^^^^^^^#",
+    "#.^^^^^^^...................xxxxxxxxxxxxxxxxxxxx..................^^^^^^^^#",
+    "#.^^^^^^^...................xxxxxxxxxLxxxxxxxxxx..................^^^^^^^^#",
+    "#...........................xxxxxxxxx=xxxxxxxxxx..........................#",
+    "#....................................=....................................#",
+    "#....................................K.................ttttttttt..........#",
+    "#....................................=.................ttttttttt..........#",
+    "#.............................iiiiiii=iiiiiii..........ttttAtttt..........#",
+    "#.............................iiiiiiiIiiiiii============tttttttt..........#",
+    "#...eeeeeeeeeeeee.............iiiiiii=iiiiiii..........ttttttttt..........#",
+    "#...eeeeeeeeeeeee....................=.................ttttttttt..........#",
+    "#...eeeeeeeeeeeee.............ggggggg=ggggggg.............................#",
+    "#...eeeeeeEeeeee===============ggggggGggggggg.............................#",
+    "#...eeeeeeeeeeeee.............ggggggg=ggggggg.............................#",
+    "#...eeee=eeeeeeee...............jjjjj=jjjjj...............................#",
+    "#...ssss=ssssssss...............jjjjjJjjjjj...............................#",
+    "#...ssssSssssssss...............jjjjj=jjjjj...............................#",
+    "#...sssssssssssss.............bbbbbbb=bbbbbbb.............................#",
+    "#..........qqqqqqq............bbbbbbbBbbbbbbb.............................#",
+    "#..........qqqqQqq=...........bbbbbbb=bbbbbbb.............................#",
+    "#.............cccccc=cccccc...rrrrrrr=rrrrrrr...uuuuuuuuuuuuu.............#",
+    "#.............ccccccCcccccc...rrrrrrrRrrrrrrr...uuuuuuUuuuuuu.............#",
+    "#.............cccccc=cccccc...rrrrrrr=rrrrrrr...uuuuuu=uuuuuu.............#",
+    "#...................===========......=......===========...................#",
+    "#.............................fffffff=fffffff.....yyyy=yyyy...............#",
+    "#.............................fffffffFfffffff.....yyyyYyyyy...............#",
+    "#..............mmmmmmmmm......fffffff=fffffff.....yyyyyyyyy...............#",
+    "#......aaaHaa========================T========================D...........#",
+    "#wwwwwwaaaaaaa.mmmmMmmm===============........................=...........#",
+    "#wwwwwwaaaaaa=.mmmmmmmmm............................dddddddddd=dddddddd...#",
+    "#wwwwww......=.mmmmmmmmm............................dddddddddd=dddddddd...#",
+    "#wwwwww......=......................................dddddddddd=dddddddd...#",
+    "#wwwwww.nnnnn=nnnnn.................................dddddddddd=dddddddd...#",
+    "#wwwwww.nnnnnnnnnnn.................................dddddddddd=dddddddd...#",
+    "#wwwwww.nnnnnWnnnnn.................................dddddddddd=dddddddd...#",
+    "#wwwwww.nnnnnnnnnnn.................................ddddddddddPdddddddd...#",
+    "#wwwwww.nnnnnnnnnnn.................................dddddddddd=dddddddd...#",
+    "#wwwwww.......pppppppppppp=oooooooooooo.............dddddddddd=dddddddd...#",
+    "#wwwwww.......pppppXpppppp=oooooNoooooo.............ddddddddddOdddddddd...#",
+    "#wwwwww.......pppppppppppp=oooooooooooo.............dddddddddd=dddddddd...#",
+    "#wwwwww.......pppppppppppp=oooooooooooo.............dddvvvvvvv=vvvvvvdd...#",
+    "#.............pppppppppppp=oooooooooooo.............dddvvvvvvv=vvvvvvdd...#",
+    "#.^^^^^.............................................dddvvvvvvvVvvvvvvdd...#",
+    "#.^^^^^.............................................dddvvvvvvv=vvvvvvdd...#",
+    "#.^^^^^...zzzzzzzz...zzzzzz............................vvvvvv=vvvvvvv.....#",
+    "#.^^^^^...zzzzZzzz=..zzzzzz............................vvvvvv=vvvvvvv.....#",
+    "#.^^^^^...zzzzzzzz=zzzzzzzz............................======.............#",
+    "###########################################################################"
+  ],
+  "terrain": {
+    "#": {
+      "passable": false,
+      "zone": null
+    },
+    "w": {
+      "passable": false,
+      "zone": null
+    },
+    "^": {
+      "passable": false,
+      "zone": null
+    },
+    ".": {
+      "passable": true,
+      "zone": null
+    },
+    "=": {
+      "passable": true,
+      "zone": null
+    },
+    "f": {
+      "passable": true,
+      "zone": "forest"
+    },
+    "c": {
+      "passable": true,
+      "zone": "cave"
+    },
+    "q": {
+      "passable": true,
+      "zone": "dwarf_mine"
+    },
+    "r": {
+      "passable": true,
+      "zone": "river"
+    },
+    "u": {
+      "passable": true,
+      "zone": "ruins"
+    },
+    "b": {
+      "passable": true,
+      "zone": "bandit_camp"
+    },
+    "g": {
+      "passable": true,
+      "zone": "castle_gate"
+    },
+    "i": {
+      "passable": true,
+      "zone": "castle_inside"
+    },
+    "a": {
+      "passable": true,
+      "zone": "harbor"
+    },
+    "d": {
+      "passable": true,
+      "zone": "desert"
+    },
+    "n": {
+      "passable": true,
+      "zone": "swamp"
+    },
+    "x": {
+      "passable": true,
+      "zone": "ice"
+    },
+    "e": {
+      "passable": true,
+      "zone": "elf_village"
+    },
+    "s": {
+      "passable": true,
+      "zone": "spirit_forest"
+    },
+    "m": {
+      "passable": true,
+      "zone": "moonlight_lake"
+    },
+    "y": {
+      "passable": true,
+      "zone": "labyrinth"
+    },
+    "j": {
+      "passable": true,
+      "zone": "mercenary_camp"
+    },
+    "t": {
+      "passable": true,
+      "zone": "dark_tower"
+    },
+    "v": {
+      "passable": true,
+      "zone": "volcano"
+    },
+    "z": {
+      "passable": true,
+      "zone": "dragon_dungeon"
+    },
+    "p": {
+      "passable": true,
+      "zone": "colosseum"
+    },
+    "o": {
+      "passable": true,
+      "zone": "forgotten_temple"
+    }
+  },
+  "locations": {
+    "T": {
+      "name": "아르카디아",
+      "zone": "town"
+    },
+    "F": {
+      "name": "어두운 숲",
+      "zone": "forest"
+    },
+    "C": {
+      "name": "몬스터 동굴",
+      "zone": "cave"
+    },
+    "Q": {
+      "name": "드워프 광산",
+      "zone": "dwarf_mine"
+    },
+    "R": {
+      "name": "안개 강가",
+      "zone": "river"
+    },
+    "U": {
+      "name": "저주받은 폐허",
+      "zone": "ruins"
+    },
+    "B": {
+      "name": "산적 야영지",
+      "zone": "bandit_camp"
+    },
+    "G": {
+      "name": "마왕의 성 정문",
+      "zone": "castle_gate"
+    },
+    "I": {
+      "name": "성 내부",
+      "zone": "castle_inside"
+    },
+    "K": {
+      "name": "마왕의 방",
+      "zone": "throne"
+    },
+    "H": {
+      "name": "포구 마을",
+      "zone": "harbor"
+    },
+    "D": {
+      "name": "사하르 마을",
+      "zone": "desert_town"
+    },
+    "P": {
+      "name": "파라오의 피라미드",
+      "zone": "pyramid"
+    },
+    "O": {
+      "name": "오아시스",
+      "zone": "oasis"
+    },
+    "W": {
+      "name": "독안개 늪",
+      "zone": "swamp"
+    },
+    "L": {
+      "name": "빙하 동굴",
+      "zone": "ice_cave"
+    },
+    "E": {
+      "name": "엘프 마을",
+      "zone": "elf_village"
+    },
+    "S": {
+      "name": "정령왕의 숲",
+      "zone": "spirit_forest"
+    },
+    "M": {
+      "name": "달빛 호수",
+      "zone": "moonlight_lake"
+    },
+    "Y": {
+      "name": "지하 미궁",
+      "zone": "labyrinth"
+    },
+    "J": {
+      "name": "용병단 야영지",
+      "zone": "mercenary_camp"
+    },
+    "A": {
+      "name": "어둠의 탑",
+      "zone": "dark_tower"
+    },
+    "V": {
+      "name": "화산 지대",
+      "zone": "volcano"
+    },
+    "Z": {
+      "name": "드래곤의 던전",
+      "zone": "dragon_dungeon"
+    },
+    "X": {
+      "name": "고대 투기장",
+      "zone": "colosseum"
+    },
+    "N": {
+      "name": "잊혀진 신전",
+      "zone": "forgotten_temple"
+    }
+  }
+}

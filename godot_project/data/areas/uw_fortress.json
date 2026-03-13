@@ -1,0 +1,161 @@
+{
+  "uw_fortress": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "uw_fortress_visited"
+        },
+        "then": [
+          {
+            "action": "set_flag",
+            "key": "uw_fortress_visited",
+            "value": true
+          },
+          {
+            "action": "print",
+            "text": "  거대한 뼈로 세워진 요새가 앞을 가로막는다."
+          },
+          {
+            "action": "print",
+            "text": "  망자들의 울부짖음이 들려온다..."
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "망자의 요새"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "요새 탐색",
+                "when": {
+                  "not_flag": "uw_fortress_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  요새 안으로 들어서자 원혼들이 떼지어 덮쳐온다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "soul_wraith",
+                    "on_win": [
+                      {
+                        "action": "print",
+                        "text": "  원혼을 물리치자 죽음의 기사가 나타났다!"
+                      },
+                      {
+                        "action": "battle",
+                        "enemy": "death_knight",
+                        "on_win": [
+                          {
+                            "action": "set_flag",
+                            "key": "uw_fortress_cleared",
+                            "value": true
+                          },
+                          {
+                            "action": "print",
+                            "text": "  죽음의 기사를 쓰러뜨렸다!"
+                          },
+                          {
+                            "action": "print",
+                            "text": "  요새 깊숙한 곳에서 심연으로 이어지는 문이 열렸다."
+                          },
+                          {
+                            "action": "add_gold",
+                            "amount": 120
+                          },
+                          {
+                            "action": "add_item",
+                            "item": "지옥불 검"
+                          }
+                        ],
+                        "on_lose": [
+                          {
+                            "action": "print",
+                            "text": "  당신은 패배했다..."
+                          }
+                        ]
+                      }
+                    ],
+                    "on_lose": [
+                      {
+                        "action": "print",
+                        "text": "  당신은 패배했다..."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "요새 탐색",
+                "when": {
+                  "flag": "uw_fortress_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "random",
+                    "options": [
+                      {
+                        "weight": 40,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  원혼이 나타났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "soul_wraith"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 40,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  죽음의 기사가 나타났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "death_knight"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 20,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  요새는 조용하다. 아무 일도 일어나지 않았다."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

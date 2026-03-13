@@ -1,0 +1,148 @@
+{
+  "uw_lava_lake": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "uw_lava_lake_visited"
+        },
+        "then": [
+          {
+            "action": "set_flag",
+            "key": "uw_lava_lake_visited",
+            "value": true
+          },
+          {
+            "action": "print",
+            "text": "  끓어오르는 용암 호수. 열기가 숨을 막는다."
+          },
+          {
+            "action": "print",
+            "text": "  용암 속에서 무언가가 꿈틀거린다..."
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "용암 호수"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "용암 호수 탐색",
+                "when": {
+                  "not_flag": "uw_lava_lake_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  용암 속에서 거대한 지렁이가 튀어나왔다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "lava_worm",
+                    "on_win": [
+                      {
+                        "action": "print",
+                        "text": "  지옥 악마가 용암 위로 떠올랐다!"
+                      },
+                      {
+                        "action": "battle",
+                        "enemy": "inferno_demon",
+                        "on_win": [
+                          {
+                            "action": "set_flag",
+                            "key": "uw_lava_lake_cleared",
+                            "value": true
+                          },
+                          {
+                            "action": "print",
+                            "text": "  지옥 악마를 쓰러뜨렸다! 용암이 잠잠해진다."
+                          },
+                          {
+                            "action": "print",
+                            "text": "  망자의 요새로 가는 길이 나타났다."
+                          },
+                          {
+                            "action": "add_gold",
+                            "amount": 150
+                          }
+                        ],
+                        "on_lose": [
+                          {
+                            "action": "print",
+                            "text": "  당신은 패배했다..."
+                          }
+                        ]
+                      }
+                    ],
+                    "on_lose": [
+                      {
+                        "action": "print",
+                        "text": "  당신은 패배했다..."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "용암 호수 탐색",
+                "when": {
+                  "flag": "uw_lava_lake_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "random",
+                    "options": [
+                      {
+                        "weight": 50,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  용암 지렁이가 나타났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "lava_worm"
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 50,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  지옥 악마가 나타났다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "inferno_demon"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "dragon_dungeon": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "dragon_dungeon_visited"
+        },
+        "then": [
+          {
+            "action": "divider",
+            "title": "드래곤의 던전 입구"
+          },
+          {
+            "action": "print",
+            "text": "\n숨을 들이마시는 것조차 고통스러운 초고온의 지대.\n거대한 동굴 입구 주변에는 짐승과 마족들의 뼈가 산처럼 쌓여 있다.\n저 깊숙한 곳에서부터 들려오는 심장 고동 소리가 대지를 울린다.\n"
+          },
+          {
+            "action": "set_flag",
+            "key": "dragon_dungeon_visited",
+            "value": true
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "드래곤의 던전"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "입구 주변 화산재 수색",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n  동굴 입구 근처의 화산재 더미를 뒤적거렸다."
+                  },
+                  {
+                    "action": "random",
+                    "branches": [
+                      {
+                        "weight": 0.5,
+                        "actions": [
+                          {
+                            "action": "add_gold",
+                            "amount": 80
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 0.5,
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  둥지를 나선 새끼 드래곤과 마주쳤다!"
+                          },
+                          {
+                            "action": "battle",
+                            "enemy": "dragon_whelp"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "던전 더 깊은 곳으로 진입",
+                "when": {
+                  "not_flag": "dragon_dungeon_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "dragon_boss"
+                  }
+                ]
+              },
+              {
+                "label": "드래곤의 유해 탐구 (클리어 후)",
+                "when": {
+                  "flag": "dragon_dungeon_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n불꽃이 사그라든 둥지 한가운데에 드래곤의 거대한 유해가 놓여 있다.\n이제 이 던전에서 나는 열기는 오직 화산의 지열뿐이다.\n"
+                  },
+                  {
+                    "action": "pause"
+                  }
+                ]
+              },
+              {
+                "label": "구름 위로 이어지는 포탈 조사",
+                "when": {
+                  "flag": "dragon_dungeon_cleared"
+                },
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  드래곤의 둥지 최상부에서 구름을 뚫고 빛나는 포탈을 발견했다."
+                  },
+                  {
+                    "action": "print",
+                    "text": "  용의 심장이 반응하며 포탈이 활성화되기 시작한다..."
+                  },
+                  {
+                    "action": "menu",
+                    "options": [
+                      {
+                        "label": "구름 위로 올라간다",
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  포탈 속으로 빨려 들어가 구름을 뚫고 올라갔다..."
+                          },
+                          {
+                            "action": "pause"
+                          },
+                          {
+                            "action": "warp_map",
+                            "map": "celestial",
+                            "zone": "cel_gate"
+                          },
+                          {
+                            "action": "break"
+                          }
+                        ]
+                      },
+                      {
+                        "label": "그만둔다",
+                        "actions": [
+                          {
+                            "action": "print",
+                            "text": "  아직 준비가 덜 된 것 같다."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "바깥쪽으로 돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "dragon_boss": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "거대 드래곤의 둥지 최심부"
+          },
+          {
+            "action": "print",
+            "text": "\n수백 미터는 족히 되어 보이는 거대한 공간.\n용암이 흐르는 둥지 위에서 산만한 크기의 고대 드래곤이 내려다보고 있다.\n\"필멸자여... 죽고 싶어 안달이 났구나.\"\n분노한 드래곤이 거대한 입을 벌려 불꽃을 내뿜기 시작한다!\n"
+          },
+          {
+            "action": "battle",
+            "name": "화염의 고대 드래곤",
+            "enemy": "dragon",
+            "hp_multiply": 1.2,
+            "on_win": [
+              {
+                "action": "divider",
+                "title": "신의 사냥꾼"
+              },
+              {
+                "action": "print",
+                "text": "\n드래곤이 마지막 포효를 내지르며 용암 속으로 쓰러졌다.\n화산 분화구가 한차례 크게 울렸다.\n신화 속 존재를 쓰러뜨린 대가로 불타오르는 대검을 거머쥐었다!\n"
+              },
+              {
+                "action": "set_flag",
+                "key": "dragon_dungeon_cleared",
+                "value": true
+              },
+              {
+                "action": "add_item",
+                "item": "드래곤 슬레이어",
+                "count": 1
+              },
+              {
+                "action": "pause"
+              }
+            ],
+            "on_lose": [
+              {
+                "action": "print",
+                "text": "\n순식간에 대지가 화염으로 뒤덮였다.\n숨 쉴 틈 없는 드래곤 브레스 속에서 한 줌의 재가 되어 흩어졌다...\n"
+              },
+              {
+                "action": "game_over"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

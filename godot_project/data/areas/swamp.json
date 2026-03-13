@@ -1,0 +1,187 @@
+{
+  "swamp": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "flag": "swamp_cleared"
+        },
+        "then": [
+          {
+            "action": "print",
+            "text": "  늪은 이미 정리되었습니다. 안개가 옅어져 있다."
+          },
+          {
+            "action": "break"
+          }
+        ],
+        "else": [
+          {
+            "action": "divider",
+            "title": "독안개 늪"
+          },
+          {
+            "action": "print",
+            "text": "\n짙은 안개가 발목까지 내려앉은 늪지대.\n부글거리는 진흙 사이로 이상한 빛이 반짝인다.\n어딘가에서 낮게 웃는 소리가 들려온다...\n"
+          },
+          {
+            "action": "print",
+            "text": "  발밑에서 독사가 튀어나왔다!"
+          },
+          {
+            "action": "battle",
+            "enemy": "swamp_snake"
+          },
+          {
+            "action": "goto",
+            "scene": "swamp_witch"
+          },
+          {
+            "action": "set_flag",
+            "key": "swamp_cleared"
+          },
+          {
+            "action": "print",
+            "text": "  ▶ 독안개 늪 탐색 완료."
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "swamp_witch": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "늪지 마녀의 오두막"
+          },
+          {
+            "action": "print",
+            "text": "\n안개 사이로 구부러진 오두막이 보인다.\n문 앞에 늙은 마녀가 가마솥을 젓고 있다.\n\n마녀: \"크크크... 손님이 왔군. 마왕을 무찌르러 간다고?\"\n       \"내가 도와줄 수도 있지... 대가를 치른다면.\"\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "마녀의 제안을 듣는다",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "witch_deal"
+                  }
+                ]
+              },
+              {
+                "label": "싸운다",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  마녀: '감히! 내 늪에서 까불겠다고?!'"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "swamp_witch"
+                  },
+                  {
+                    "action": "set_flag",
+                    "key": "swamp_treasure"
+                  },
+                  {
+                    "action": "add_item",
+                    "item": "마법 지팡이",
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "  마녀가 남긴 가마솥에서 마법 지팡이를 발견했다!"
+                  }
+                ]
+              },
+              {
+                "label": "무시하고 지나간다",
+                "actions": [
+                  {
+                    "action": "add_dark",
+                    "amount": 1,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "  마녀의 웃음소리가 등 뒤에서 따라온다..."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "witch_deal": {
+        "actions": [
+          {
+            "action": "print",
+            "text": "\n마녀: \"50G를 내면 늪의 비약을 만들어 주마.\n       최대 HP가 영구적으로 30 오를 거야. 크크크.\"\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "50G를 낸다",
+                "actions": [
+                  {
+                    "action": "if",
+                    "cond": {
+                      "gold_gte": 50
+                    },
+                    "then": [
+                      {
+                        "action": "sub_gold",
+                        "amount": 50,
+                        "message": false
+                      },
+                      {
+                        "action": "add_stat",
+                        "max_hp": 30,
+                        "message": false
+                      },
+                      {
+                        "action": "heal",
+                        "amount": 30,
+                        "message": false
+                      },
+                      {
+                        "action": "print",
+                        "text": "  마녀가 건넨 보라색 액체를 마시자 온몸에 힘이 솟는다!"
+                      },
+                      {
+                        "action": "print",
+                        "text": "  ▶ 최대 HP +30!"
+                      },
+                      {
+                        "action": "set_flag",
+                        "key": "swamp_potion"
+                      }
+                    ],
+                    "else": [
+                      {
+                        "action": "print",
+                        "text": "  골드가 부족하다."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "거절한다",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  마녀: '흥, 나중에 후회할 걸.'"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

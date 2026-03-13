@@ -1,0 +1,93 @@
+{
+  "cel_gate": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "cel_gate_visited"
+        },
+        "then": [
+          {
+            "action": "set_flag",
+            "key": "cel_gate_visited",
+            "value": true
+          },
+          {
+            "action": "print",
+            "text": "  구름을 뚫고 올라오자 눈부신 빛이 쏟아진다."
+          },
+          {
+            "action": "print",
+            "text": "  황금빛 문이 우뚝 서 있다. 구름 왕국의 입구다."
+          },
+          {
+            "action": "print",
+            "text": "  어딘가에서 들려오는 비명... 이곳은 더 이상 평화롭지 않다."
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "구름의 문"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "주변 살피기",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  북쪽으로 천상의 정원이 보인다."
+                  },
+                  {
+                    "action": "print",
+                    "text": "  서쪽에는 반란 천사들의 시장과 빛의 성소가 있다."
+                  },
+                  {
+                    "action": "print",
+                    "text": "  동쪽 먼 곳에 거대한 수정 첨탑이 빛나고 있다."
+                  }
+                ]
+              },
+              {
+                "label": "지상으로 돌아가기",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  포탈을 통해 지상으로 돌아간다..."
+                  },
+                  {
+                    "action": "pause"
+                  },
+                  {
+                    "action": "warp_map",
+                    "map": "mainland",
+                    "zone": "dragon_dungeon"
+                  },
+                  {
+                    "action": "break"
+                  }
+                ]
+              },
+              {
+                "label": "돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

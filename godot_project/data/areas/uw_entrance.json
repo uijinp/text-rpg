@@ -1,0 +1,85 @@
+{
+  "uw_entrance": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "uw_entrance_visited"
+        },
+        "then": [
+          {
+            "action": "set_flag",
+            "key": "uw_entrance_visited",
+            "value": true
+          },
+          {
+            "action": "print",
+            "text": "  지상에서 내려온 깊은 동굴. 돌아갈 수 없을 것 같은 어둠이 펼쳐진다."
+          },
+          {
+            "action": "print",
+            "text": "  차갑고 축축한 공기 사이로 먼 곳에서 희미한 빛이 보인다."
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "심연의 입구"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "주변 살피기",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  균열 사이로 지상의 빛이 희미하게 내려온다."
+                  },
+                  {
+                    "action": "print",
+                    "text": "  북쪽으로 뼈의 묘지, 서쪽으로 암흑 시장과 영혼의 신전이 보인다."
+                  }
+                ]
+              },
+              {
+                "label": "지상으로 돌아가기",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  균열을 타고 지상으로 올라갔다."
+                  },
+                  {
+                    "action": "pause"
+                  },
+                  {
+                    "action": "warp_map",
+                    "map": "mainland",
+                    "zone": "labyrinth"
+                  },
+                  {
+                    "action": "break"
+                  }
+                ]
+              },
+              {
+                "label": "돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

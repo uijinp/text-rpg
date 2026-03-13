@@ -1,0 +1,309 @@
+{
+  "moonlight_lake": {
+    "actions": [
+      {
+        "action": "set_location",
+        "zone": "moonlight_lake"
+      },
+      {
+        "action": "divider",
+        "title": "달빛 호수"
+      },
+      {
+        "action": "print",
+        "text": "\n은빛 물결이 일렁이는 신비로운 호수.\n수면 위로 달빛이 비치며 주변이 환하게 빛난다.\n물가에 하얀 꽃이 가득 피어 있다.\n"
+      },
+      {
+        "action": "heal",
+        "amount": "full",
+        "message": false
+      },
+      {
+        "action": "print",
+        "text": "  호수의 기운으로 HP가 완전히 회복되었다. ({player.hp}/{player.max_hp})\n"
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "호수에 다가간다",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "undine"
+                  }
+                ]
+              },
+              {
+                "label": "물가를 탐색한다",
+                "actions": [
+                  {
+                    "action": "goto",
+                    "scene": "lakeshore"
+                  }
+                ]
+              },
+              {
+                "label": "떠난다",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "undine": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": {
+              "flag": "witnessed_betrayal"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "\n운디네: \"기억을 잊지 마세요. 진실이 당신의 무기가 될 것입니다.\"\n"
+              }
+            ],
+            "else": [
+              {
+                "action": "if",
+                "cond": [
+                  {
+                    "flag": "saw_zeldion_past"
+                  },
+                  {
+                    "any_flag": [
+                      "heard_maou_truth",
+                      "found_truth_book",
+                      "found_diary"
+                    ]
+                  }
+                ],
+                "then": [
+                  {
+                    "action": "goto",
+                    "scene": "undine_second_vision"
+                  }
+                ],
+                "else": [
+                  {
+                    "action": "if",
+                    "cond": {
+                      "not_flag": "saw_zeldion_past"
+                    },
+                    "then": [
+                      {
+                        "action": "goto",
+                        "scene": "undine_first_vision"
+                      }
+                    ]
+                  },
+                  {
+                    "action": "goto",
+                    "scene": "undine_question"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "undine_first_vision": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "운디네"
+          },
+          {
+            "action": "print",
+            "text": "\n물속에서 푸른 빛의 여인이 솟아오른다.\n\n운디네: \"환영하오, 여행자여. 나는 이 호수의 수호자 운디네.\n         세상의 슬픈 기억을 간직하는 것이 내 역할이지.\"\n\n운디네: \"당신에게 보여줄 것이 있소.\"\n\n수면 위로 환영이 펼쳐진다.\n\n─── 20년 전, 아르카디아 ───\n젊은 마법사가 홍수에서 마을 사람들을 구하고 있다.\n모두가 그를 '젤드리온 님!'이라 부르며 감사해 한다.\n밝은 눈의 청년은 환하게 웃으며 대답한다.\n\n젤드리온: \"다치신 분은 없나요? 모두 괜찮다면 다행입니다.\"\n\n─── 환영 종료 ───\n\n운디네: \"그것이... 마왕이 되기 전의 젤드리온이었소.\"\n"
+          },
+          {
+            "action": "set_flag",
+            "key": "saw_zeldion_past"
+          },
+          {
+            "action": "print",
+            "text": "  ▶ [젤드리온의 과거] 마왕의 선한 과거를 목격했다."
+          }
+        ]
+      },
+      "undine_second_vision": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "운디네의 두 번째 환영"
+          },
+          {
+            "action": "print",
+            "text": "\n물의 정령이 다시 나타나 슬픈 눈으로 당신을 바라본다.\n\n운디네: \"진실을 알게 되었군요. 그렇다면...\n         그 시절의 마지막 기억을 보여드리겠습니다.\"\n\n수면에 새로운 환영이 펼쳐진다.\n\n─── 15년 전, 왕궁 ───\n라자러스가 밀실에서 봉인 반지를 숨기는 모습.\n그리고 왕 앞에서 젤드리온을 고발하는 장면.\n쇠사슬에 묶인 젤드리온의 절규가 수면 위로 울려 퍼진다.\n\n젤드리온: \"나는 아무것도 하지 않았다! 라자러스가...!\"\n왕: \"증거가 명확하다. 추방하라.\"\n\n─── 환영 종료 ───\n\n운디네: \"이것이 모든 것의 시작이었습니다.\"\n"
+          },
+          {
+            "action": "set_flag",
+            "key": "witnessed_betrayal"
+          },
+          {
+            "action": "print",
+            "text": "  ▶ [배신의 증인] 젤드리온의 억울한 추방을 목격했다."
+          }
+        ]
+      },
+      "undine_question": {
+        "actions": [
+          {
+            "action": "print",
+            "text": "\n운디네: \"젤드리온을 만나면 어찌할 것인가?\"\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "'구해보겠습니다'",
+                "actions": [
+                  {
+                    "action": "sub_dark",
+                    "amount": 1,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n  운디네: '그 마음이라면 분명 길이 열릴 것이오.'"
+                  },
+                  {
+                    "action": "print",
+                    "text": "  ▶ 어둠 점수 -1"
+                  }
+                ]
+              },
+              {
+                "label": "'그는 벌을 받아야 합니다'",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "\n  운디네: '...그렇소. 그것도 하나의 답이겠지.'"
+                  }
+                ]
+              },
+              {
+                "label": "'그의 힘을 빼앗겠습니다'",
+                "actions": [
+                  {
+                    "action": "add_dark",
+                    "amount": 2,
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n  운디네: '...어둠의 유혹을 조심하시오.'"
+                  },
+                  {
+                    "action": "print",
+                    "text": "  ▶ 어둠 점수 +2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "lakeshore": {
+        "actions": [
+          {
+            "action": "if",
+            "cond": {
+              "not_flag": "moonlight_trinket_found"
+            },
+            "then": [
+              {
+                "action": "random",
+                "branches": [
+                  {
+                    "weight": 0.6,
+                    "actions": [
+                      {
+                        "action": "set_flag",
+                        "key": "moonlight_trinket_found"
+                      },
+                      {
+                        "action": "add_item",
+                        "item": "달빛 장신구",
+                        "message": false
+                      },
+                      {
+                        "action": "sub_dark",
+                        "amount": 1,
+                        "message": false
+                      },
+                      {
+                        "action": "print",
+                        "text": "\n물가를 거닐다 은빛으로 빛나는 장신구를 발견했다.\n손에 닿는 순간 마음이 맑아지는 느낌이 든다.\n\n▶ [달빛 장신구] 획득!\n▶ 어둠 점수 -1\n"
+                      }
+                    ]
+                  },
+                  {
+                    "weight": 0.4,
+                    "actions": [
+                      {
+                        "action": "print",
+                        "text": "  물가를 둘러보았지만 특별한 것은 없었다."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "else": [
+              {
+                "action": "random",
+                "branches": [
+                  {
+                    "weight": 0.3,
+                    "actions": [
+                      {
+                        "action": "random",
+                        "branches": [
+                          {
+                            "weight": 1.0,
+                            "actions": [
+                              {
+                                "action": "add_gold",
+                                "amount": 20,
+                                "message": false
+                              },
+                              {
+                                "action": "print",
+                                "text": "  물가에서 반짝이는 금화를 발견했다! (+20G)"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "weight": 0.7,
+                    "actions": [
+                      {
+                        "action": "print",
+                        "text": "  평온한 물가를 거닐었다. 마음이 편안해진다."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

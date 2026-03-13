@@ -1,0 +1,152 @@
+{
+  "pyramid": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "flag": "pyramid_cleared"
+        },
+        "then": [
+          {
+            "action": "print",
+            "text": "  피라미드는 이미 탐색 완료되었습니다."
+          },
+          {
+            "action": "break"
+          }
+        ],
+        "else": [
+          {
+            "action": "divider",
+            "title": "파라오의 피라미드"
+          },
+          {
+            "action": "print",
+            "text": "\n거대한 석조 구조물이 사막 위에 우뚝 서 있다.\n입구에서 차가운 바람이 불어나온다.\n벽에 고대 문자가 새겨져 있다: '침입자에게 영원한 저주를.'\n"
+          },
+          {
+            "action": "goto",
+            "scene": "floor_1"
+          },
+          {
+            "action": "goto",
+            "scene": "boss_room"
+          },
+          {
+            "action": "set_flag",
+            "key": "pyramid_cleared"
+          },
+          {
+            "action": "add_item",
+            "item": "파라오의 검",
+            "message": false
+          },
+          {
+            "action": "print",
+            "text": "\n수호자가 쓰러지며 석관 안에서 황금빛 검이 빛난다.\n\n▶ [파라오의 검 획득] 고대 왕의 무기! 공격력이 매우 높다.\n▶ 피라미드 공략 완료.\n"
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "floor_1": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "1층 - 함정 통로"
+          },
+          {
+            "action": "print",
+            "text": "  좁은 통로에 함정이 가득하다."
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "왼쪽 통로",
+                "actions": [
+                  {
+                    "action": "random",
+                    "branches": [
+                      {
+                        "weight": 0.4,
+                        "actions": [
+                          {
+                            "action": "damage",
+                            "amount": 28,
+                            "message": false
+                          },
+                          {
+                            "action": "print",
+                            "text": "  화살 함정! 데미지를 입었다."
+                          }
+                        ]
+                      },
+                      {
+                        "weight": 0.6,
+                        "actions": [
+                          {
+                            "action": "add_gold",
+                            "amount": 30,
+                            "message": false
+                          },
+                          {
+                            "action": "print",
+                            "text": "  벽 틈에서 30G를 발견!"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "오른쪽 통로",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  미라가 튀어나왔다!"
+                  },
+                  {
+                    "action": "battle",
+                    "enemy": "mummy"
+                  }
+                ]
+              },
+              {
+                "label": "천장의 구멍으로 올라간다",
+                "actions": [
+                  {
+                    "action": "add_item",
+                    "item": "대형 포션",
+                    "message": false
+                  },
+                  {
+                    "action": "print",
+                    "text": "  숨겨진 방에서 대형 포션을 발견!"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "boss_room": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "최심부 - 파라오의 관"
+          },
+          {
+            "action": "print",
+            "text": "\n거대한 석관이 중앙에 놓여 있다.\n금빛 가면이 씌워진 관 뚜껑이 천천히 열리며...\n붕대로 감싼 거대한 전사가 일어선다.\n\n파라오 수호자: \"이 무덤에 침입한 대가를... 치러라.\"\n"
+          },
+          {
+            "action": "battle",
+            "enemy": "pharaoh"
+          }
+        ]
+      }
+    }
+  }
+}

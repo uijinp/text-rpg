@@ -1,0 +1,234 @@
+{
+  "ruins": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "flag": "ruins_cleared"
+        },
+        "then": [
+          {
+            "action": "print",
+            "text": "  폐허는 이미 정리되었습니다."
+          }
+        ],
+        "else": [
+          {
+            "action": "set_flag",
+            "key": "route",
+            "value": "ruins"
+          },
+          {
+            "action": "goto",
+            "scene": "ruins_church"
+          },
+          {
+            "action": "goto",
+            "scene": "ruins_artifact"
+          },
+          {
+            "action": "set_flag",
+            "key": "ruins_cleared"
+          },
+          {
+            "action": "print",
+            "text": "  ▶ 폐허 공략 완료."
+          }
+        ]
+      }
+    ],
+    "scenes": {
+      "ruins_church": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "폐허 성당"
+          },
+          {
+            "action": "print",
+            "text": "\n도시 중심에 반쯤 무너진 성당이 서 있다.\n제단 위에 낡은 일기장이 놓여 있다.\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "일기장을 읽는다",
+                "actions": [
+                  {
+                    "action": "set_flag",
+                    "key": "found_diary"
+                  },
+                  {
+                    "action": "set_flag",
+                    "key": "heard_maou_truth"
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n일기장의 마지막 페이지:\n───────────────────────────────────────\n\"...왕의 고문 레이저스가 젤드리온을 모함했다.\n 왕의 봉인 반지를 훔치고는 마법사에게 죄를 뒤집어씌웠다.\n 억울하게 추방된 젤드리온은 어둠에 빠져들었고,\n 진실을 알면서도 침묵한 나는... 죄인이다.\"\n\n일기장 말미에: \"진실은 성의 지하 도서관에 봉인되어 있다.\"\n───────────────────────────────────────\n\n▶ [일기장 발견] 마왕 사건의 진실에 한 걸음 더!\n"
+                  }
+                ]
+              },
+              {
+                "label": "그냥 지나친다",
+                "actions": []
+              }
+            ]
+          },
+          {
+            "action": "print",
+            "text": "\n성당을 떠나려는 순간... 제단 옆 석관이 천천히 열린다.\n차가운 공기가 흘러나오며 창백한 손가락이 관 밖으로 뻗어나온다.\n"
+          },
+          {
+            "action": "pause"
+          },
+          {
+            "action": "if",
+            "cond": {
+              "flag": "found_diary"
+            },
+            "then": [
+              {
+                "action": "print",
+                "text": "\n창백한 귀족풍의 남자가 관에서 나와 당신을 바라본다.\n\n뱀파이어: \"......일기장을 읽었군.\"\n           \"그 내용이 사실이든 아니든 나는 상관없다.\"\n           \"이 폐허에 발을 들인 자는 누구든 살아서 나갈 수 없지.\"\n\n그가 손가락을 튕기자 성당 전체가 어둠으로 물든다.\n\n뱀파이어: \"피 냄새가 좋군. 오늘 저녁은 풍성하겠어.\"\n"
+              }
+            ],
+            "else": [
+              {
+                "action": "print",
+                "text": "\n창백한 귀족풍의 남자가 관에서 천천히 일어선다.\n수백 년은 된 듯한 심홍색 로브가 먼지를 털며 펼쳐진다.\n\n뱀파이어: \"......이 폐허에 살아있는 자가 오다니.\"\n           \"몇 년 만인가. 아, 그 따뜻한 심장 소리...\"\n\n그가 눈을 감고 코를 들이킨다.\n\n뱀파이어: \"마지막으로 부탁이 있나? 들어줄 수도 있어.\"\n           \"어차피 곧 죽을 테니까.\"\n"
+              },
+              {
+                "action": "menu",
+                "options": [
+                  {
+                    "label": "'죽기 싫다. 싸우겠다!'",
+                    "actions": [
+                      {
+                        "action": "print",
+                        "text": "\n뱀파이어: \"용기는 가상하군. 하지만 용기만으론 부족하지.\"\n"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "'...나는 마왕을 무찌르러 가는 길이다'",
+                    "actions": [
+                      {
+                        "action": "print",
+                        "text": "\n뱀파이어가 잠시 멈추더니 낮게 웃는다.\n\n뱀파이어: \"마왕을... 하. 재미있는 인간이군.\"\n           \"그렇다면 더욱 막을 수 없지. 강한 자의 피가 더 맛있거든.\"\n\n그가 망토를 펼치며 날아오른다.\n"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "print",
+            "text": "  뱀파이어가 공중으로 떠오르며 날카로운 이빨을 드러낸다!"
+          },
+          {
+            "action": "battle",
+            "enemy": "vampire",
+            "on_lose": [
+              {
+                "action": "game_over"
+              }
+            ]
+          },
+          {
+            "action": "print",
+            "text": "\n뱀파이어가 재로 흩어지며 속삭인다.\n\"......오래간만에... 재미있었다...\"\n"
+          }
+        ]
+      },
+      "ruins_artifact": {
+        "actions": [
+          {
+            "action": "divider",
+            "title": "폐허 광장"
+          },
+          {
+            "action": "print",
+            "text": "\n광장 중앙에 검은 수정 구슬이 받침대 위에 놓여 있다.\n구슬에서 어두운 기운이 뿜어져 나오며 속삭인다.\n\"나를 가져라... 힘을 주겠다...\"\n"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "어둠의 구슬을 집어든다  (공격력 +10 / 어둠 +3)",
+                "actions": [
+                  {
+                    "action": "add_stat",
+                    "attack": 10,
+                    "message": false
+                  },
+                  {
+                    "action": "add_dark",
+                    "amount": 3,
+                    "message": false
+                  },
+                  {
+                    "action": "set_flag",
+                    "key": "dark_artifact"
+                  },
+                  {
+                    "action": "print",
+                    "text": "\n구슬을 쥐는 순간 어두운 힘이 온몸에 퍼진다.\n공격력이 폭발적으로 증가했다! 하지만 손에서 검은 기운이 흐른다...\n\n▶ 공격력 +10  /  어둠 점수 +3\n"
+                  }
+                ]
+              },
+              {
+                "label": "구슬을 부순다",
+                "actions": [
+                  {
+                    "action": "if",
+                    "cond": {
+                      "random_lt": 0.5
+                    },
+                    "then": [
+                      {
+                        "action": "print",
+                        "text": "  구슬이 폭발하며 암흑 마법사가 소환됐다!"
+                      },
+                      {
+                        "action": "battle",
+                        "enemy": "dark_mage",
+                        "on_lose": [
+                          {
+                            "action": "game_over"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "action": "add_item",
+                    "item": "대형 포션",
+                    "message": false
+                  },
+                  {
+                    "action": "set_flag",
+                    "key": "destroyed_artifact"
+                  },
+                  {
+                    "action": "print",
+                    "text": "  구슬이 산산조각 났다. 대형 포션이 나타났다. ▶ 획득!"
+                  }
+                ]
+              },
+              {
+                "label": "그냥 지나간다",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  구슬을 그냥 지나쳤다. 속삭임이 멀어진다."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

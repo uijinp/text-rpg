@@ -1,0 +1,64 @@
+{
+  "cel_market": {
+    "actions": [
+      {
+        "action": "if",
+        "cond": {
+          "not_flag": "cel_market_visited"
+        },
+        "then": [
+          {
+            "action": "set_flag",
+            "key": "cel_market_visited",
+            "value": true
+          },
+          {
+            "action": "print",
+            "text": "  구름 뒤편에 숨겨진 공간. 반란 천사들이 모여 있다."
+          },
+          {
+            "action": "print",
+            "text": "  \"환영합니다, 용사여. 우리는 대천사의 광기에 맞서는 자들입니다.\""
+          },
+          {
+            "action": "pause"
+          }
+        ]
+      },
+      {
+        "action": "loop",
+        "body": [
+          {
+            "action": "divider",
+            "title": "반란 천사의 시장"
+          },
+          {
+            "action": "menu",
+            "options": [
+              {
+                "label": "천상 상점 이용",
+                "actions": [
+                  {
+                    "action": "print",
+                    "text": "  \"좋은 물건을 준비해두었습니다. 마음껏 고르세요.\""
+                  },
+                  {
+                    "action": "open_cel_shop"
+                  }
+                ]
+              },
+              {
+                "label": "돌아가기",
+                "actions": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
