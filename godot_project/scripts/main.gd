@@ -25,8 +25,9 @@ var hud: Control = null
 var dpad: Control = null
 
 # ── UI 컴포넌트 (씬 인스턴스) ──
-var dialog_box = null  # scripts/ui/dialog_box.gd
-var shop_panel = null   # scripts/ui/shop_panel.gd
+var dialog_box = null      # scripts/ui/dialog_box.gd
+var shop_panel = null      # scripts/ui/shop_panel.gd
+var save_load_panel = null # scripts/ui/save_load_panel.gd
 
 # ── 상태 ──
 var _event_running: bool = false
@@ -96,17 +97,66 @@ func _on_new_game() -> void:
 	name_input.grab_focus()
 
 func _on_continue() -> void:
-	# 첫 번째 사용 가능한 슬롯 로드
-	for i in range(GameState.MAX_SLOTS):
-		if GameState.load_game(i):
-			return
-	GameState.show_toast("저장된 게임이 없습니다.", "toast-warning")
+	# 슬롯 선택 UI를 타이틀 화면에 표시
+	_show_load_slots()
 
 func _create_character(job: String) -> void:
 	var pname: String = name_input.text.strip_edges()
 	if pname == "":
 		pname = "모험가"
 	GameState.new_game(pname, job)
+
+func _show_load_slots() -> void:
+	# 타이틀 화면에 슬롯 목록 표시
+	var existing: Node = title_screen.get_node_or_null("LoadSlots")
+	if existing:
+		existing.queue_free()
+		await get_tree().process_frame
+
+	var panel := PanelContainer.new()
+	panel.name = "LoadSlots"
+	panel.layout_mode = 1
+	panel.anchor_left = 0.1
+	panel.anchor_top = 0.3
+	panel.anchor_right = 0.9
+	panel.anchor_bottom = 0.85
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+
+	var label := Label.new()
+	label.text = "불러오기"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(label)
+
+	for i in range(GameState.MAX_SLOTS):
+		var info: Dictionary = GameState.get_save_info(i)
+		var btn := Button.new()
+		if info.is_empty():
+			btn.text = "슬롯 %d: (비어있음)" % (i + 1)
+			btn.disabled = true
+		else:
+			btn.text = "슬롯 %d: %s (%s) Lv.%d" % [i + 1, info.get("name", "???"), info.get("job", "???"), info.get("level", 1)]
+			var slot := i
+			btn.pressed.connect(func():
+				panel.queue_free()
+				GameState.load_game(slot)
+			)
+		vbox.add_child(btn)
+
+	var cancel := Button.new()
+	cancel.text = "취소"
+	cancel.pressed.connect(func(): panel.queue_free())
+	vbox.add_child(cancel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_child(vbox)
+	panel.add_child(margin)
+	title_screen.add_child(panel)
 
 # ══════════════════════════════════════════════════
 #  게임 화면 설정
@@ -195,6 +245,23 @@ func _setup_game_screen() -> void:
 		_update_hud()
 	)
 	game_screen.add_child(shop_panel)
+
+	# ── 세이브/로드 패널 (오버레이) ──
+	var save_scene := load("res://scenes/ui/save_load_panel.tscn")
+	save_load_panel = save_scene.instantiate()
+	save_load_panel.name = "SaveLoadPanel"
+	save_load_panel.layout_mode = 1
+	save_load_panel.anchor_top = 0.15
+	save_load_panel.anchor_right = 1.0
+	save_load_panel.anchor_bottom = 0.9
+	save_load_panel.offset_left = 20.0
+	save_load_panel.offset_right = -20.0
+	save_load_panel.visible = false
+	save_load_panel.panel_closed.connect(func():
+		save_load_panel.visible = false
+		_update_hud()
+	)
+	game_screen.add_child(save_load_panel)
 
 	# 필드 매니저 시그널
 	field_manager.encounter_triggered.connect(_on_encounter)
@@ -339,7 +406,7 @@ func _create_dpad() -> Control:
 	save_btn.text = "저장"
 	save_btn.position = Vector2(220, btn_y)
 	save_btn.size = Vector2(80, 40)
-	save_btn.pressed.connect(func(): GameState.save_game(0))
+	save_btn.pressed.connect(_on_save)
 	container.add_child(save_btn)
 
 	var map_btn := Button.new()
@@ -376,6 +443,8 @@ func _move_player(direction: Vector2i) -> void:
 	if _event_running or (dialog_box != null and dialog_box.visible):
 		return
 	if shop_panel != null and shop_panel.visible:
+		return
+	if save_load_panel != null and save_load_panel.visible:
 		return
 	field_manager.try_move(direction)
 	_update_hud()
@@ -460,7 +529,11 @@ func _on_shop_requested(player: PlayerData, shop_type: String) -> void:
 	shop_panel.open_shop(player, shop_type)
 
 func _on_save_requested() -> void:
-	GameState.save_game(0)
+	if save_load_panel != null:
+		save_load_panel.open_panel("save")
+		await save_load_panel.panel_closed
+	else:
+		GameState.save_game(0)
 
 func _on_game_over() -> void:
 	GameState.show_toast("전투에서 패배했다...", "toast-warning")
@@ -602,6 +675,12 @@ func _on_status() -> void:
 		dialog_box.hide_dialog()
 	_event_running = false
 
+func _on_save() -> void:
+	if GameState.player == null or _event_running:
+		return
+	if save_load_panel != null:
+		save_load_panel.open_panel("save")
+
 func _on_world_map() -> void:
 	GameState.show_toast("월드맵은 Phase 6에서 구현 예정", "toast-info")
 
@@ -640,6 +719,27 @@ func _setup_battle_screen(enemies: Array) -> void:
 		bg.anchor_bottom = 1.0
 		bg.color = Color(0.04, 0.04, 0.06, 1)
 		battle_screen.add_child(bg)
+
+	# 배경 이미지 (지역에 따른 전투 배경)
+	var bg_img_node: TextureRect = battle_screen.get_node_or_null("BGImage")
+	if bg_img_node:
+		bg_img_node.queue_free()
+	if GameState.player:
+		var zone: String = GameState.player.current_location
+		var bg_name: String = GameData.area_bg_image.get(zone, "")
+		if bg_name != "":
+			var bg_path := "res://assets/backgrounds/%s" % bg_name
+			if ResourceLoader.exists(bg_path):
+				bg_img_node = TextureRect.new()
+				bg_img_node.name = "BGImage"
+				bg_img_node.layout_mode = 1
+				bg_img_node.anchors_preset = 15
+				bg_img_node.anchor_right = 1.0
+				bg_img_node.anchor_bottom = 0.35
+				bg_img_node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+				bg_img_node.texture = load(bg_path)
+				bg_img_node.modulate = Color(0.6, 0.6, 0.7, 0.5)  # 반투명 어둡게
+				battle_screen.add_child(bg_img_node)
 
 	# 적 표시 영역 (상단 30%)
 	var enemy_panel := HBoxContainer.new()
