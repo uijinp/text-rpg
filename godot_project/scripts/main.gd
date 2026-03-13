@@ -32,6 +32,10 @@ var skill_tree_panel = null  # scripts/ui/skill_tree_panel.gd
 var achievement_panel = null # scripts/ui/achievement_panel.gd
 var world_map_panel = null   # scripts/ui/world_map_panel.gd
 
+# ── 화면 전환 페이드 ──
+var _fade_rect: ColorRect = null
+var _is_transitioning: bool = false
+
 # ── 상태 ──
 var _event_running: bool = false
 
@@ -76,20 +80,57 @@ func _ready() -> void:
 	CombatSystem.target_select_requested.connect(_on_target_select)
 	CombatSystem.battle_item_menu_requested.connect(_on_battle_item_menu)
 
+	# 페이드 오버레이 생성 (최상단 레이어)
+	_fade_rect = ColorRect.new()
+	_fade_rect.name = "FadeOverlay"
+	_fade_rect.layout_mode = 1
+	_fade_rect.anchors_preset = 15
+	_fade_rect.anchor_right = 1.0
+	_fade_rect.anchor_bottom = 1.0
+	_fade_rect.color = Color(0.04, 0.04, 0.06, 0)
+	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_fade_rect)
+
 	# 초기 화면
-	_show_screen("title")
+	_show_screen("title", false)
 
 func _on_screen_changed(screen_name: String) -> void:
-	_show_screen(screen_name)
+	_show_screen(screen_name, true)
 
-func _show_screen(name: String) -> void:
-	title_screen.visible = (name == "title")
-	create_screen.visible = (name == "create")
-	game_screen.visible = (name == "game")
-	battle_screen.visible = (name == "battle")
+func _show_screen(screen_name: String, with_fade: bool = true) -> void:
+	if with_fade and not _is_transitioning:
+		_is_transitioning = true
+		await _fade_out(0.2)
+		_switch_screen_visibility(screen_name)
+		await _fade_in(0.2)
+		_is_transitioning = false
+	else:
+		_switch_screen_visibility(screen_name)
 
-	if name == "game":
+func _switch_screen_visibility(screen_name: String) -> void:
+	title_screen.visible = (screen_name == "title")
+	create_screen.visible = (screen_name == "create")
+	game_screen.visible = (screen_name == "game")
+	battle_screen.visible = (screen_name == "battle")
+
+	if screen_name == "game":
 		_setup_game_screen()
+
+func _fade_out(duration: float) -> void:
+	if _fade_rect == null:
+		return
+	_fade_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+	var tween := create_tween()
+	tween.tween_property(_fade_rect, "color:a", 1.0, duration)
+	await tween.finished
+
+func _fade_in(duration: float) -> void:
+	if _fade_rect == null:
+		return
+	var tween := create_tween()
+	tween.tween_property(_fade_rect, "color:a", 0.0, duration)
+	await tween.finished
+	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 # ══════════════════════════════════════════════════
 #  타이틀 & 캐릭터 생성
