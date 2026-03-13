@@ -1,0 +1,70 @@
+bandit_camp:
+  actions:
+    - action: if
+      cond: {flag: bandit_camp_cleared}
+      then:
+        - action: print
+          text: "  야영지는 이미 정리되었습니다."
+      else:
+        - action: divider
+          title: "산적 야영지"
+        - action: print
+          text: |
+
+            마왕의 성으로 향하는 길목에 산적들이 진을 치고 있다.
+            두목: "통행세 50G를 내면 지나가게 해주지."
+        - action: menu
+          options:
+            - label: "싸운다"
+              actions:
+                - action: battle
+                  enemy: bandit
+                  on_lose:
+                    - action: game_over
+
+            - label: "50G를 낸다"
+              actions:
+                - action: if
+                  cond: {gold_gte: 50}
+                  then:
+                    - action: sub_gold
+                      amount: 50
+                      message: false
+                    - action: print
+                      text: "  통행세를 지불하고 통과했다."
+                  else:
+                    - action: print
+                      text: "  골드가 부족하다! 싸울 수밖에 없다."
+                    - action: battle
+                      enemy: bandit
+                      on_lose:
+                        - action: game_over
+
+            - label: "협상한다"
+              actions:
+                - action: if
+                  cond: {dark_gte: 3}
+                  then:
+                    - action: print
+                      text: "  분위기로 산적들을 제압해 길을 열었다."
+                  else:
+                    - action: battle
+                      enemy: bandit
+                      on_lose:
+                        - action: game_over
+
+        # 카이 구출 보상
+        - action: if
+          cond: {flag: rescued_kai}
+          then:
+            - action: print
+              text: "  브론이 감사의 보상으로 강철 검과 30G를 건넸다."
+            - action: add_item
+              item: "강철 검"
+              message: false
+            - action: add_gold
+              amount: 30
+              message: false
+
+        - action: set_flag
+          key: bandit_camp_cleared

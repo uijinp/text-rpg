@@ -1,0 +1,122 @@
+forest:
+  actions:
+    - action: if
+      cond: {flag: forest_cleared}
+      then:
+        - action: print
+          text: "  숲은 이미 정리되었습니다."
+      else:
+        - action: divider
+          title: "어두운 숲"
+        - action: print
+          text: |
+
+            수풀이 흔들리더니 고블린이 튀어나왔다!
+        - action: battle
+          enemy: goblin
+          on_lose:
+            - action: game_over
+        - action: goto
+          scene: forest_random_event
+        - action: set_flag
+          key: forest_cleared
+        - action: print
+          text: "  ▶ 숲 길을 확보했다. 세 갈래 지역으로 이동할 수 있다."
+
+  scenes:
+    # ─── 숲 랜덤 이벤트 ───
+    forest_random_event:
+      actions:
+        - action: divider
+        - action: random
+          branches:
+            - weight: 0.25
+              actions:
+                - action: print
+                  text: |
+
+                    숲 속에서 수레를 끌고 온 수상한 상인이 나타났다.
+                    "쉿! 나도 이 숲에서 길을 잃었소. 싸게 팔테니..."
+                - action: menu
+                  options:
+                    - label: "상인과 거래한다"
+                      actions:
+                        - action: open_shop
+                    - label: "무시하고 지나간다"
+                      actions: []
+
+            - weight: 0.20
+              actions:
+                - action: print
+                  text: "\n  갑자기 굶주린 늑대 한 마리가 달려든다!"
+                - action: battle
+                  enemy: wolf
+                  on_lose:
+                    - action: game_over
+
+            - weight: 0.20
+              actions:
+                - action: print
+                  text: |
+
+                    신음 소리가 들려 덤불을 헤치자, 부상당한 여행자가 쓰러져 있다.
+                    "살려... 주세요..."
+                - action: goto
+                  scene: injured_traveler
+
+            - weight: 0.35
+              actions:
+                - action: add_gold
+                  amount: 20
+                  message: false
+                - action: print
+                  text: "\n  길가에 버려진 여행 가방에서 금화를 발견했다!"
+
+    # ─── 부상당한 여행자 ───
+    injured_traveler:
+      actions:
+        - action: if
+          cond: {flag: blacksmith_quest}
+          then:
+            - action: print
+              text: '  "저는... 대장장이 브론의 아들 카이입니다..."'
+        - action: menu
+          options:
+            - label: "소형 포션을 써서 치료한다"
+              actions:
+                - action: if
+                  cond: {has_item: "소형 포션"}
+                  then:
+                    - action: remove_item
+                      item: "소형 포션"
+                    - action: if
+                      cond: {flag: blacksmith_quest}
+                      then:
+                        - action: set_flag
+                          key: rescued_kai
+                        - action: print
+                          text: |
+
+                            카이: "감사합니다... 마을로 돌아가 아버지께 꼭 전하겠습니다."
+
+                            ▶ [카이 구출] 나중에 보상이 있을 것이다!
+                      else:
+                        - action: add_item
+                          item: "지도 조각"
+                          message: false
+                        - action: print
+                          text: |
+
+                            여행자: '감사합니다. 이 낡은 지도 조각이라도...'
+                            ▶ [지도 조각 획득]
+                  else:
+                    - action: print
+                      text: "  포션이 없어 도울 수가 없었다..."
+
+            - label: "그냥 지나친다"
+              actions:
+                - action: add_dark
+                  amount: 1
+                  message: false
+                - action: print
+                  text: "  외면하고 발걸음을 옮겼다. 신음이 뒤에서 들려온다..."

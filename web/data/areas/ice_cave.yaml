@@ -1,0 +1,100 @@
+ice_cave:
+  actions:
+    - action: if
+      cond: {flag: ice_cave_cleared}
+      then:
+        - action: print
+          text: "  빙하 동굴은 이미 탐색 완료되었습니다."
+        - action: break
+      else:
+        - action: divider
+          title: "빙하 동굴"
+        - action: print
+          text: |
+
+            얼어붙은 동굴 입구에서 한기가 몰려온다.
+            벽면에 거대한 발톱 자국이 있다. 이곳에 무언가가 살고 있다...
+            얼음 사이로 보석 같은 것이 반짝인다.
+        - action: print
+          text: "  얼음 벽이 갈라지며 골렘이 나타났다!"
+        - action: battle
+          enemy: ice_golem
+
+        - action: goto
+          scene: inner_cave
+
+  scenes:
+    inner_cave:
+      actions:
+        - action: divider
+          title: "동굴 최심부"
+        - action: print
+          text: |
+
+            동굴 깊숙한 곳에 얼어붙은 용이 잠들어 있다.
+            서리 비룡 '프로스트'. 고대의 빙룡.
+            얼음 비늘 사이로 차가운 숨결이 새어나온다.
+        - action: menu
+          options:
+            - label: "깨우지 않고 보물만 가져간다 (민첩 필요)"
+              actions:
+                - action: goto
+                  scene: stealth_attempt
+
+            - label: "정면으로 싸운다"
+              actions:
+                - action: print
+                  text: "  프로스트가 포효하며 일어선다!"
+                - action: battle
+                  enemy: frost_wyrm
+                - action: add_item
+                  item: "서리의 검"
+                  message: false
+                - action: set_flag
+                  key: ice_cave_cleared
+                - action: print
+                  text: |
+
+                    비룡이 쓰러지며 동굴이 진동한다.
+                    비룡의 둥지에서 서리가 서린 검을 발견했다.
+
+                    ▶ [서리의 검 획득] 빙룡의 힘이 깃든 검!
+                    ▶ 빙하 동굴 탐색 완료.
+
+            - label: "돌아간다"
+              actions:
+                - action: print
+                  text: "  현명한 선택이다. 준비가 되면 다시 오자."
+
+    stealth_attempt:
+      actions:
+        - action: random
+          branches:
+            - weight: 0.35
+              actions:
+                - action: add_item
+                  item: "서리의 검"
+                  message: false
+                - action: set_flag
+                  key: ice_cave_cleared
+                - action: print
+                  text: |
+
+                    숨을 죽이고 조심스럽게 보물에 손을 뻗었다.
+                    얼음 틈에서 서리가 서린 검을 꺼내 조용히 물러났다.
+
+                    ▶ [서리의 검 획득] 빙룡의 힘이 깃든 검!
+                    ▶ 빙하 동굴 탐색 완료.
+            - weight: 0.65
+              actions:
+                - action: print
+                  text: "  발을 헛디뎌 얼음이 깨졌다! 비룡이 눈을 떴다!"
+                - action: battle
+                  enemy: frost_wyrm
+                - action: add_item
+                  item: "서리의 검"
+                  message: false
+                - action: set_flag
+                  key: ice_cave_cleared
+                - action: print
+                  text: "  ▶ [서리의 검 획득] ▶ 빙하 동굴 탐색 완료."

@@ -1,85 +1,208 @@
 labyrinth:
   actions:
-    - action: if
-      cond: {not_flag: labyrinth_visited}
-      then:
-        - action: set_flag
-          key: labyrinth_visited
-          value: true
-        - action: print
-          text: "  지하로 이어지는 미궁의 입구에 도착했다."
-        - action: print
-          text: "  차가운 바람이 아래에서 불어온다..."
-        - action: pause
+    - action: set_location
+      zone: labyrinth
 
-    - action: loop
-      body:
+    - action: if
+      cond: {flag: labyrinth_cleared}
+      then:
+        - action: print
+          text: "\n  이미 탐색한 미궁이다. 골렘의 잔해만 남아있다."
+        - action: break
+      else:
         - action: divider
           title: "지하 미궁"
+        - action: print
+          text: |
 
+            폐허 지하에서 발견한 숨겨진 계단.
+            끝이 보이지 않는 어둠 속으로 내려간다.
+            벽에 라자러스의 문장이 희미하게 새겨져 있다...
+
+            "이곳은 라자러스가 증거를 숨기기 위해 만든 미궁인가?"
+        - action: pause
+
+        - action: goto
+          scene: floor1
+
+        - action: pause
+
+        - action: goto
+          scene: floor2
+
+        - action: pause
+
+        - action: goto
+          scene: cursed_chest
+
+        - action: pause
+
+        - action: goto
+          scene: floor3_boss
+
+  scenes:
+    # ─── 1층 - 세 갈래 길 ───
+    floor1:
+      actions:
+        - action: divider
+          title: "미궁 1층 - 세 갈래 길"
+        - action: print
+          text: |
+
+            세 갈래 길이 나타난다.
         - action: menu
           options:
-            - label: "미궁 탐색"
+            - label: "왼쪽 통로 (어둡고 좁다)"
               actions:
-                - action: if
-                  cond: {not_flag: labyrinth_cleared}
-                  then:
-                    - action: print
-                      text: "  미궁 깊은 곳에서 수호자의 기척이 느껴진다!"
-                    - action: battle
-                      enemy: labyrinth_golem
-                      on_win:
-                        - action: set_flag
-                          key: labyrinth_cleared
-                          value: true
+                - action: random
+                  branches:
+                    - weight: 0.4
+                      actions:
+                        - action: damage
+                          amount: 25
+                          message: false
                         - action: print
-                          text: "  미궁 골렘을 격파했다!"
+                          text: "  함정 발동! 천장에서 돌이 떨어진다! (-25 HP)"
+                    - weight: 0.6
+                      actions:
+                        - action: add_gold
+                          amount: 50
+                          message: false
                         - action: print
-                          text: "  미궁의 가장 깊은 곳에서 아래로 이어지는 균열을 발견했다..."
-                        - action: add_item
-                          item: "지도 조각"
-                      on_lose:
-                        - action: print
-                          text: "  당신은 패배했다..."
-                  else:
-                    - action: print
-                      text: "  이미 정복한 미궁이다. 조용하다."
-                    - action: random
-                      options:
-                        - weight: 50
-                          actions:
-                            - action: print
-                              text: "  미궁 속에서 적을 만났다!"
-                            - action: battle
-                              enemy: labyrinth_guardian
-                        - weight: 50
-                          actions:
-                            - action: print
-                              text: "  아무 일 없이 돌아왔다."
+                          text: "  좁은 통로 끝에 숨겨진 보물함이 있다! (+50G)"
 
-            - label: "지하 세계로 내려가기"
-              when: {flag: labyrinth_cleared}
+            - label: "중앙 통로 (정면에 빛이 보인다)"
               actions:
                 - action: print
-                  text: "  균열 사이로 뜨거운 바람과 함께 어둠의 기운이 느껴진다."
-                - action: print
-                  text: "  정말 내려가시겠습니까?"
-                - action: menu
-                  options:
-                    - label: "내려간다"
-                      actions:
-                        - action: print
-                          text: "  깊고 깊은 균열 속으로 내려갔다..."
-                        - action: pause
-                        - action: warp_map
-                          map: underworld
-                          zone: uw_entrance
-                        - action: break
-                    - label: "그만둔다"
-                      actions:
-                        - action: print
-                          text: "  아직 준비가 덜 된 것 같다."
+                  text: "\n  중앙 통로에서 미궁 수호자가 나타난다!"
+                - action: battle
+                  enemy: labyrinth_guardian
 
-            - label: "돌아가기"
+            - label: "오른쪽 통로 (바닥에 금화가 흩어져 있다)"
               actions:
-                - action: break
+                - action: add_item
+                  item: "대형 포션"
+                  message: false
+                - action: add_gold
+                  amount: 30
+                  message: false
+                - action: print
+                  text: "  보물함에서 대형 포션과 금화를 발견했다! (+대형 포션, +30G)"
+
+    # ─── 2층 - 봉인의 방 ───
+    floor2:
+      actions:
+        - action: divider
+          title: "미궁 2층 - 봉인의 방"
+        - action: print
+          text: |
+
+            석판에 글자가 새겨져 있다.
+            "봉인의 열쇠는 무엇인가?"
+        - action: if
+          cond: {any_flag: ["found_diary", "lazarus_elf_clue"]}
+          then:
+            - action: print
+              text: "  (당신이 가진 단서를 바탕으로 답을 알 수 있다...)"
+            - action: print
+              text: "  ▶ 자동 해결! 석판이 빛나며 문이 열린다."
+          else:
+            - action: menu
+              options:
+                - label: "'진실'"
+                  actions:
+                    - action: print
+                      text: "  정답! 석판이 빛나며 문이 열린다."
+
+                - label: "'힘'"
+                  actions:
+                    - action: damage
+                      amount: 30
+                      message: false
+                    - action: print
+                      text: "  오답! 함정이 발동한다! (-30 HP)"
+                    - action: print
+                      text: "  ...그래도 문은 천천히 열렸다."
+
+                - label: "'용기'"
+                  actions:
+                    - action: damage
+                      amount: 30
+                      message: false
+                    - action: print
+                      text: "  오답! 함정이 발동한다! (-30 HP)"
+                    - action: print
+                      text: "  ...그래도 문은 천천히 열렸다."
+
+    # ─── 저주의 보물함 ───
+    cursed_chest:
+      actions:
+        - action: divider
+          title: "저주의 보물함"
+        - action: print
+          text: |
+
+            구석에 검은 기운이 감도는 보물함이 있다.
+            강한 힘의 기운이 느껴진다... 하지만 불길하다.
+        - action: menu
+          options:
+            - label: "연다 (강한 힘을 얻지만 대가가 있을 수 있다)"
+              actions:
+                - action: add_stat
+                  attack: 8
+                  message: false
+                - action: add_dark
+                  amount: 2
+                  message: false
+                - action: print
+                  text: |
+
+                    검은 기운이 당신의 몸으로 스며든다.
+                    힘이 솟아오르지만, 마음 한 구석이 어두워진다.
+
+                    ▶ 공격력 +8!
+                    ▶ 어둠 점수 +2
+
+            - label: "부순다 (안전한 선택)"
+              actions:
+                - action: add_item
+                  item: "대형 포션"
+                  message: false
+                - action: print
+                  text: "\n  보물함을 부수자 안에서 대형 포션이 나왔다."
+
+            - label: "무시한다"
+              actions:
+                - action: print
+                  text: "\n  불길한 느낌을 무시하고 지나쳤다."
+
+    # ─── 3층 보스 - 봉인의 수호자 ───
+    floor3_boss:
+      actions:
+        - action: divider
+          title: "미궁 최하층 - 봉인의 수호자"
+        - action: print
+          text: |
+
+            거대한 석조 골렘이 천장까지 닿는 크기로 일어선다!
+            눈에서 붉은 빛이 번뜩인다.
+
+            골렘: "[...침...입...자...처...단...]"
+        - action: battle
+          enemy: labyrinth_golem
+
+        - action: add_item
+          item: "봉인의 검"
+          message: false
+        - action: set_flag
+          key: labyrinth_cleared
+        - action: print
+          text: |
+
+            골렘이 부서지며 뒤에 숨겨진 석실이 드러난다.
+            대좌 위에 빛나는 검이 놓여 있다.
+
+            "이 검은... 봉인의 힘이 서려 있다."
+
+            ▶ [봉인의 검] 획득! (공격력 +20, 라자러스에게 특효)
+            ▶ 지하 미궁 공략 완료!

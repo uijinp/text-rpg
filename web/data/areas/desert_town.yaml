@@ -1,0 +1,127 @@
+desert_town:
+  actions:
+    # 첫 방문
+    - action: if
+      cond: {not_flag: desert_town_visited}
+      then:
+        - action: divider
+          title: "사하르 마을"
+        - action: print
+          text: |
+
+            뜨거운 모래바람이 불어오는 사막의 교역 도시.
+            향신료 냄새와 낙타 울음소리가 뒤섞인다.
+            광장에는 알록달록한 천막 아래 상인들이 물건을 펼쳐놓고 있다.
+        - action: set_flag
+          key: desert_town_visited
+        - action: set_flag
+          key: desert_explored
+
+    # 메인 메뉴 루프
+    - action: loop
+      body:
+        - action: divider
+          title: "사하르 마을"
+        - action: menu
+          options:
+            - label: "사막 상점 '모래바람 시장'"
+              actions:
+                - action: open_shop
+
+            - label: "사막 원로 카림"
+              actions:
+                - action: goto
+                  scene: desert_elder
+
+            - label: "전갈 투기장 (보상 전투)"
+              actions:
+                - action: goto
+                  scene: desert_arena
+
+            - label: "마을 탐색 종료"
+              actions:
+                - action: break
+
+  scenes:
+    # ─── 사막 원로 카림 ───
+    desert_elder:
+      actions:
+        - action: if
+          cond: {flag: desert_elder_done}
+          then:
+            - action: print
+              text: "\n  카림: '피라미드 안에서 조심하게. 미라들은 빛을 두려워한다네.'"
+          else:
+            - action: divider
+              title: "사막 원로 카림"
+            - action: print
+              text: |
+
+                흰 수건을 두른 노인이 차를 마시며 맞이한다.
+                카림: "오, 먼 곳에서 온 여행자여. 피라미드에 관심이 있는가?"
+            - action: menu
+              options:
+                - label: "피라미드에 대해 묻는다"
+                  actions:
+                    - action: set_flag
+                      key: pyramid_entrance_info
+                    - action: print
+                      text: |
+
+                        카림: "피라미드는 고대 왕 네페르의 무덤이라네.
+                               그 안에는 파라오의 검이 봉인되어 있다고 전해지지.
+                               하지만 수호자가 지키고 있어. 만만한 상대가 아닐 걸세."
+
+                        ▶ [단서] 피라미드 입구와 파라오의 검 정보 획득!
+
+                - label: "마왕에 대해 묻는다"
+                  actions:
+                    - action: set_flag
+                      key: heard_maou_truth
+                    - action: print
+                      text: |
+
+                        카림: "마왕 젤드리온... 사실 그는 원래 이 사막 출신이라네.
+                               어릴 때부터 천재적인 마법사였지. 왕국에서 불러가서
+                               궁정 마법사가 됐는데... 그 뒤로는 안 좋은 일만 있었다더군."
+
+                        ▶ [중요 단서] 마왕의 과거에 대한 새로운 정보!
+            - action: set_flag
+              key: desert_elder_done
+
+    # ─── 전갈 투기장 ───
+    desert_arena:
+      actions:
+        - action: divider
+          title: "전갈 투기장"
+        - action: if
+          cond: {flag: arena_won}
+          then:
+            - action: print
+              text: "  이미 투기장에서 승리했습니다. 관중들이 환호한다!"
+          else:
+            - action: print
+              text: |
+
+                모래로 둘러싸인 원형 투기장.
+                관중석에서 사람들이 함성을 지른다.
+                사회자: "오늘의 도전자! 살아남으면 상금 80G!"
+            - action: menu
+              options:
+                - label: "도전한다"
+                  actions:
+                    - action: print
+                      text: "  거대한 사막 전갈이 모래에서 튀어나왔다!"
+                    - action: battle
+                      enemy: sand_scorpion
+                    - action: add_gold
+                      amount: 80
+                      message: false
+                    - action: set_flag
+                      key: arena_won
+                    - action: print
+                      text: "  관중이 열광한다! 상금 80G 획득!"
+                - label: "그만둔다"
+                  actions:
+                    - action: print
+                      text: "  사회자: '겁쟁이는 물러가라~'"

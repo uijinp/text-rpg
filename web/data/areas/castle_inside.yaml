@@ -1,0 +1,240 @@
+castle_inside:
+  actions:
+    - action: if
+      cond: {flag: castle_inside_cleared}
+      then:
+        - action: print
+          text: "  성 내부 탐색은 이미 완료되었습니다."
+      else:
+        - action: goto
+          scene: castle_explore
+        # 암흑 장군 전투
+        - action: divider
+          title: "암흑 장군"
+        - action: menu
+          options:
+            - label: "싸운다"
+              actions:
+                - action: battle
+                  enemy: dark_general
+                  on_lose:
+                    - action: game_over
+
+            - label: "진실을 아는 자임을 밝힌다"
+              actions:
+                - action: if
+                  cond:
+                    - {any_flag: ["heard_maou_truth", "found_truth_book"]}
+                  then:
+                    - action: print
+                      text: "  장군이 길을 열어주었다."
+                  else:
+                    - action: battle
+                      enemy: dark_general
+                      on_lose:
+                        - action: game_over
+
+        - action: set_flag
+          key: castle_inside_cleared
+
+  scenes:
+    # ─── 성 내부 탐색 루프 (최소 2곳) ───
+    castle_explore:
+      actions:
+        - action: show_map
+          kind: castle
+        - action: loop
+          body:
+            - action: menu
+              options:
+                - label: "지하 도서관"
+                  when: {not_flag: explored_library}
+                  actions:
+                    - action: set_flag
+                      key: explored_library
+                    - action: goto
+                      scene: castle_library
+
+                - label: "지하 감옥"
+                  when: {not_flag: explored_prison}
+                  actions:
+                    - action: set_flag
+                      key: explored_prison
+                    - action: goto
+                      scene: castle_prison
+
+                - label: "무기고"
+                  when: {not_flag: explored_armory}
+                  actions:
+                    - action: set_flag
+                      key: explored_armory
+                    - action: goto
+                      scene: castle_armory
+
+                - label: "탐색 종료"
+                  actions:
+                    - action: break
+
+    # ─── 지하 도서관 ───
+    castle_library:
+      actions:
+        - action: divider
+          title: "지하 도서관"
+        - action: print
+          text: |
+
+            먼지 쌓인 서가 사이로 오래된 책들이 늘어서 있다.
+            한쪽 구석에 잠긴 유리 케이스 안에 붉은 책이 놓여 있다.
+        - action: menu
+          options:
+            - label: "유리 케이스를 부수고 책을 꺼낸다"
+              actions:
+                - action: set_flag
+                  key: found_truth_book
+                - action: set_flag
+                  key: heard_maou_truth
+                - action: print
+                  text: |
+
+                    『진실의 기록』 - 봉인 해제.
+                    ───────────────────────────────────────
+                    왕국력 352년, 궁정 마법사 젤드리온은
+                    왕의 봉인 반지 도난 사건의 누명을 썼다.
+
+                    실범은 왕의 고문 레이저스였으나 그는 증거를 조작했다.
+                    10년간의 고독과 분노 속에 젤드리온은 어둠을 받아들였다.
+
+                    단 하나의 조건이면 모든 것이 끝날 수 있다:
+                    '봉인 반지를 돌려받고 진실이 밝혀지는 것.'
+                    ───────────────────────────────────────
+
+                    ▶ [진실의 기록 발견] 마왕과의 대화에서 새로운 선택지가 열린다!
+
+            - label: "다른 책들을 살펴본다"
+              actions:
+                - action: add_stat
+                  max_hp: 20
+                  message: false
+                - action: heal
+                  amount: 20
+                  message: false
+                - action: add_item
+                  item: "대형 포션"
+                  message: false
+                - action: print
+                  text: "  주문서를 읽어 최대 HP +20! 대형 포션도 발견!"
+
+    # ─── 지하 감옥 ───
+    castle_prison:
+      actions:
+        - action: divider
+          title: "지하 감옥"
+        - action: print
+          text: |
+
+            서늘한 감옥 통로를 걷자 한 구석에서 신음 소리가 들린다.
+            창살 뒤에 왕국군 병사 두 명이 갇혀 있다.
+            병사: '제발... 살려주세요!'
+        - action: menu
+          options:
+            - label: "창살을 부수고 구출한다"
+              actions:
+                - action: set_flag
+                  key: rescued_prisoners
+                - action: add_stat
+                  attack: 5
+                  message: false
+                - action: print
+                  text: |
+
+                    창살을 힘껏 당기자 낡은 자물쇠가 부서진다.
+                    병사: '감사합니다! 마왕과 싸울 때 힘을 드리겠습니다!'
+
+                    ▶ [기사 구출] 공격력 임시 +5! (기사들의 응원 효과)
+
+            - label: "그냥 지나간다"
+              actions:
+                - action: add_dark
+                  amount: 1
+                  message: false
+                - action: print
+                  text: "  병사들의 목소리를 외면하고 지나쳤다..."
+
+    # ─── 무기고 ───
+    castle_armory:
+      actions:
+        - action: divider
+          title: "무기고"
+        - action: print
+          text: |
+
+            각종 무기와 갑옷이 벽에 걸려 있다.
+            하지만 방 중앙에 함정이 있을 것 같은 느낌이 든다.
+        - action: if
+          cond: {flag: trap_hint}
+          then:
+            - action: print
+              text: "  (노인의 말이 떠오른다. '항상 오른쪽 통로를...')"
+            - action: menu
+              options:
+                - label: "오른쪽 통로로 우회해 들어간다 (안전)"
+                  actions:
+                    - action: print
+                      text: "  안전하게 통과했다."
+
+                - label: "정면으로 들어간다 (함정 위험)"
+                  actions:
+                    - action: damage
+                      amount: 30
+                      message: false
+                    - action: print
+                      text: "  바닥이 꺼지며 함정 발동! 30 데미지! (HP {player.hp}/{player.max_hp})"
+          else:
+            - action: menu
+              options:
+                - label: "조심스럽게 들어간다"
+                  actions:
+                    - action: print
+                      text: "  조심스럽게 통과했다."
+
+                - label: "대담하게 정면으로 들어간다"
+                  actions:
+                    - action: if
+                      cond: {random_lt: 0.5}
+                      then:
+                        - action: damage
+                          amount: 30
+                          message: false
+                        - action: print
+                          text: "  바닥이 꺼지며 함정 발동! 30 데미지! (HP {player.hp}/{player.max_hp})"
+                      else:
+                        - action: print
+                          text: "  무사히 통과했다."
+
+        - action: print
+          text: "\n  무기고에서 장비를 하나 가져갈 수 있다."
+        - action: menu
+          options:
+            - label: "강철 검"
+              actions:
+                - action: add_item
+                  item: "강철 검"
+                  message: false
+                - action: print
+                  text: "  ▶ 강철 검 획득!"
+
+            - label: "사슬 갑옷"
+              actions:
+                - action: add_item
+                  item: "사슬 갑옷"
+                  message: false
+                - action: print
+                  text: "  ▶ 사슬 갑옷 획득!"
+
+            - label: "대형 포션"
+              actions:
+                - action: add_item
+                  item: "대형 포션"
+                  message: false
+                - action: print
+                  text: "  ▶ 대형 포션 획득!"

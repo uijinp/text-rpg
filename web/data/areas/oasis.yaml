@@ -1,0 +1,46 @@
+oasis:
+  actions:
+    - action: divider
+      title: "오아시스"
+    - action: print
+      text: |
+
+        사막 한가운데, 야자수 그늘 아래 맑은 샘물이 흐른다.
+        피로와 갈증이 한순간에 사라지는 듯하다.
+    - action: heal
+      amount: full
+    - action: print
+      text: "  ▶ HP 완전 회복!"
+
+    - action: if
+      cond: {flag: oasis_merchant}
+      then:
+        - action: print
+          text: "  떠돌이 상인이 아직 자리를 지키고 있다."
+        - action: menu
+          options:
+            - label: "상인과 거래한다"
+              actions:
+                - action: open_shop
+            - label: "쉬고 간다"
+              actions: []
+      else:
+        - action: random
+          branches:
+            - weight: 0.5
+              actions:
+                - action: print
+                  text: |
+
+                    야자수 그늘에 낙타를 탄 상인이 쉬고 있다.
+                    상인: "오아시스에서 만나다니, 인연이군. 물건 좀 보겠나?"
+                - action: set_flag
+                  key: oasis_merchant
+                - action: open_shop
+            - weight: 0.5
+              actions:
+                - action: add_gold
+                  amount: 25
+                  message: false
+                - action: print
+                  text: "  샘물 바닥에서 반짝이는 동전을 발견했다. 25G 획득!"

@@ -1,0 +1,250 @@
+mercenary_camp:
+  actions:
+    - action: set_location
+      zone: mercenary_camp
+    - action: divider
+      title: "용병단 야영지"
+
+    - action: if
+      cond: {not_flag: merc_camp_visited}
+      then:
+        - action: set_flag
+          key: merc_camp_visited
+        - action: print
+          text: |
+
+            울타리로 둘러싸인 야영지. 무장한 용병들이 훈련 중이다.
+            모닥불 옆에서 덩치 큰 남자가 고기를 굽고 있다.
+
+            경비병: "뭐야, 새로운 놈인가? 대장님에게 가봐."
+      else:
+        - action: print
+          text: "\n  용병 야영지에 다시 왔다. 모닥불이 따뜻하다.\n"
+
+    - action: loop
+      body:
+        - action: menu
+          options:
+            - label: "대장 베론"
+              actions:
+                - action: goto
+                  scene: captain_veron
+
+            - label: "용병 대장장이"
+              actions:
+                - action: open_merc_shop
+
+            - label: "훈련장"
+              actions:
+                - action: goto
+                  scene: training
+
+            - label: "용병의 소문"
+              actions:
+                - action: goto
+                  scene: rumor
+
+            - label: "떠난다"
+              actions:
+                - action: print
+                  text: "  베론: '조심해서 가라, 친구.'"
+                - action: break
+
+  scenes:
+    # ─── 대장 베론 ───
+    captain_veron:
+      actions:
+        - action: divider
+          title: "대장 베론"
+
+        - action: if
+          cond: {not_flag: dark_tower_hint}
+          then:
+            - action: print
+              text: |
+
+                덩치 큰 남자가 고기를 뜯으며 당신을 위아래로 훑어본다.
+
+                베론: "오, 마왕을 치러 간다고? 대단하군. 나도 한때 왕국군이었지.
+                       지금은... 뭐, 자유로운 몸이야. 하하."
+
+                베론: "한 가지 정보를 주지. 마왕의 성 동북쪽에 수상한 탑이 있더군.
+                       왕의 고문이라는 자가 드나드는 걸 봤어.
+                       라자러스라고 했나? 뭔가를 숨기고 있는 게 분명해."
+            - action: set_flag
+              key: dark_tower_hint
+            - action: print
+              text: "  ▶ [어둠의 탑 정보] 라자러스의 은신처에 대한 정보를 얻었다!"
+          else:
+            - action: print
+              text: "\n  베론: '아직 그 탑에 안 가봤나? 뭔가 있을 거야.'\n"
+
+        - action: if
+          cond: {not_flag: mercenary_hired}
+          then:
+            - action: print
+              text: |
+
+                베론: "100G를 내면 부하를 하나 빌려주지.
+                       다음 큰 싸움에서 적의 사기를 꺾어줄 거야."
+            - action: menu
+              options:
+                - label: "100G를 내고 용병을 고용한다"
+                  actions:
+                    - action: if
+                      cond: {gold_gte: 100}
+                      then:
+                        - action: sub_gold
+                          amount: 100
+                          message: false
+                        - action: set_flag
+                          key: mercenary_hired
+                        - action: print
+                          text: "  베론: '좋아! 크레인을 보내줄게. 든든한 녀석이야.'"
+                        - action: print
+                          text: "  ▶ [용병 고용] 다음 보스전에서 적 HP -25%!"
+                      else:
+                        - action: print
+                          text: "  골드가 부족합니다. (필요: 100G)"
+
+                - label: "거절한다"
+                  actions:
+                    - action: print
+                      text: "  베론: '필요하면 언제든 와.'"
+          else:
+            - action: print
+              text: "  베론: '크레인이 준비되어 있어. 든든하지?'"
+
+    # ─── 훈련장 ───
+    training:
+      actions:
+        - action: if
+          cond: {flag: training_done}
+          then:
+            - action: print
+              text: "\n  훈련 교관: '이미 한 번 훈련했잖아. 더는 가르칠 게 없어.'"
+          else:
+            - action: divider
+              title: "훈련장"
+            - action: print
+              text: |
+
+                훈련 교관: "60G면 특훈시켜 주지. 뭘 강화할래?"
+            - action: menu
+              options:
+                - label: "공격 훈련 (공격력 +3 영구)"
+                  actions:
+                    - action: if
+                      cond: {gold_gte: 60}
+                      then:
+                        - action: sub_gold
+                          amount: 60
+                          message: false
+                        - action: set_flag
+                          key: training_done
+                        - action: add_stat
+                          attack: 3
+                          message: false
+                        - action: print
+                          text: "  고된 훈련 끝에 공격력이 올랐다! (공격력 +3)"
+                      else:
+                        - action: print
+                          text: "  골드가 부족합니다. (필요: 60G)"
+
+                - label: "방어 훈련 (방어력 +2 영구)"
+                  actions:
+                    - action: if
+                      cond: {gold_gte: 60}
+                      then:
+                        - action: sub_gold
+                          amount: 60
+                          message: false
+                        - action: set_flag
+                          key: training_done
+                        - action: add_stat
+                          defense: 2
+                          message: false
+                        - action: print
+                          text: "  방어 훈련으로 단단해졌다! (방어력 +2)"
+                      else:
+                        - action: print
+                          text: "  골드가 부족합니다. (필요: 60G)"
+
+                - label: "그만두다"
+                  actions: []
+
+    # ─── 용병의 소문 ───
+    rumor:
+      actions:
+        - action: divider
+          title: "용병의 소문"
+        - action: if
+          cond: {flag: merc_rumor_done}
+          then:
+            - action: print
+              text: "  이미 소문을 들었다. 새로운 이야기는 없다."
+          else:
+            - action: set_flag
+              key: merc_rumor_done
+            - action: print
+              text: |
+
+                용병 하나가 조심스럽게 속삭인다.
+
+                용병: "...있잖아, 전쟁이 끝나면 우리 일부가 근처 마을을 약탈할 계획이야.
+                       대장은 모르는 일이지. 어차피 전쟁통에 누가 알겠어?"
+            - action: menu
+              options:
+                - label: "마을에 경고한다 (용병 고용을 잃을 수 있다)"
+                  actions:
+                    - action: sub_dark
+                      amount: 1
+                      message: false
+                    - action: if
+                      cond: {flag: mercenary_hired}
+                      then:
+                        - action: set_flag
+                          key: mercenary_hired
+                          value: false
+                        - action: print
+                          text: |
+
+                            당신은 경비병을 통해 마을에 경고를 보냈다.
+                            소식을 들은 베론이 약탈 계획자들을 처벌했지만,
+                            고용한 용병도 그 일에 연루되어 있었다.
+
+                            ▶ 어둠 점수 -1
+                            ▶ 용병 고용이 취소되었다.
+                      else:
+                        - action: print
+                          text: |
+
+                            당신은 경비병을 통해 마을에 경고를 보냈다.
+                            약탈 계획이 사전에 저지되었다.
+
+                            ▶ 어둠 점수 -1
+
+                - label: "침묵한다"
+                  actions:
+                    - action: add_dark
+                      amount: 1
+                      message: false
+                    - action: print
+                      text: "\n  ...알면서도 침묵했다.\n  ▶ 어둠 점수 +1"
+
+                - label: "'나도 동참하겠다'"
+                  actions:
+                    - action: add_dark
+                      amount: 3
+                      message: false
+                    - action: add_gold
+                      amount: 100
+                      message: false
+                    - action: print
+                      text: |
+
+                        용병이 히죽 웃는다. "좋아, 네 몫은 보장할게."
+                        주머니에 선불금이 쑤셔 넣어진다.
+
+                        ▶ 어둠 점수 +3
+                        ▶ 100G 획득

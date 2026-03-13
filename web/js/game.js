@@ -210,7 +210,7 @@ const GameState = {
   async loadYaml(zone) {
     if (this.yamlCache[zone]) return this.yamlCache[zone];
     try {
-      const resp = await fetch(`../data/areas/${zone}.yaml`);
+      const resp = await fetch(`data/areas/${zone}.yaml`);
       if (!resp.ok) return null;
       const text = await resp.text();
       const data = jsyaml.load(text);

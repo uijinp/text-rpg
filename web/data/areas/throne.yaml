@@ -1,0 +1,401 @@
+throne:
+  actions:
+    - action: set_location
+      zone: throne
+    - action: divider
+      title: "챕터 7: 마왕 젤드리온과의 대면"
+    - action: print
+      text: |
+
+        거대한 문이 열리며 왕좌의 방이 나타난다.
+        창밖으로 번개가 치는 가운데, 검은 로브를 걸친 마왕이
+        왕좌에서 천천히 일어선다.
+
+        마왕: "...감히 여기까지 오다니. 그 용기는 인정하지.
+               하지만 이 자리는 네가 죽는 자리다."
+
+    # 진실을 아는 경우
+    - action: if
+      cond: {any_flag: [heard_maou_truth, found_truth_book, found_diary]}
+      then:
+        - action: print
+          text: "  당신은 마왕에 대한 진실을 알고 있다."
+        - action: menu
+          options:
+            - label: "'레이저스에게 억울한 누명을 쓴 것을 알고 있다'고 말한다"
+              actions:
+                - action: goto
+                  scene: dialogue_path
+
+            - label: "그냥 싸운다"
+              actions:
+                - action: goto
+                  scene: final_battle
+
+            - label: "봉인 반지를 건네며 '라자러스를 처단하고 반지를 되찾았습니다'"
+              when:
+                - {has_item: "봉인 반지"}
+                - {flag: lazarus_defeated}
+              actions:
+                - action: goto
+                  scene: ending_justice
+
+      # 진실을 모르는 경우
+      else:
+        - action: menu
+          options:
+            - label: "싸운다"
+              actions:
+                - action: goto
+                  scene: final_battle
+
+  scenes:
+    # ─── 진실의 대화 ───
+    dialogue_path:
+      actions:
+        - action: divider
+          title: "진실의 대화"
+        - action: print
+          text: |
+
+            마왕의 눈이 흔들린다.
+
+            마왕: "...무슨 말을 하는 거냐. 그것을 어떻게..."
+
+            당신은 발견한 진실들을 차분히 이야기했다.
+            일기장, 도서관의 기록, 은자 노인의 증언...
+
+            마왕: "...기억하고 싶지 않았다. 그 배신을.
+                   하지만... 너는 진실을 찾기 위해 여기까지 온 것인가?"
+        - action: menu
+          options:
+            - label: "'당신을 구하러 왔습니다. 함께 진실을 밝힙시다.'"
+              actions:
+                - action: if
+                  cond: {dark_lte: 2}
+                  then:
+                    - action: goto
+                      scene: ending_redemption
+                  else:
+                    - action: goto
+                      scene: dark_choice
+
+            - label: "'그래도 당신이 한 일은 용서받을 수 없다. 싸우자.'"
+              actions:
+                - action: print
+                  text: "\n  마왕: '...그렇군. 그것이 네 대답이라면.'"
+                - action: goto
+                  scene: final_battle
+
+            - label: "'진실은 알지만, 이 싸움은 피할 수 없다.'"
+              actions:
+                - action: print
+                  text: "\n  마왕: '정직한 대답이군. 그럼 싸우자.'"
+                - action: goto
+                  scene: final_battle
+
+    # ─── 어둠 선택 (dark_points > 2) ───
+    dark_choice:
+      actions:
+        - action: print
+          text: |
+
+            마왕이 당신의 손에서 흘러나오는 어둠의 기운을 보며 말한다.
+
+            마왕: "...너도 어둠에 물들었군. 하지만 아직 선택할 수 있다.
+                   그 힘을 내려놓을 수 있는가?"
+        - action: menu
+          options:
+            - label: "어둠의 힘을 내려놓는다  (공격력 -10, 구원 엔딩)"
+              actions:
+                - action: add_stat
+                  attack: -10
+                  message: false
+                - action: set_dark
+                  amount: 0
+                - action: print
+                  text: "  어둠에서 얻은 힘을 포기했다. 손이 맑아진다."
+                - action: goto
+                  scene: ending_redemption
+
+            - label: "어둠의 힘을 유지한다    (어둠 엔딩)"
+              actions:
+                - action: add_dark
+                  amount: 5
+                  message: false
+                - action: goto
+                  scene: ending_dark
+
+    # ─── 최종 전투 ───
+    final_battle:
+      actions:
+        - action: divider
+          title: "최종 전투"
+        - action: print
+          text: |
+
+            마왕 젤드리온이 검은 번개를 두 손에 모은다.
+            마왕: "후회하지 않는다. 이것이 내 운명이라면!"
+        - action: print
+          text: "  [전투 전 마지막 준비]"
+
+        - action: loop
+          body:
+            - action: menu
+              options:
+                - label: "전투 시작"
+                  actions:
+                    - action: break
+
+                - label: "인벤토리"
+                  actions:
+                    - action: show_inventory
+
+                - label: "장착"
+                  actions:
+                    - action: equip_item
+
+                - label: "캐릭터 정보"
+                  actions:
+                    - action: show_status
+
+                - label: "지도 보기"
+                  actions:
+                    - action: show_map
+                      kind: world
+
+        - action: if
+          cond: {flag: rescued_prisoners}
+          then:
+            - action: print
+              text: "\n  구출한 기사들이 문 밖에서 응원한다!"
+            - action: print
+              text: "  '용사님, 힘내세요!' 사기가 오른다! (공격력 +3)"
+            - action: add_stat
+              attack: 3
+              message: false
+
+        - action: if
+          cond: {flag: mercenary_hired}
+          then:
+            - action: print
+              text: "  ▶ 고용한 용병이 적의 주의를 분산시킨다!"
+            - action: set_flag
+              key: mercenary_hired
+              value: false
+            - action: battle
+              enemy: dragon
+              name: "마왕 젤드리온"
+              hp_multiply: 0.75
+          else:
+            - action: battle
+              enemy: dragon
+              name: "마왕 젤드리온"
+
+        # 전투 승리 후 엔딩 분기
+        - action: if
+          cond: {dark_gte: 5}
+          then:
+            - action: goto
+              scene: ending_dark
+          else:
+            - action: if
+              cond: {dark_gte: 3}
+              then:
+                - action: goto
+                  scene: ending_shadow
+              else:
+                - action: goto
+                  scene: ending_hero
+
+    # ═══════════════════════════════════════════════════
+    #  5가지 엔딩
+    # ═══════════════════════════════════════════════════
+
+    ending_hero:
+      actions:
+        - action: print
+          text: "\n★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★"
+        - action: print
+          text: |
+
+            마왕이 쓰러졌다. 검은 번개가 멎고, 성 전체에서 어둠이 걷혔다.
+            수십 년 만에 창밖으로 햇살이 쏟아져 들어온다.
+
+            바닥에 쓰러진 젤드리온이 눈을 뜬다.
+            분노로 가득했던 눈동자가 조금씩 맑아지고 있었다.
+
+            젤드리온: "......네가... 이겼군."
+                       "......이 오랜 싸움이... 이렇게 끝나는군."
+                       잠시 침묵이 흘렀다.
+                       "......왕국이 다시 빛을 찾길... 바란다."
+                       "......그것만으로... 충분하다."
+
+            손에서 힘이 빠지며 어둠의 마법이 완전히 소멸했다.
+
+            왕국에 평화가 돌아왔다.
+            {player.name}은(는) 아르카디아 왕국 최고의 영웅으로 기록되었다.
+            레이저스 고문은 진실이 밝혀지며 처형되었고,
+            젤드리온의 명예는 사후에야 회복되었다.
+
+            ─ ★ 영웅 엔딩 ★ ─
+            도달 레벨: {player.level}  /  최종 골드: {player.gold}G
+            어둠 점수: {player.dark_points}
+        - action: print
+          text: "★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★"
+        - action: return
+          value: clear_hero
+
+    ending_redemption:
+      actions:
+        - action: print
+          text: "\n◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆"
+        - action: print
+          text: |
+
+            마왕 젤드리온이 천천히 두 손을 내렸다.
+            어둠의 마법이 연기처럼 흩어진다.
+
+            젤드리온: "......10년이다."
+                       "10년 동안 분노만을 품고 살았다."
+                       "그런데 너는... 싸우러 온 것이 아니었군."
+
+            그가 긴 한숨을 내쉬었다.
+
+            젤드리온: "...알겠다. 함께 진실을 밝혀보자."
+                       "이 늙은 마법사에게... 아직 할 일이 남아있는 것 같군."
+
+            두 사람은 왕국으로 돌아갔다.
+            봉인 반지의 실제 행방이 밝혀지고,
+            레이저스의 음모가 만천하에 드러났다.
+
+            젤드리온은 어둠의 마법을 스스로 봉인하고
+            왕국 수석 마법사의 자리로 돌아왔다.
+
+            왕국에는 전쟁 없이 평화가 찾아왔다.
+            {player.name}은(는) 검이 아닌 진실과 대화로 세상을 구했다.
+
+            ─ ◆ 구원 엔딩 [비밀 엔딩] ◆ ─
+            도달 레벨: {player.level}  /  최종 골드: {player.gold}G
+            진실 단서 수집 + 선한 선택으로 달성 가능한 엔딩
+        - action: print
+          text: "◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆"
+        - action: return
+          value: clear_redemption
+
+    ending_shadow:
+      actions:
+        - action: print
+          text: "\n▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲"
+        - action: print
+          text: |
+
+            마왕이 쓰러졌다.
+
+            젤드리온이 쓰러지며 마지막으로 당신의 눈을 바라본다.
+            그 눈빛에 두려움 같은 것이 섞여 있었다.
+
+            젤드리온: "......너는..."
+                       "......나와 같은 눈을 하고 있군."
+                       "조심해라... 어둠은... 쉽게 놓아주지 않는다..."
+
+            그의 말이 끊겼다.
+
+            왕국 사람들은 {player.name}을(를) 영웅이라 불렀다.
+            그러나 어떤 이들은 그 눈빛을 보며 두려움을 감추지 못했다.
+
+            마음 한켠에는 어둠의 씨앗이 남아 있었다.
+            그 씨앗이 언젠가 꽃을 피울지는... 아무도 모른다.
+
+            ─ ▲ 그림자 영웅 엔딩 ▲ ─
+            도달 레벨: {player.level}  /  어둠 점수: {player.dark_points}
+            (어둠 점수 2 이하를 유지하면 순수 영웅 엔딩을 볼 수 있다)
+        - action: print
+          text: "▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲"
+        - action: return
+          value: clear_shadow
+
+    ending_dark:
+      actions:
+        - action: print
+          text: "\n▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓"
+        - action: print
+          text: |
+
+            마왕이 쓰러졌다.
+
+            바닥에 쓰러진 젤드리온이 힘겹게 고개를 들어 당신을 바라본다.
+            그의 눈에 서서히 공포가 번졌다.
+
+            젤드리온: "......너는..."
+                       "......설마... 처음부터..."
+
+            {player.name}이(가) 천천히 왕좌로 걸어갔다.
+            그리고 앉았다.
+
+            젤드리온: "......이런 결말이..."
+                       "......나는... 경고가 되고 싶지 않았는데..."
+                       "......제발... 멈춰라..."
+
+            마지막 숨을 거두며 젤드리온의 눈이 감겼다.
+
+            {player.name}의 손가락 사이로 검은 기운이 흘러나오기 시작했다.
+            왕국에는 새로운 어둠의 지배자가 탄생했다.
+
+            ─ ▓ 어둠의 엔딩 ▓ ─
+            도달 레벨: {player.level}  /  어둠 점수: {player.dark_points}
+            (진실을 찾고 선한 선택을 해보세요...)
+        - action: print
+          text: "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓"
+        - action: return
+          value: clear_dark
+
+    ending_justice:
+      actions:
+        - action: print
+          text: "\n◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇"
+        - action: print
+          text: |
+
+            마왕의 눈이 크게 벌어진다.
+            당신은 품에서 봉인 반지를 꺼내 그에게 건넸다.
+
+            젤드리온: "......이것은... 봉인 반지..."
+                       "......정말로... 진실을 밝혔단 말인가..."
+                       "......라자러스를... 처단했다고..."
+
+            반지가 그의 손에 닿는 순간, 어둠의 마법이 조용히 걷히기 시작한다.
+            10년간의 분노가 천천히 눈물로 변해간다.
+
+            젤드리온: "......미안하다. 이 땅의 사람들에게."
+                       "......어둠에 빠진 나를... 용서할 수 없겠지."
+
+            {player.name}: "용서는 앞으로의 행동으로 보여주시면 됩니다."
+
+            젤드리온이 처음으로 미소를 짓는다.
+
+            젤드리온: "......고맙다. 정말로."
+
+            봉인 반지의 빛이 성 전체를 밝힌다.
+            어둠의 저주가 완전히 풀리고,
+            마왕의 성이 본래 모습인 '별의 탑'으로 되돌아간다.
+
+            젤드리온은 왕국 앞에 무릎을 꿇고 사죄했다.
+            라자러스의 음모가 낱낱이 밝혀지고,
+            왕은 젤드리온의 무죄를 공식 선언했다.
+
+            {player.name}은(는) '정의의 수호자'라는 칭호를 받았다.
+            젤드리온은 남은 생을 왕국 재건에 바쳤다.
+
+            피 한 방울 흘리지 않고 악을 처단하고,
+            무고한 자를 구하고, 세상에 정의를 바로 세운
+            진정한 결말.
+
+            ─ ◇ 정의 엔딩 [트루 엔딩] ◇ ─
+            도달 레벨: {player.level}  /  최종 골드: {player.gold}G
+            어둠 점수: {player.dark_points}
+            라자러스 처단 + 봉인 반지 반환으로 달성한 가장 완전한 결말
+        - action: print
+          text: "◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇"
+        - action: return
+          value: clear_justice
