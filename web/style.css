@@ -1331,6 +1331,16 @@ body {
 .vtile-cloud     { background-color: #4a4a6a; }
 .vtile-void      { background-color: #0a0a0f; }
 
+/* 통행 가능/불가 시각 구분 */
+.vtile-passable {
+  box-shadow: inset 0 0 0 1px rgba(80, 200, 120, 0.15);
+}
+.vtile-impassable {
+  opacity: 0.55;
+  filter: brightness(0.7);
+  box-shadow: inset 0 0 0 1px rgba(180, 60, 60, 0.25);
+}
+
 /* 타일 이미지 (이미지가 있으면 배경색 위에 오버라이드) */
 .vtile[data-img] {
   background-size: cover;

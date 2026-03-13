@@ -301,7 +301,7 @@ function renderTileMap(player) {
         /* 플레이어 타일 */
         const ch = tileMap[r]?.[c] || '.';
         const v = VisualMap.getTileVisual(ch, mapId);
-        span.classList.add('vtile-player');
+        span.classList.add('vtile-player', 'vtile-passable');
         span.style.backgroundColor = v.css;
         if (v.img) span.style.backgroundImage = `url(tile_image/${v.img}.webp)`;
 
@@ -323,8 +323,10 @@ function renderTileMap(player) {
         /* 맵 밖 */
         span.classList.add('vtile-void');
       } else {
-        /* 일반 타일 */
+        /* 일반 타일: 통행 가능/불가 시각 구분 */
         const ch = tileMap[r][c];
+        const passable = canMoveTo(r, c);
+        span.classList.add(passable ? 'vtile-passable' : 'vtile-impassable');
         const v = VisualMap.getTileVisual(ch, mapId);
         span.style.backgroundColor = v.css;
         if (v.img) span.style.backgroundImage = `url(tile_image/${v.img}.webp)`;
@@ -402,7 +404,9 @@ async function tryStepMove(player, dr, dc, label) {
     const arrLvl = arrArea?.recommendedLevel;
     const arrTag = (arrLvl > 0) ? ` [Lv.${arrLvl}]` : '';
     UI.showToast(`★ ${locs[ch].name}${arrTag}`);
-    // 자동으로 장소 메뉴 열기
+    // 맵 렌더 직후 대화창이 가려지지 않도록 한 프레임 뒤에 장소 메뉴 열기
+    await new Promise(r => requestAnimationFrame(r));
+    UI.showDialog();
     await showLocationMenu(player);
     return { ok: true };
   }
@@ -483,13 +487,15 @@ async function tryStepMove(player, dr, dc, label) {
 
 async function showLocationMenu(player) {
   _gameState = 'dialog';
-  const posZone = getZoneAt(player.mapRow, player.mapCol);
-  const posZoneData = posZone ? AREAS[posZone] : null;
-  const positionalName = getAreaNameByPos(player.mapRow, player.mapCol);
+  const posZone = getZoneAt(player.mapRow, player.mapCol) || player.currentLocation;
+  const posZoneData = AREAS[posZone] || null;
+  const positionalName = (posZoneData && posZoneData.name) || getAreaNameByPos(player.mapRow, player.mapCol);
 
   UI.clearLog();
   UI.addDivider(positionalName);
-  if (posZoneData) UI.addLog(`  ${posZoneData.desc}`);
+  if (posZoneData && posZoneData.desc) UI.addLog(`  ${posZoneData.desc}`);
+  UI.showDialog();
+  await new Promise(r => requestAnimationFrame(r));
   UI.showDialog();
 
   const menuLabels = ['지역 탐색', '인벤토리', '메뉴 더보기'];
@@ -824,10 +830,12 @@ async function startGameLoop() {
   renderTileMap(player);
   _gameState = 'field';
 
-  // 거점 위에 있으면 자동 메뉴 표시
+  // 거점 위에 있으면 자동 메뉴 표시 (한 프레임 뒤에 열어 화면이 그려진 뒤 대화창 표시)
   const ch = getTileChar(player.mapRow, player.mapCol);
   const locs = getCurrentLocations();
   if (locs[ch]) {
+    await new Promise(r => requestAnimationFrame(r));
+    UI.showDialog();
     await showLocationMenu(player);
   }
 
