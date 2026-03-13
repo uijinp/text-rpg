@@ -720,11 +720,12 @@ func _on_inventory() -> void:
 		# 장비 가능한 아이템 확인
 		for item_name in p.inventory:
 			var info: Dictionary = GameData.get_item(item_name)
+			var _existing_names: Array = usable_items.map(func(u): return u["name"])
 			if info.get("type", "") in ["weapon", "armor"]:
-				if item_name not in usable_items:
+				if item_name not in _existing_names:
 					usable_items.append({"name": item_name, "action": "equip"})
 			elif info.get("effect", "") == "heal" or info.get("effect", "") == "cure":
-				if item_name not in [u["name"] for u in usable_items]:
+				if item_name not in _existing_names:
 					usable_items.append({"name": item_name, "action": "use"})
 
 		for u in usable_items:

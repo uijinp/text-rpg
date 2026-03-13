@@ -50,7 +50,7 @@ func _update_player_visual() -> void:
 		player_sprite.texture = tex
 		# 스프라이트를 타일 크기에 맞게 스케일
 		if tex:
-			var scale_factor := float(TILE_SIZE) / max(tex.get_width(), tex.get_height())
+			var scale_factor: float = float(TILE_SIZE) / float(max(tex.get_width(), tex.get_height()))
 			player_sprite.scale = Vector2(scale_factor, scale_factor)
 
 func try_move(direction: Vector2i) -> bool:

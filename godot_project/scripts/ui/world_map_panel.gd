@@ -49,7 +49,7 @@ func _build_map_tabs() -> void:
 		else:
 			btn.text = display_name
 		btn.custom_minimum_size = Vector2(80, 0)
-		var _mid := map_id
+		var _mid: String = String(map_id)
 		btn.pressed.connect(func():
 			_current_map = _mid
 			_refresh()

@@ -132,8 +132,8 @@ func _build_sell_list() -> void:
 		var btn := Button.new()
 		btn.text = "판매"
 		btn.custom_minimum_size = Vector2(60, 0)
-		var _item := item_name
-		var _sell := sell_price
+		var _item: String = String(item_name)
+		var _sell: int = sell_price
 		btn.pressed.connect(func(): _do_sell(_item, _sell))
 		row.add_child(btn)
 

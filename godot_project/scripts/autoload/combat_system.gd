@@ -82,7 +82,7 @@ func _assign_labels(enemies: Array) -> void:
 			e["label"] = "%s %s" % [n, char(64 + idx[n])]
 
 func _calc_player_damage(enemy: Dictionary, base_damage: int) -> int:
-	var raw := max(0, base_damage - enemy.get("def", 0))
+	var raw: int = int(max(0, base_damage - enemy.get("def", 0)))
 	# 적 방어 태세
 	if enemy.get("guard_turns", 0) > 0:
 		raw = max(0, int(raw * 0.6))
@@ -127,7 +127,7 @@ func _resolve_enemy_attack(player: PlayerData, e: Dictionary) -> Dictionary:
 		return {"dmg": 0, "text": text, "guard": true}
 	elif style == "drain" and randf() < 0.3:
 		dmg = _calc_enemy_damage(player, int(e["atk"] * 0.95), true)
-		var heal_amt := max(5, int(dmg * 0.5))
+		var heal_amt: int = int(max(5, int(dmg * 0.5)))
 		e["hp"] = min(e["max_hp"], e["hp"] + heal_amt)
 		text = "%s의 흡혈 일격!" % e["label"]
 		return {"dmg": dmg, "text": text, "drain_heal": heal_amt}

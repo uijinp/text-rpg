@@ -103,7 +103,7 @@ func get_attack() -> Dictionary:
 	if equipped_weapon != "":
 		var item_data: Dictionary = GameData.get_item(equipped_weapon)
 		weapon_bonus = item_data.get("attack_bonus", 0)
-	var buf_bonus := passive_buffs.get("attackBonus", 0)
+	var buf_bonus: int = int(passive_buffs.get("attackBonus", 0))
 
 	# 임시 버프
 	var temp_mult := 1.0
@@ -131,16 +131,16 @@ func get_defense() -> int:
 	if equipped_armor != "":
 		var item_data: Dictionary = GameData.get_item(equipped_armor)
 		armor_bonus = item_data.get("defense_bonus", 0)
-	var buf_bonus := passive_buffs.get("defenseBonus", 0)
+	var buf_bonus: int = int(passive_buffs.get("defenseBonus", 0))
 	return defense + armor_bonus + buf_bonus
 
 func take_damage(amount: int) -> int:
-	var actual := max(0, amount)
+	var actual: int = int(max(0, amount))
 	hp = max(0, hp - actual)
 	return actual
 
 func heal(amount: int) -> int:
-	var healed := min(amount, max_hp - hp)
+	var healed: int = int(min(amount, max_hp - hp))
 	hp += healed
 	return healed
 

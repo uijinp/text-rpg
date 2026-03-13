@@ -36,7 +36,7 @@ func run_area_event(zone: String) -> Variant:
 	if event_data is Dictionary:
 		_current_scenes = event_data.get("scenes", {})
 		if event_data.has("actions"):
-			var result := await run_actions(event_data["actions"], GameState.player, {})
+			var result: Variant = await run_actions(event_data["actions"], GameState.player, {})
 			_current_scenes = {}
 			return result
 	elif event_data is Array:
@@ -327,7 +327,7 @@ func _action_loop(act: Dictionary, player: PlayerData, ctx: Dictionary) -> Varia
 	var loop_actions: Array = act.get("body", act.get("actions", []))
 
 	for i in range(max_loops):
-		var res := await run_actions(loop_actions, player, ctx)
+		var res: Variant = await run_actions(loop_actions, player, ctx)
 		if res == "break":
 			break
 		if res == "return":

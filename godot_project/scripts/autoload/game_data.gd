@@ -29,7 +29,7 @@ func _ready() -> void:
 	print("[GameData] 데이터 로딩 완료")
 
 func _load_game_data() -> void:
-	var data := _load_json("res://data/game_data.json")
+	var data: Variant = _load_json("res://data/game_data.json")
 	if data == null:
 		push_error("game_data.json 로딩 실패!")
 		return
@@ -44,24 +44,24 @@ func _load_game_data() -> void:
 func _load_maps() -> void:
 	for map_name in ["mainland", "underworld", "celestial"]:
 		var path := "res://data/maps/%s.json" % map_name
-		var data := _load_json(path)
+		var data: Variant = _load_json(path)
 		if data:
 			maps[map_name] = data
 
 func _load_extra_data() -> void:
-	var ach := _load_json("res://data/achievements.json")
+	var ach: Variant = _load_json("res://data/achievements.json")
 	if ach is Array:
 		achievements = ach
 
-	var st := _load_json("res://data/skill_trees.json")
+	var st: Variant = _load_json("res://data/skill_trees.json")
 	if st is Dictionary:
 		skill_trees = st
 
-	var sl := _load_json("res://data/storylets.json")
+	var sl: Variant = _load_json("res://data/storylets.json")
 	if sl is Array:
 		storylets = sl
 
-	var eb := _load_json("res://data/enemy_behavior.json")
+	var eb: Variant = _load_json("res://data/enemy_behavior.json")
 	if eb is Dictionary:
 		enemy_behavior = eb
 
@@ -74,7 +74,7 @@ func _load_area_events() -> void:
 	var file_name := dir.get_next()
 	while file_name != "":
 		if file_name.ends_with(".json"):
-			var data := _load_json("res://data/areas/%s" % file_name)
+			var data: Variant = _load_json("res://data/areas/%s" % file_name)
 			if data is Dictionary:
 				# JSON 구조: {"town": {"actions": [...], "scenes": {...}}}
 				# 내부 zone 키를 풀어서 저장
